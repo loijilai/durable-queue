@@ -52,3 +52,15 @@ def mark_failed(job_id, error):
     job.save()
 
     return job
+
+
+def mark_pending(job_id):
+    job = TranscriptionJob.objects.get(pk=job_id)
+
+    if job.status != TranscriptionJob.RUNNING:
+        raise ValueError("Job status should be running")
+
+    job.status = TranscriptionJob.PENDING
+    job.save()
+
+    return job

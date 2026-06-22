@@ -1,5 +1,5 @@
 from django.test import TestCase
-from jobs.services import claim_next_job, mark_failed, mark_succeeded
+from jobs.services import claim_next_job, mark_failed, mark_succeeded, mark_pending
 from jobs.models import TranscriptionJob
 
 
@@ -98,3 +98,27 @@ class TranscriptionServiceTests(TestCase):
         )
         with self.assertRaises(ValueError):
             mark_failed(1, self.ERROR)
+
+    # mark pending
+    def test_mark_pending_updates_running_job(self):
+        # Arrange
+        job = TranscriptionJob.objects.create(
+            video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
+        )
+        # Act
+        mark_pending(job.id)
+        job.refresh_from_db()
+        # Assert
+        self.assertEqual(job.status, TranscriptionJob.PENDING)
+
+    def test_mark_pending_raises_does_not_exist_when_job_is_not_found(self):
+        with self.assertRaises(TranscriptionJob.DoesNotExist):
+            mark_pending(1)
+
+    def test_mark_pending_raises_value_error_when_job_is_not_running(self):
+        # Arrange
+        TranscriptionJob.objects.create(
+            id=1, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+        )
+        with self.assertRaises(ValueError):
+            mark_pending(1)
