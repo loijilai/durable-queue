@@ -1,22 +1,27 @@
 from .models import TranscriptionJob
+from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 
 
 def claim_next_job():
-    # TODO: 目前僅支援單一 worker
-    job = (
-        TranscriptionJob.objects.filter(status=TranscriptionJob.PENDING)
-        .order_by("created_at", "id")
-        .first()
-    )
+    with transaction.atomic():
+        job = (
+            TranscriptionJob.objects.filter(status=TranscriptionJob.PENDING)
+            .select_for_update(skip_locked=True)
+            .order_by("created_at", "id")
+            .first()
+        )
 
-    if not job:
-        return  # 找不到 job 是正常業務分支
+        if not job:
+            return  # 找不到 job 是正常業務分支
 
-    job.claimed_at = timezone.now()
-    job.status = TranscriptionJob.RUNNING
-    job.attempt_count += 1
-    job.save()
+        job.claimed_at = timezone.now()
+        job.status = TranscriptionJob.RUNNING
+        job.attempt_count = F("attempt_count") + 1
+        job.save(update_fields=["claimed_at", "status", "attempt_count"])
+
+        job.refresh_from_db()
 
     return job
 
