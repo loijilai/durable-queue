@@ -3,6 +3,9 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
+TIMEOUT = 300  # seconds
+ATTEMPT_LIMIT = 3
+
 
 def claim_next_job():
     with transaction.atomic():
@@ -27,40 +30,71 @@ def claim_next_job():
 
 
 def mark_succeeded(job_id, transcript):
-    job = TranscriptionJob.objects.get(pk=job_id)
+    with transaction.atomic():
+        job = TranscriptionJob.objects.select_for_update().get(pk=job_id)
 
-    if job.status != TranscriptionJob.RUNNING:
-        raise ValueError("Job status should be running")
+        if job.status == TranscriptionJob.SUCCEEDED:
+            return
 
-    job.status = TranscriptionJob.SUCCEEDED
-    job.transcript = transcript
-    job.finished_at = timezone.now()
-    job.save()
+        if job.status != TranscriptionJob.RUNNING:
+            raise ValueError(f"Job status {job.status} cannot be marked succeeded")
+
+        job.status = TranscriptionJob.SUCCEEDED
+        job.transcript = transcript
+        job.finished_at = timezone.now()
+        job.save()
 
     return job
 
 
 def mark_failed(job_id, error):
-    job = TranscriptionJob.objects.get(pk=job_id)
+    with transaction.atomic():
+        job = TranscriptionJob.objects.select_for_update().get(pk=job_id)
 
-    if job.status != TranscriptionJob.RUNNING:
-        raise ValueError("Job status should be running")
+        if job.status == TranscriptionJob.FAILED:
+            return
 
-    job.status = TranscriptionJob.FAILED
-    job.error = error
-    job.finished_at = timezone.now()
-    job.save()
+        if job.status != TranscriptionJob.RUNNING:
+            raise ValueError("Job status should be running")
+
+        job.status = TranscriptionJob.FAILED
+        job.error = error
+        job.finished_at = timezone.now()
+        job.save()
 
     return job
 
 
 def mark_pending(job_id):
-    job = TranscriptionJob.objects.get(pk=job_id)
+    with transaction.atomic():
+        job = TranscriptionJob.objects.select_for_update().get(pk=job_id)
 
-    if job.status != TranscriptionJob.RUNNING:
-        raise ValueError("Job status should be running")
+        if job.status == TranscriptionJob.PENDING:
+            return
 
-    job.status = TranscriptionJob.PENDING
-    job.save()
+        if job.status != TranscriptionJob.RUNNING:
+            raise ValueError("Job status should be running")
+
+        job.status = TranscriptionJob.PENDING
+        job.save()
 
     return job
+
+
+def reclaim_job():
+    with transaction.atomic():
+        running_jobs = (
+            TranscriptionJob.objects.select_for_update(skip_locked=True)
+            .filter(status=TranscriptionJob.RUNNING)
+            .order_by("id")
+        )
+        for j in running_jobs:
+            if j.claimed_at is None:
+                print(f"Running job {j.id} claimed_at is None")  # TODO: logging
+                continue
+            if (timezone.now() - j.claimed_at).total_seconds() > TIMEOUT:
+                if j.attempt_count >= ATTEMPT_LIMIT:
+                    mark_failed(j.id, "lease timeout exceeded")
+                else:
+                    j.status = TranscriptionJob.PENDING
+                    j.save()

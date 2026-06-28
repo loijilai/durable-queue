@@ -8,7 +8,7 @@ ATTEMPT_LIMIT = 3
 
 
 class Command(BaseCommand):
-    help = "Run a single worker loop"
+    help = "Run a worker loop"
 
     def handle(self, *args, **options):
         try:
