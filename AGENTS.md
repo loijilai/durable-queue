@@ -85,18 +85,22 @@
 - [x] Job 資料模型與狀態機
 - [x] 建立 / 查詢 job 的 REST API
 - [x] 基本的 claim / succeed / fail service
-- [ ] **並發安全的 claim**：目前 `claim_next_job()` 只支援單一 worker（見程式內 TODO）。多 worker 下會有 race condition → `select_for_update(skip_locked=True)`、transaction、SQLite vs Postgres 的差異。
-- [ ] **Worker loop**：誰在跑 job？polling 迴圈、management command、長駐 process。
-- [ ] **Retry 與失敗處理**：`attempt_count` 已存在但還沒用到。max retries、backoff、什麼錯誤該重試。
-- [ ] **At-least-once 與 idempotency**：job 可能被執行超過一次，為什麼？要怎麼設計才安全。
-- [ ] **Lease / 逾時回收**：worker 在 `running` 中途掛掉，`claimed_at` 怎麼用來偵測 stuck job 並重新排入。
-- [ ] **Dead-letter / 永久失敗**：反覆失敗的 job 怎麼處理。
+- [x] **並發安全的 claim**：`claim_next_job()` 用 `select_for_update(skip_locked=True)` + `transaction.atomic()` 支援多 worker 同時 claim 不互搶。
+- [x] **Worker loop**：`run_worker.py` management command，長駐 polling 迴圈，沒 job 時 sleep。
+- [x] **Retry 與失敗處理（部分）**：`mark_pending()` + `ATTEMPT_LIMIT` 重試迴圈；失敗未達上限退回 `pending`，達上限 `mark_failed`。**仍有兩個 TODO 留在 `run_worker.py`**：(a) 錯誤分類（transient vs permanent），(b) 固定 `sleep(1)` 還不是真正的 exponential backoff + jitter。
+- [x] **Lease / 逾時回收**：`reclaim_job()`（sweep 模式，`TIMEOUT=300s`）+ `run_sweeper.py` 獨立 process，把 stuck 的 `running` job 退回 `pending`，達上限則 `mark_failed`。`mark_*` 加了 idempotent guard 處理「worker 剛好完成 vs sweeper 回收」的 race。
+- [~] **At-least-once 與 idempotency**：**移到 Phase 2 跟真實 OpenAI 轉錄一起做**。理由：目前 `fake_transcribe` 無副作用，重複執行無害，沒有東西需要冪等化；等接上有成本/副作用的 API 才有意義。`mark_*` 的冪等 guard 已保護「狀態轉移」這一層，但「執行本身」的去重尚未做。
+- [ ] **Dead-letter / 永久失敗**：反覆失敗的 job 怎麼處理。（暫緩，待真實失敗模式出現後再做，可在 Phase 2 一併處理。）
+
+> Phase 1 收尾：claim / lease / retry 等手刻原語已走過一輪，足以理解 queue 在解什麼。idempotency 與 dead-letter 屬「策略」而非「新原語」，刻意延到 Phase 2 跟真實副作用一起面對。
 
 ### Phase 2 — 換成 Celery + Redis（production 級核心）
 
 - [ ] **導入 Celery + Redis**：Redis 當 broker，設定 Celery app、`celery worker`。
 - [ ] **把轉錄改成 Celery task**：API 收到請求後 `task.delay()` 派工，而非自己 polling。
 - [ ] **對照映射**：手刻的 claim/lease/retry ↔ Celery 的 `acks_late`、`visibility_timeout`、`autoretry_for`、`max_retries`、`retry_backoff`。釐清每個對應關係。
+- [ ] **At-least-once 與 idempotency**（從 Phase 1 移入）：`acks_late=True` 會提高重複執行機率，Celery 不幫你保證冪等——要自己設計 idempotency key / 狀態檢查 / 天然冪等寫入。跟「接真實 OpenAI 轉錄」綁在一起做。
+- [ ] **Dead-letter / 永久失敗**（從 Phase 1 移入）：反覆失敗的 job 怎麼隔離、觀察、是否能手動 retry。
 - [ ] **DB 表 vs Redis 的職責邊界**：`TranscriptionJob` 表是持久化真相來源，Redis 是派工通道——為什麼需要兩者，少了一個會怎樣。
 - [ ] **可觀測性**：Flower 監控、task 狀態查詢、failure 告警。
 - [ ] **接真正的 OpenAI 轉錄**：取代 `fake_transcribe`，在 Celery task 內處理外部 API 的逾時、錯誤、成本、rate limit。
