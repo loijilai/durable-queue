@@ -18,7 +18,6 @@ class TranscriptionJob(models.Model):
 
     transcript = models.TextField(null=True)
     error = models.TextField(null=True)
-    attempt_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     claimed_at = models.DateTimeField(null=True)
     finished_at = models.DateTimeField(null=True)

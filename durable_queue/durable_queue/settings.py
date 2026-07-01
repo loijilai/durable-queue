@@ -117,3 +117,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+
+# Celery
+# 這些變數以 CELERY_ 開頭，才會被 celery.py 裡的 config_from_object(namespace="CELERY") 讀到。
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+
+CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+
+CELERY_TIMEZONE = TIME_ZONE
