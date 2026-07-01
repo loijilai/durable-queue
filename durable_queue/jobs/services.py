@@ -14,7 +14,6 @@ def mark_running(job_id):
         job.claimed_at = timezone.now()
 
         job.save()
-        job.refresh_from_db()
     return job
 
 
