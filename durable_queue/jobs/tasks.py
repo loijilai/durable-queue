@@ -13,6 +13,7 @@ class ExecuteJobTask(Task):
 
 @shared_task(
     base=ExecuteJobTask,
+    acks_late=True,
     autoretry_for=(ConnectionError, TimeoutError),
     max_retries=3,
     retry_backoff=True,
@@ -20,5 +21,7 @@ class ExecuteJobTask(Task):
 )
 def execute_job(job_id):
     job = mark_running(job_id)
+    if job is None:
+        return
     transcript = fake_transcribe(job.video_url)
     mark_succeeded(job.id, transcript)

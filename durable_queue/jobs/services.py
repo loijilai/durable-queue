@@ -7,11 +7,13 @@ def mark_running(job_id):
     with transaction.atomic():
         job = TranscriptionJob.objects.select_for_update().get(pk=job_id)
 
-        if job.status == TranscriptionJob.RUNNING:
-            return job
+        if (
+            job.status == TranscriptionJob.SUCCEEDED
+            or job.status == TranscriptionJob.FAILED
+        ):
+            return
 
         job.status = TranscriptionJob.RUNNING
-        job.claimed_at = timezone.now()
 
         job.save()
     return job
@@ -21,11 +23,14 @@ def mark_succeeded(job_id, transcript):
     with transaction.atomic():
         job = TranscriptionJob.objects.select_for_update().get(pk=job_id)
 
-        if job.status == TranscriptionJob.SUCCEEDED:
+        if (
+            job.status == TranscriptionJob.SUCCEEDED
+            or job.status == TranscriptionJob.FAILED
+        ):
             return
 
         if job.status != TranscriptionJob.RUNNING:
-            raise ValueError(f"Job status {job.status} cannot be marked succeeded")
+            raise ValueError(f"Job status {job.status} cannot be marked as succeeded")
 
         job.status = TranscriptionJob.SUCCEEDED
         job.transcript = transcript
@@ -39,11 +44,14 @@ def mark_failed(job_id, error):
     with transaction.atomic():
         job = TranscriptionJob.objects.select_for_update().get(pk=job_id)
 
-        if job.status == TranscriptionJob.FAILED:
+        if (
+            job.status == TranscriptionJob.SUCCEEDED
+            or job.status == TranscriptionJob.FAILED
+        ):
             return
 
         if job.status != TranscriptionJob.RUNNING:
-            raise ValueError("Job status should be running")
+            raise ValueError(f"Job status {job.status} cannot be marked as failed")
 
         job.status = TranscriptionJob.FAILED
         job.error = error

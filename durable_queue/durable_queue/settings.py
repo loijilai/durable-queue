@@ -127,3 +127,9 @@ CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
 
 CELERY_TIMEZONE = TIME_ZONE
+
+# Worker crash 保護：task 執行超過此時間未 ACK，Redis 會重新派發
+# 設定需比預期最長的 task 執行時間還長，避免誤判 worker 死亡而重送
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "visibility_timeout": 3600,  # 1 小時
+}
