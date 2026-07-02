@@ -59,3 +59,18 @@ def mark_failed(job_id, error):
         job.save()
 
     return job
+
+
+def retry_job(job_id):
+    with transaction.atomic():
+        job = TranscriptionJob.objects.select_for_update().get(pk=job_id)
+
+        if job.status != TranscriptionJob.FAILED:
+            raise ValueError(f"Job status {job.status} cannot be retried")
+
+        job.status = TranscriptionJob.PENDING
+        job.error = None
+        job.finished_at = None
+        job.save()
+
+    return job

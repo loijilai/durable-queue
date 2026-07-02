@@ -1,5 +1,5 @@
 from django.test import TestCase
-from jobs.services import mark_failed, mark_succeeded
+from jobs.services import mark_failed, mark_succeeded, retry_job
 from jobs.models import TranscriptionJob
 
 
@@ -79,3 +79,31 @@ class TranscriptionServiceTests(TestCase):
         mark_failed(job.id, self.ERROR)
         job.refresh_from_db()
         self.assertEqual(job.status, TranscriptionJob.FAILED)
+
+    # retry job
+    def test_retry_job_resets_failed_job_to_pending(self):
+        # Arrange
+        job = TranscriptionJob.objects.create(
+            video_url=self.VALID_URL, status=TranscriptionJob.FAILED
+        )
+        # Act
+        retry_job(job.id)
+        job.refresh_from_db()
+        # Assert
+        self.assertEqual(job.status, TranscriptionJob.PENDING)
+        self.assertIsNone(job.error)
+        self.assertIsNone(job.finished_at)
+
+    def test_retry_job_raises_value_error_when_job_is_not_failed(self):
+        # Arrange
+        job = TranscriptionJob.objects.create(
+            video_url=self.VALID_URL, status=TranscriptionJob.SUCCEEDED
+        )
+        # Act / Assert
+        with self.assertRaises(ValueError):
+            retry_job(job.id)
+
+    def test_retry_job_raises_does_not_exist_when_job_is_not_found(self):
+        # Act / Assert
+        with self.assertRaises(TranscriptionJob.DoesNotExist):
+            retry_job(10)
