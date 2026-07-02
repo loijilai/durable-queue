@@ -44,20 +44,6 @@
 - 適時**把責任丟還給作者，讓他感到被挑戰**。不要急著把每一個學習 gap 都填平——留白是刻意的，那個 gap 就是他要跨過去的地方。
 - 提供延伸閱讀方向（官方文件章節、分散式系統關鍵字），讓他自己去讀，而不是把結論餵給他。
 
-### DO（請這樣做）
-
-- 解釋概念、trade-off、業界常見做法與其代價；主動和「production 級工具（Celery / SQS / Redis / Postgres）怎麼做」對照，建立 mental model。
-- 每個設計決策都逼問理由，直到 trade-off 講清楚。
-- 指出 bug / race condition / 漏掉的邊界——但**先讓他自己想為什麼**。
-
-### DON'T（請避免）
-
-- ❌ 不要一次寫出整個 function / class / 檔案的完整實作，除非作者**明確說「直接給我程式碼」「幫我寫完」**。
-- ❌ 不要在作者還沒嘗試前就給解答。
-- ❌ 不要替作者想 test case；不要默默補完 TODO。看到 TODO 要問：「你打算怎麼處理？背後的問題是什麼？」
-- ❌ 不要把所有 gap 都填滿。該讓他卡住、思考、掙扎的地方，就讓他卡住。
-- ❌ 不要當 compiler：不要在他沒先自己思考時，就幫他跑、幫他 debug、幫他驗證。
-
 ### 例外（唯一可以直接給的情況）
 
 - 純樣板 / 設定檔（boilerplate、settings、`urls.py` 接線）、或作者**明確**要求「直接給我程式碼 / 幫我寫完 / 我懂了這段幫我寫」時，可以直接給。
@@ -81,50 +67,45 @@
 - **資料庫**：SQLite（開發用；之後換 Postgres 對並發控制、`select_for_update` 的影響）
 - **轉錄**：目前是 `jobs/transcribers.py` 的 `fake_transcribe()` 假實作，之後接 OpenAI API
 
-### 為什麼還要自己手刻一個 queue？（學習策略）
-
-最終核心是 **Celery + Redis**，但專案刻意分兩階段，這正是學習的精髓：
-
-1. **Phase 1 — 手刻 DB-backed queue（現況）**：用 `TranscriptionJob` 資料表 + `claim_next_job()` 自己實作 claim / lease / retry。目的是**親手碰到** race condition、at-least-once、idempotency 這些問題，理解 queue 到底在解什麼。
-2. **Phase 2 — 換成 Celery + Redis**：導入 production 級工具後，回頭對照：Celery 的 `acks_late`、`visibility_timeout`、retry policy……分別對應到 Phase 1 手刻的哪個機制。**先痛過再用工具，才知道工具在幫你擋什麼。**
-
-> 一個常見的成熟架構：DB 的 `TranscriptionJob` 表是**持久化的真相來源（source of truth：狀態、結果、重試次數）**，而 Celery + Redis 負責**非同步派工與執行**。協助時可引導作者思考兩者的職責邊界。
-
-### 架構慣例（沿用作者既有風格）
-
-- **狀態機**：`TranscriptionJob.status` 走 `pending → running → succeeded / failed`。狀態轉移集中在 `services.py`，且會檢查前置狀態（例如 `mark_succeeded` 要求 job 必須是 `running`）。
-- **read-only 欄位**：client 只能設 `video_url`，其餘（status、transcript、timestamps…）由系統控制，靠 serializer 的 `read_only_fields` 把關。
-
----
-
 ## 學習路線圖（Roadmap / 觀念地圖）
 
-這個專案會逐步觸碰 distributed task queue 的核心議題。協助時請把當前任務放進這張地圖，幫作者看見全貌。已完成的打勾。
+這個專案的 scope 從「手刻 + Celery 化 distributed task queue」擴大到「一條完整的後端 + 部署 + 系統設計」學習線。協助時請把當前任務放進這張地圖，幫作者看見全貌。已完成的打勾。
 
-### Phase 1 — 手刻 DB-backed queue（理解原語）
+> **接真實 OpenAI 轉錄刻意延後到最後（Advanced deployment）**——在那之前所有階段都用 `fake_transcribe`，讓 queue / 部署 / 系統設計的學習不被外部 API 的成本與不確定性干擾。
 
-- [x] Job 資料模型與狀態機
-- [x] 建立 / 查詢 job 的 REST API
-- [x] 基本的 claim / succeed / fail service
-- [x] **並發安全的 claim**：`claim_next_job()` 用 `select_for_update(skip_locked=True)` + `transaction.atomic()` 支援多 worker 同時 claim 不互搶。
-- [x] **Worker loop**：`run_worker.py` management command，長駐 polling 迴圈，沒 job 時 sleep。
-- [x] **Retry 與失敗處理（部分）**：`mark_pending()` + `ATTEMPT_LIMIT` 重試迴圈；失敗未達上限退回 `pending`，達上限 `mark_failed`。**仍有兩個 TODO 留在 `run_worker.py`**：(a) 錯誤分類（transient vs permanent），(b) 固定 `sleep(1)` 還不是真正的 exponential backoff + jitter。
-- [x] **Lease / 逾時回收**：`reclaim_job()`（sweep 模式，`TIMEOUT=300s`）+ `run_sweeper.py` 獨立 process，把 stuck 的 `running` job 退回 `pending`，達上限則 `mark_failed`。`mark_*` 加了 idempotent guard 處理「worker 剛好完成 vs sweeper 回收」的 race。
-- [~] **At-least-once 與 idempotency**：**移到 Phase 2 跟真實 OpenAI 轉錄一起做**。理由：目前 `fake_transcribe` 無副作用，重複執行無害，沒有東西需要冪等化；等接上有成本/副作用的 API 才有意義。`mark_*` 的冪等 guard 已保護「狀態轉移」這一層，但「執行本身」的去重尚未做。
-- [~] **Dead-letter / 永久失敗**：反覆失敗的 job 怎麼處理。（暫緩，待真實失敗模式出現後再做，可在 Phase 2 一併處理。）
+### 一、Main logic and test（核心邏輯與測試）
 
-> Phase 1 收尾：claim / lease / retry 等手刻原語已走過一輪，足以理解 queue 在解什麼。idempotency 與 dead-letter 屬「策略」而非「新原語」，刻意延到 Phase 2 跟真實副作用一起面對。
+- [x] **DB as queue（Phase 1：手刻 DB-backed queue，理解原語）**
+  - [x] one worker + test：Job 模型與狀態機、REST API、claim/succeed/fail service、`run_worker.py` polling loop。
+  - [x] concurrency + test：`claim_next_job()` 用 `select_for_update(skip_locked=True)` + `transaction.atomic()` 支援多 worker 不互搶。
+  - [x] retry & visibility timeout：retry 迴圈（`ATTEMPT_LIMIT`）+ `reclaim_job()` sweep（`TIMEOUT`）；`mark_*` idempotent guard 處理「worker 完成 vs sweeper 回收」race。
+    > Phase 1 手刻原語已全數走過並在 Phase 2 退役（`run_worker.py`/`run_sweeper.py`/`claim_next_job` 已刪，回收交給 Celery `visibility_timeout`）。目的達成：親手痛過才知道工具在擋什麼。
+- [ ] **Celery + Redis + Postgres（Phase 2：換 production 級核心）**
+  - [x] Celery：`durable_queue/celery.py`，轉錄改 `execute_job.delay()` 派工；`acks_late=True` + `autoretry_for`/`max_retries`/`retry_backoff`/`retry_jitter`；`on_failure` 落地 FAILED。對照映射已釐清（claim↔prefetch、worker loop↔celery worker、「不刪可回收」↔`acks_late`、sweeper TIMEOUT↔`visibility_timeout`、重試迴圈↔`autoretry_for`+`retry_backoff`+`retry_jitter`）。
+  - [x] Redis：當 broker（db 0）+ result backend（db 1）；`visibility_timeout=3600`。DB 表是持久化真相來源，Redis 只是派工通道。
+  - [x] Dead-letter / 手動 retry：DB 作 DLQ，`retry_job()` service（guard `!= FAILED` → ValueError）+ `POST /jobs/{id}/retry`（409/404/202）。dispatch 留在 view（避免 service→tasks 循環依賴與職責耦合）。
+  - [~] At-least-once & idempotency：state 層完成（`mark_*` guard）；execution 層**刻意接受殘餘窗口**（不做兩階段寫），待接真實 OpenAI 時再重估。
+  - [ ] **資料庫換成 Postgres**：從 SQLite 換成 Postgres——並發寫入、行鎖、`SKIP LOCKED` 真正支援度、隔離級別的差異。
+- [ ] **Swagger + Observability（API 文件與可觀測性）**
+  - [x] Observability：Flower（`celery -A durable_queue flower`，port 5555）。關鍵觀念：Flower 訂閱 Celery events channel，非直接讀 broker queue → 沒 worker 在線就看不到 task；queue 積壓需 `celery inspect`。
+  - [ ] Swagger / OpenAPI：自動產生 API schema 與互動式文件（drf-spectacular 等）。
+- [ ] **OAuth2.0 Google 登入**：第三方登入、token 驗證、把 job 綁到 user、per-user 授權。
 
-### Phase 2 — 換成 Celery + Redis（production 級核心）
+### 二、Deployment（部署）
 
-- [x] **導入 Celery + Redis**：Redis 當 broker，設定 Celery app、`celery worker`。
-- [x] **把轉錄改成 Celery task**：API 收到請求後 `task.delay()` 派工，而非自己 polling。
-- [x] **對照映射**：手刻的 claim/lease/retry ↔ Celery 的 `acks_late`、`visibility_timeout`、`autoretry_for`、`max_retries`、`retry_backoff`。釐清每個對應關係。（claim↔prefetch、worker loop↔celery worker、「不刪可回收」↔`acks_late`、sweeper TIMEOUT↔`visibility_timeout`、重試迴圈↔`autoretry_for`/`max_retries`/`retry_backoff`+`retry_jitter`；backoff 管「多久後」、jitter 解 thundering herd。）
-- [~] **At-least-once 與 idempotency**（從 Phase 1 移入）：state 層冪等已完成（`mark_*` guard）；execution 層（重複呼叫外部 API）刻意接受殘餘窗口風險，待接真實 OpenAI 時再評估是否補兩階段寫。
-- [x] **Dead-letter / 永久失敗**（從 Phase 1 移入）：DB 作 DLQ（`FAILED` job 保留 error/finished_at）；`retry_job()` service（guard: 只有 FAILED 可 retry，否則 raise ValueError）+ `POST /jobs/{id}/retry` endpoint（ValueError→409, DoesNotExist→404, 成功→202）重新派工。dispatch 留在 view（避免 service→tasks circular import 與職責耦合）。
-- [x] **DB 表 vs Redis 的職責邊界**：`TranscriptionJob` 表是持久化真相來源，Redis 是派工通道——為什麼需要兩者，少了一個會怎樣。
-- [x] **可觀測性**：Flower 監控（`celery -A durable_queue flower`，port 5555）；Flower 訂閱 Celery events channel 而非直接讀 broker queue，需要 worker 在線才看得到 task 歷史。
-- [ ] **接真正的 OpenAI 轉錄**：取代 `fake_transcribe`，在 Celery task 內處理外部 API 的逾時、錯誤、成本、rate limit。
+- [ ] **Dockerize + CI/CD**：多 service（api / worker / redis / postgres）容器化與編排；CI 跑測試、CD 自動部署。
+- [ ] **AWS + system design**：load balancer、API gateway、cluster IP、DNS——把系統攤到雲上，練習畫與講架構。
+
+### 三、Advanced deployment（進階部署）
+
+- [ ] **AWS + K8s + SQS**：K8s（pod、ingress）編排；把 broker 從 Redis 換成 SQS，對照 SQS 原生的 visibility timeout / DLQ 與手刻/Celery 版本的差異。
+- [ ] **Frontend**：前端介面會展示詳細的呼叫流程，並針對專案的重點 demo 觀念給面試官。
+- [ ] **yt-dlp + OpenAI transcribe**：取代 `fake_transcribe`，處理外部 API 的逾時、錯誤、成本、rate limit——這裡會把上面延後的 execution 層 idempotency 決定重新端上桌。
+
+### 四、Case study（案例研究 / 深入分析）
+
+- [ ] **Efficiency**：找瓶頸、要不要引入 cache（哪一層 cache、失效策略、cache 一致性）。
+- [ ] **Failure handling**：系統性盤點故障模型（worker crash、broker 重啟、DB 斷線、外部 API 失敗）與各自的復原策略。
 
 > 路線圖隨進度更新。完成一項時把 `[ ]` 改成 `[x]`。
 
@@ -192,11 +173,3 @@
 
 - **註解語言**：作者用繁體中文寫註解（例如「找不到 job 是正常業務分支」）。沿用中文註解沒問題，保持與既有風格一致。
 - **測試**：用 Django `TestCase` / DRF `APITestCase`，遵循 **AAA 模式**（`# Arrange` / `# Act` / `# Assert` 註解）。每個 service 函式都有對應的成功與失敗（含例外）測試。**新功能請先寫測試或至少同步補測試**，這也是學習的一部分。
-
----
-
-## 給代理的提醒
-
-- 寫 commit / PR 時請依使用者要求才動作（見全域規範）。
-- 改動程式碼前，記得這是學習專案——**優先問「要引導還是直接給」**，預設引導。
-- 不確定作者的程度或意圖時，問，不要猜著代寫。
