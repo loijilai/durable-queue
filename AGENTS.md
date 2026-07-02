@@ -120,10 +120,10 @@
 - [x] **導入 Celery + Redis**：Redis 當 broker，設定 Celery app、`celery worker`。
 - [x] **把轉錄改成 Celery task**：API 收到請求後 `task.delay()` 派工，而非自己 polling。
 - [x] **對照映射**：手刻的 claim/lease/retry ↔ Celery 的 `acks_late`、`visibility_timeout`、`autoretry_for`、`max_retries`、`retry_backoff`。釐清每個對應關係。（claim↔prefetch、worker loop↔celery worker、「不刪可回收」↔`acks_late`、sweeper TIMEOUT↔`visibility_timeout`、重試迴圈↔`autoretry_for`/`max_retries`/`retry_backoff`+`retry_jitter`；backoff 管「多久後」、jitter 解 thundering herd。）
-- [ ] **At-least-once 與 idempotency**（從 Phase 1 移入）：`acks_late=True` 會提高重複執行機率，Celery 不幫你保證冪等——要自己設計 idempotency key / 狀態檢查 / 天然冪等寫入。跟「接真實 OpenAI 轉錄」綁在一起做。
+- [~] **At-least-once 與 idempotency**（從 Phase 1 移入）：state 層冪等已完成（`mark_*` guard）；execution 層（重複呼叫外部 API）刻意接受殘餘窗口風險，待接真實 OpenAI 時再評估是否補兩階段寫。
 - [ ] **Dead-letter / 永久失敗**（從 Phase 1 移入）：反覆失敗的 job 怎麼隔離、觀察、是否能手動 retry。
 - [x] **DB 表 vs Redis 的職責邊界**：`TranscriptionJob` 表是持久化真相來源，Redis 是派工通道——為什麼需要兩者，少了一個會怎樣。
-- [ ] **可觀測性**：Flower 監控、task 狀態查詢、failure 告警。
+- [x] **可觀測性**：Flower 監控（`celery -A durable_queue flower`，port 5555）；Flower 訂閱 Celery events channel 而非直接讀 broker queue，需要 worker 在線才看得到 task 歷史。
 - [ ] **接真正的 OpenAI 轉錄**：取代 `fake_transcribe`，在 Celery task 內處理外部 API 的逾時、錯誤、成本、rate limit。
 
 > 路線圖隨進度更新。完成一項時把 `[ ]` 改成 `[x]`。
