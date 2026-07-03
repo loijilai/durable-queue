@@ -87,9 +87,9 @@
   - [~] At-least-once & idempotency：state 層完成（`mark_*` guard）；execution 層**刻意接受殘餘窗口**（不做兩階段寫），待接真實 OpenAI 時再重估。
   - [x] **資料庫換成 Postgres**：從 SQLite 換成 Postgres（psycopg3 driver、`DATABASES` 讀 env、`.env`/`.env.example` 分離）。並發測試（`TransactionTestCase` + threads + `threading.Event` 喬交錯）證實行鎖真的生效。
     > 核心洞見：SQLite 的 `select_for_update` 是 no-op（`has_select_for_update=False`），Phase 1 的鎖從沒被真正驗證過。換 Postgres 後才發現關鍵——**鎖要保護的是 check-then-act 的「讀」，不是「寫」**：拿掉 `mark_failed` 的 `select_for_update`，B 的「寫」仍被 A 的 `FOR UPDATE` 鎖序列化（`FOR UPDATE` 也擋普通 `UPDATE`），但 B 的 guard 讀到 stale 狀態就做了錯誤決定 → lost update。加回鎖，讓 B 的**讀**卡到 A commit 後，guard 才看到真相。
-- [ ] **Swagger + Observability（API 文件與可觀測性）**
+- [x] **Swagger + Observability（API 文件與可觀測性）**
   - [x] Observability：Flower（`celery -A durable_queue flower`，port 5555）。關鍵觀念：Flower 訂閱 Celery events channel，非直接讀 broker queue → 沒 worker 在線就看不到 task；queue 積壓需 `celery inspect`。
-  - [ ] Swagger / OpenAPI：自動產生 API schema 與互動式文件（drf-spectacular 等）。
+  - [x] Swagger / OpenAPI：自動產生 API schema 與互動式文件（drf-spectacular 等）。
 - [ ] **OAuth2.0 Google 登入**：第三方登入、token 驗證、把 job 綁到 user、per-user 授權。
 
 ### 二、Deployment（部署）

@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from jobs.services import retry_job
 from django.http import Http404
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 
 # Create your views here.
@@ -25,6 +26,15 @@ class JobRetrieveView(generics.RetrieveAPIView):
 
 
 class JobRetryView(APIView):
+    @extend_schema(
+        request=None,
+        responses={
+            202: TranscriptionJobSerializer,
+            404: OpenApiResponse(description="not found"),
+            409: OpenApiResponse(description="job is not in failed status"),
+        },
+        description="Retry endpoint for Failed job",
+    )
     def post(self, request, job_id):
         try:
             job = retry_job(job_id)

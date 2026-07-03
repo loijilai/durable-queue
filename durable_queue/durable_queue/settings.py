@@ -36,6 +36,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "rest_framework",
+    "drf_spectacular",
     "jobs",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -140,4 +141,17 @@ CELERY_TIMEZONE = TIME_ZONE
 # 設定需比預期最長的 task 執行時間還長，避免誤判 worker 死亡而重送
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": 3600,  # 1 小時
+}
+
+
+# drf-spectacular (OpenAPI schema)
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "durable-queue API",
+    "DESCRIPTION": "YouTube transcription job queue",
+    "VERSION": "1.0.0",
 }
