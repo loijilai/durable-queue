@@ -85,7 +85,8 @@
   - [x] Redis：當 broker（db 0）+ result backend（db 1）；`visibility_timeout=3600`。DB 表是持久化真相來源，Redis 只是派工通道。
   - [x] Dead-letter / 手動 retry：DB 作 DLQ，`retry_job()` service（guard `!= FAILED` → ValueError）+ `POST /jobs/{id}/retry`（409/404/202）。dispatch 留在 view（避免 service→tasks 循環依賴與職責耦合）。
   - [~] At-least-once & idempotency：state 層完成（`mark_*` guard）；execution 層**刻意接受殘餘窗口**（不做兩階段寫），待接真實 OpenAI 時再重估。
-  - [ ] **資料庫換成 Postgres**：從 SQLite 換成 Postgres——並發寫入、行鎖、`SKIP LOCKED` 真正支援度、隔離級別的差異。
+  - [x] **資料庫換成 Postgres**：從 SQLite 換成 Postgres（psycopg3 driver、`DATABASES` 讀 env、`.env`/`.env.example` 分離）。並發測試（`TransactionTestCase` + threads + `threading.Event` 喬交錯）證實行鎖真的生效。
+    > 核心洞見：SQLite 的 `select_for_update` 是 no-op（`has_select_for_update=False`），Phase 1 的鎖從沒被真正驗證過。換 Postgres 後才發現關鍵——**鎖要保護的是 check-then-act 的「讀」，不是「寫」**：拿掉 `mark_failed` 的 `select_for_update`，B 的「寫」仍被 A 的 `FOR UPDATE` 鎖序列化（`FOR UPDATE` 也擋普通 `UPDATE`），但 B 的 guard 讀到 stale 狀態就做了錯誤決定 → lost update。加回鎖，讓 B 的**讀**卡到 A commit 後，guard 才看到真相。
 - [ ] **Swagger + Observability（API 文件與可觀測性）**
   - [x] Observability：Flower（`celery -A durable_queue flower`，port 5555）。關鍵觀念：Flower 訂閱 Celery events channel，非直接讀 broker queue → 沒 worker 在線就看不到 task；queue 積壓需 `celery inspect`。
   - [ ] Swagger / OpenAPI：自動產生 API schema 與互動式文件（drf-spectacular 等）。
@@ -106,6 +107,9 @@
 
 - [ ] **Efficiency**：找瓶頸、要不要引入 cache（哪一層 cache、失效策略、cache 一致性）。
 - [ ] **Failure handling**：系統性盤點故障模型（worker crash、broker 重啟、DB 斷線、外部 API 失敗）與各自的復原策略。
+- [ ] **Concurrency & Race Condition**：目前有兩個可能的方向
+  - [ ] 跨系統的 concurrency：DB 新增或是更改 job 的狀態，與 Broker Dispatch 之間的時間差
+  - [ ] select_for_update 避免同時兩個 request執行，但這要討論是否有必要
 
 > 路線圖隨進度更新。完成一項時把 `[ ]` 改成 `[x]`。
 
