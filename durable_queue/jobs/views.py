@@ -11,7 +11,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 
 # Create your views here.
-class JobCreateView(generics.CreateAPIView):
+class JobCreateView(generics.ListCreateAPIView):
     queryset = TranscriptionJob.objects.all()
     serializer_class = TranscriptionJobSerializer
 

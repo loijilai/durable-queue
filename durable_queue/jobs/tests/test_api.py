@@ -11,7 +11,7 @@ class TranscriptionJobAPITests(APITestCase):
 
     def test_create_job(self):
         # Arrange
-        url = reverse("job-create")
+        url = reverse("job-list-create")
         data = {"video_url": self.VALID_URL}
 
         # Act
@@ -27,7 +27,7 @@ class TranscriptionJobAPITests(APITestCase):
 
     def test_invalid_url_create_job(self):
         # Arrange
-        url = reverse("job-create")
+        url = reverse("job-list-create")
         data = {"video_url": self.INVALID_URL}
 
         # Act
