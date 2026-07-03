@@ -90,20 +90,30 @@
 - [x] **Swagger + Observability（API 文件與可觀測性）**
   - [x] Observability：Flower（`celery -A durable_queue flower`，port 5555）。關鍵觀念：Flower 訂閱 Celery events channel，非直接讀 broker queue → 沒 worker 在線就看不到 task；queue 積壓需 `celery inspect`。
   - [x] Swagger / OpenAPI：自動產生 API schema 與互動式文件（drf-spectacular 等）。
-- [ ] **OAuth2.0 Google 登入**：第三方登入、token 驗證、把 job 綁到 user、per-user 授權。
 
-### 二、Deployment（部署）
+### 二、API authentication & authorization（認證與授權）
+
+> **技術選型**：前後端分離、前端用 React → 走 **token-based（JWT，access + refresh）**，不用 session/cookie。理由：跨 origin 乾淨（不依賴瀏覽器自動帶 cookie）、CORS 設定單純、避開 cookie 自動送出帶來的 CSRF 面。代價要能講清楚：JWT stateless 導致**難以即時 revoke**（登出/停權後舊 token 在過期前仍有效）→ 用 **access 短效期 + refresh 換新** 緩解；前端存 token 的位置（`localStorage` 怕 XSS vs `httpOnly cookie` 又繞回 CSRF）也是一個 trade-off，要能說明選哪個、為什麼。
+>
+> **JWT 的「簽發/驗證/過期」屬 boilerplate**（用 `djangorestframework-simplejwt`），不是本專案要手刻的原語；但 access/refresh 的用途分工、revocation 兩難、token 儲存位置的安全性取捨，是面試常考點，必須能用自己的話講。
+
+- [ ] **站內帳密登入（不含 Google）+ JWT**：註冊 / 登入 endpoint；登入成功回傳 access + refresh token（放 response body，非 cookie）；DRF `DEFAULT_AUTHENTICATION_CLASSES` 掛 JWTAuthentication、`DEFAULT_PERMISSION_CLASSES` 預設 `IsAuthenticated`；理解 access/refresh 分工與 refresh 換發流程。
+- [ ] **Job 綁定 user + per-user 授權**：`TranscriptionJob` 加 `owner` FK（migration + 舊資料處理策略）；view 層 queryset 依 `request.user` 過濾（`get_queryset` / `perform_create` 帶入 owner）；retrieve / retry 只能碰自己的 job（別人的要回 404 還是 403？要能講出差別與選擇）。這條牽涉 **authentication（你是誰）vs authorization（你能碰什麼）** 的分界。
+- [ ] **Google OAuth2.0 登入**：手動理解 Authorization Code Flow（redirect、code 換 token、後端驗證 Google 回傳的身份、對應到本地 user）；OAuth 完成後**發自己的 JWT** 給前端（統一認證出口，不讓前端直接拿 Google token 打 API）；不用 `django-allauth`，目的是看清每一步在做什麼。
+
+### 三、Deployment（部署）
 
 - [ ] **Dockerize + CI/CD**：多 service（api / worker / redis / postgres）容器化與編排；CI 跑測試、CD 自動部署。
 - [ ] **AWS + system design**：load balancer、API gateway、cluster IP、DNS——把系統攤到雲上，練習畫與講架構。
 
-### 三、Advanced deployment（進階部署）
+### 四、Advanced deployment（進階部署）
 
 - [ ] **AWS + K8s + SQS**：K8s（pod、ingress）編排；把 broker 從 Redis 換成 SQS，對照 SQS 原生的 visibility timeout / DLQ 與手刻/Celery 版本的差異。
+- [ ] **Production observability（metrics / tracing / logging）**：和第一階段 dev-time 的 Flower 不同——這是 production system 級別的可觀測性。metrics（例如 Prometheus 收 queue 深度 / task 延遲 / 失敗率 + Grafana 儀表板與告警）、distributed tracing（一個 request 跨 API→broker→worker 的完整 trace，OpenTelemetry）、structured logging（JSON log、correlation id 串起同一條請求、集中式收集）。重點是三者各自回答什麼問題（metrics=系統現在健不健康、tracing=這一筆慢在哪、logging=到底發生什麼事）。
 - [ ] **Frontend**：前端介面會展示詳細的呼叫流程，並針對專案的重點 demo 觀念給面試官。
 - [ ] **yt-dlp + OpenAI transcribe**：取代 `fake_transcribe`，處理外部 API 的逾時、錯誤、成本、rate limit——這裡會把上面延後的 execution 層 idempotency 決定重新端上桌。
 
-### 四、Case study（案例研究 / 深入分析）
+### 五、Case study（案例研究 / 深入分析）
 
 - [ ] **Efficiency**：找瓶頸、要不要引入 cache（哪一層 cache、失效策略、cache 一致性）。
 - [ ] **Failure handling**：系統性盤點故障模型（worker crash、broker 重啟、DB 斷線、外部 API 失敗）與各自的復原策略。
