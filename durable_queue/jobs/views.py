@@ -1,5 +1,5 @@
 from rest_framework import generics
-from jobs.serializers import TranscriptionJobSerializer
+from jobs.serializers import TranscriptionJobSerializer, UserRegisterSerializer
 from jobs.models import TranscriptionJob
 from jobs.tasks import execute_job
 from rest_framework.views import APIView
@@ -8,9 +8,11 @@ from rest_framework import status
 from jobs.services import retry_job
 from django.http import Http404
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from rest_framework.permissions import AllowAny
 
 
 # Create your views here.
+# TODO: get user-specific jobs
 class JobCreateView(generics.ListCreateAPIView):
     queryset = TranscriptionJob.objects.all()
     serializer_class = TranscriptionJobSerializer
@@ -46,3 +48,9 @@ class JobRetryView(APIView):
 
         serializer = TranscriptionJobSerializer(job)
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+
+# Authentication
+class UserRegisterView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserRegisterSerializer
