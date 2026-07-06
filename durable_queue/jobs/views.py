@@ -9,22 +9,26 @@ from jobs.services import retry_job
 from django.http import Http404
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.permissions import AllowAny
+from django.shortcuts import get_object_or_404
 
 
 # Create your views here.
-# TODO: get user-specific jobs
 class JobCreateView(generics.ListCreateAPIView):
-    queryset = TranscriptionJob.objects.all()
     serializer_class = TranscriptionJobSerializer
 
+    def get_queryset(self):
+        return TranscriptionJob.objects.filter(owner=self.request.user)
+
     def perform_create(self, serializer):
-        job = serializer.save()
+        job = serializer.save(owner=self.request.user)
         execute_job.delay(job.id)
 
 
 class JobRetrieveView(generics.RetrieveAPIView):
-    queryset = TranscriptionJob.objects.all()
     serializer_class = TranscriptionJobSerializer
+
+    def get_queryset(self):
+        return TranscriptionJob.objects.filter(owner=self.request.user)
 
 
 class JobRetryView(APIView):
@@ -38,6 +42,7 @@ class JobRetryView(APIView):
         description="Retry endpoint for Failed job",
     )
     def post(self, request, job_id):
+        get_object_or_404(TranscriptionJob, id=job_id, owner=request.user)
         try:
             job = retry_job(job_id)
             execute_job.delay(job_id)  # dispatch 必定在 DB commit 後，此處需要順序保證

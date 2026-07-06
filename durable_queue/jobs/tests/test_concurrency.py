@@ -1,6 +1,7 @@
 import threading
 from django.db import transaction, connection
 from django.test import TransactionTestCase
+from django.contrib.auth.models import User
 from jobs.models import TranscriptionJob
 import time
 from jobs.services import mark_failed
@@ -11,8 +12,9 @@ class LockTest(TransactionTestCase):
 
     def test_concurrent_marks_are_serialized(self):
         # Arrange: 建一個 RUNNING 的 job
+        user = User.objects.create_user(username="tester", password="x")
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
+            owner=user, video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
         )
 
         a_locked = threading.Event()

@@ -15,6 +15,7 @@ class TranscriptionJobSerializer(serializers.ModelSerializer):
             "error",
             "created_at",
             "finished_at",
+            "owner",
         ]
         read_only_fields = [
             "id",
@@ -23,6 +24,7 @@ class TranscriptionJobSerializer(serializers.ModelSerializer):
             "error",
             "created_at",
             "finished_at",
+            "owner",
         ]
 
 
