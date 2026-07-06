@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import TranscriptionJob
-from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
 
@@ -38,7 +37,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["username", "password"]
+        fields = ["username", "password", "email"]
 
     def create(self, validated_data):
         return User.objects.create_user(
