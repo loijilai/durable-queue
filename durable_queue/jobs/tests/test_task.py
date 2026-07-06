@@ -1,8 +1,10 @@
 from django.test import TestCase
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from jobs.tasks import execute_job
 from jobs.models import TranscriptionJob
 from unittest.mock import patch
+
+User = get_user_model()
 
 
 class ExecuteJobTaskTests(TestCase):

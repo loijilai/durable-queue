@@ -1,9 +1,11 @@
 from django.urls import reverse
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 from rest_framework import status
 from jobs.models import TranscriptionJob
 from unittest.mock import patch
+
+User = get_user_model()
 
 
 class JobAuthzTests(APITestCase):
@@ -13,8 +15,12 @@ class JobAuthzTests(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.alice = User.objects.create_user(username="alice", password="x")
-        cls.bob = User.objects.create_user(username="bob", password="x")
+        cls.alice = User.objects.create_user(
+            username="alice", email="alice@test.com", password="x"
+        )
+        cls.bob = User.objects.create_user(
+            username="bob", email="bob@test.com", password="x"
+        )
 
     def _make_job(self, owner, status=TranscriptionJob.PENDING):
         return TranscriptionJob.objects.create(

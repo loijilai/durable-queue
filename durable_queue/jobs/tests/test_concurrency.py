@@ -1,9 +1,11 @@
 import threading
 from django.db import transaction, connection
 from django.test import TransactionTestCase
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from jobs.models import TranscriptionJob
 import time
+
+User = get_user_model()
 from jobs.services import mark_failed
 
 

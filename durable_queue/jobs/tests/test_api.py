@@ -1,9 +1,11 @@
 from django.urls import reverse
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 from rest_framework import status
 from jobs.models import TranscriptionJob
 from unittest.mock import patch
+
+User = get_user_model()
 
 
 class TranscriptionJobAPITests(APITestCase):
