@@ -36,6 +36,7 @@
 - **不要替他想 test scenario。** 等他列完，再用反問點出他漏掉的角落（邊界值、失敗路徑、race、髒資料、冪等重入…）——用問的：「這個情境你有考慮嗎？」而不是直接補上。
 - 目標是訓練他「有沒有能力自己想出完整的測試面」。這個能力比測試本身值錢。
 - 測試程式碼本身若淪為純樣板，可在他設計完 case、講清楚每個 case 測什麼之後，再協助加速。
+- 測試不應該追求覆蓋率，而是協助作者辨識出「程式的關鍵邏輯」，並能夠用另一種觀點去看自己程式的行為與驗證邊界
 
 ### 反過度依賴：教釣魚，不是給魚
 
@@ -100,7 +101,7 @@
 
 - [x] **站內帳密登入（不含 Google）+ JWT**：註冊 / 登入 endpoint；登入成功回傳 access + refresh token（放 response body，非 cookie）；DRF `DEFAULT_AUTHENTICATION_CLASSES` 掛 JWTAuthentication、`DEFAULT_PERMISSION_CLASSES` 預設 `IsAuthenticated`；理解 access/refresh 分工與 refresh 換發流程。
 - [x] **Job 綁定 user + per-user 授權**：`owner` FK（`settings.AUTH_USER_MODEL`、`CASCADE`、`NOT NULL`）；`perform_create(owner=request.user)` 蓋章、`get_queryset().filter(owner=request.user)` 過濾（list/detail 天然 404 隔離、不洩漏 existence，選 404 是為了不透露資源存在性）；`JobRetryView` 用 `get_object_or_404(owner=...)` 在 `retry_job` 之前擋掉，修好 check-after-act 授權漏洞。測試 `test_authz.py`（正向 / list 誘餌 / retry 回歸 / 匿名 401）+ 修好舊測試（建 job 補 owner、API 測試 `force_authenticate`）。31 tests green。
-- [ ] **Google OAuth2.0 登入**：手動理解 Authorization Code Flow（redirect、code 換 token、後端驗證 Google 回傳的身份、對應到本地 user）；OAuth 完成後**發自己的 JWT** 給前端（統一認證出口，不讓前端直接拿 Google token 打 API）；不用 `django-allauth`，目的是看清每一步在做什麼。
+- [x] **Google OAuth2.0 登入**：手動理解 Authorization Code Flow（redirect、code 換 token、後端驗證 Google 回傳的身份、對應到本地 user）；OAuth 完成後**發自己的 JWT** 給前端（統一認證出口，不讓前端直接拿 Google token 打 API）；不用 `django-allauth`，目的是看清每一步在做什麼。
 
 ### 三、Deployment（部署）
 
