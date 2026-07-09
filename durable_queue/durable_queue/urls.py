@@ -22,15 +22,10 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-from jobs.views import UserRegisterView, GoogleLoginView, GoogleCallbackView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("jobs/", include("jobs.urls")),
+    # API 文件
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/docs/",
@@ -42,13 +37,7 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
-    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("api/register/", UserRegisterView.as_view(), name="register-user"),
-    path("api/auth/google/login/", GoogleLoginView.as_view(), name="google_login"),
-    path(
-        "api/auth/google/callback/",
-        GoogleCallbackView.as_view(),
-        name="google_callback",
-    ),
+    # API 資源
+    path("api/jobs/", include("jobs.urls")),
+    path("api/auth/", include("jobs.auth_urls")),
 ]

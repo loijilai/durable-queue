@@ -86,8 +86,8 @@ DATABASES = {
         "NAME": os.environ["POSTGRES_DB"],
         "USER": os.environ["POSTGRES_USER"],
         "PASSWORD": os.environ["POSTGRES_PASSWORD"],
-        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        "HOST": os.environ["POSTGRES_HOST"],
+        "PORT": os.environ["POSTGRES_PORT"],
     }
 }
 
@@ -132,9 +132,11 @@ STATIC_URL = "static/"
 # Celery
 # 這些變數以 CELERY_ 開頭，才會被 celery.py 裡的 config_from_object(namespace="CELERY") 讀到。
 
-CELERY_BROKER_URL = "redis://localhost:6379/0"
+# 全部從 env 讀（12-Factor：config 外置）。no-default = fail-fast，
+# 且 .env.example 成為唯一的設定清單，不用回頭讀 settings.py 找隱藏預設值。
+CELERY_BROKER_URL = os.environ["CELERY_BROKER_URL"]
 
-CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+CELERY_RESULT_BACKEND = os.environ["CELERY_RESULT_BACKEND"]
 
 CELERY_TIMEZONE = TIME_ZONE
 
