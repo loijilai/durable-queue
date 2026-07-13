@@ -11,9 +11,13 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -32,6 +36,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "rest_framework",
+    "drf_spectacular",
     "jobs",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -76,8 +81,12 @@ WSGI_APPLICATION = "durable_queue.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ["POSTGRES_DB"],
+        "USER": os.environ["POSTGRES_USER"],
+        "PASSWORD": os.environ["POSTGRES_PASSWORD"],
+        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
 }
 
@@ -117,3 +126,32 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+
+# Celery
+# 這些變數以 CELERY_ 開頭，才會被 celery.py 裡的 config_from_object(namespace="CELERY") 讀到。
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+
+CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+
+CELERY_TIMEZONE = TIME_ZONE
+
+# Worker crash 保護：task 執行超過此時間未 ACK，Redis 會重新派發
+# 設定需比預期最長的 task 執行時間還長，避免誤判 worker 死亡而重送
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "visibility_timeout": 3600,  # 1 小時
+}
+
+
+# drf-spectacular (OpenAPI schema)
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "durable-queue API",
+    "DESCRIPTION": "YouTube transcription job queue",
+    "VERSION": "1.0.0",
+}

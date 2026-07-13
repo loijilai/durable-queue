@@ -51,3 +51,6 @@ htmlcov/
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# User-defined
+schema.yml
