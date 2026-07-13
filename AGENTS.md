@@ -111,7 +111,13 @@
 
 ### 三、Deployment（部署）
 
-- [ ] **Dockerize + CI/CD**：多 service（api / worker / redis / postgres）容器化與編排；CI 跑測試、CD 自動部署。
+- [~] **Dockerize（容器化與編排）**：多 service（api / worker / redis / postgres）容器化與 compose 編排。
+  - [x] `Dockerfile`（python:3.13-slim；layer-cache 順序；刻意移除預設 CMD，逼 api/worker 各自宣告 `command:`）。
+  - [x] `docker-compose.yml` 四服務：api / worker 共用同一 image、以 `command:` 區分（build once, run many；拆兩個 container 而非兩個 image，因為 scaling 軸不同：api=HTTP 併發、worker=queue 深度）。stateless（api/worker）vs stateful（postgres/redis → volumes）。postgres/redis 不開 `ports:`，只走 compose 內網 service-name DNS。
+  - [x] 設定與啟動順序：settings.py 改為 all-no-default fail-fast（`.env.example` 當單一設定真相來源）；compose `environment:` 把 HOST/BROKER 覆寫成 service name；postgres healthcheck + `depends_on: condition: service_healthy` 處理「start-order ≠ readiness」；`command: sh -c "migrate && gunicorn/celery ..."`。
+  - [ ] 待收尾：DEBUG / SECRET_KEY 尚未外置到 env（`bool("False")` 陷阱已知）；api+worker 都跑 migrate 的併發問題已知並延後。
+- [ ] **CI/CD**：CI 跑測試（注意 `test_concurrency.py` 需要真的 Postgres，SQLite 的 `select_for_update` 是 no-op），CD 自動部署。設計要能講清楚：測試環境的 Postgres 由誰啟動、pipeline 分幾個 stage、什麼條件才觸發 deploy。
+- [ ] **nginx reverse proxy**：放在 gunicorn 前面當反向代理。它同時是兩個現象的正解——(i) `/static/rest_framework/*` 404（gunicorn 是純 app server 不服務靜態檔，`runserver` DEBUG=True 時被遮蔽）；(ii) gunicorn `WORKER TIMEOUT`（sync worker 卡在讀慢/空連線 → master 心跳逾時殺 respawn，反向代理 buffer request 可解）。
 - [ ] **AWS + system design**：load balancer、API gateway、cluster IP、DNS——把系統攤到雲上，練習畫與講架構。
 
 ### 四、Advanced deployment（進階部署）
