@@ -1,6 +1,9 @@
 from django.test import TestCase
+from django.contrib.auth import get_user_model
 from jobs.services import mark_failed, mark_succeeded, retry_job
 from jobs.models import TranscriptionJob
+
+User = get_user_model()
 
 
 class TranscriptionServiceTests(TestCase):
@@ -8,11 +11,15 @@ class TranscriptionServiceTests(TestCase):
     TRANSCRIPT = "This is a test transcript"
     ERROR = "This is a test error message"
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="tester", password="x")
+
     # mark succeeded
     def test_mark_succeeded_updates_running_job(self):
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
         )
         # Act
         mark_succeeded(job.id, self.TRANSCRIPT)
@@ -29,7 +36,7 @@ class TranscriptionServiceTests(TestCase):
     def test_mark_succeeded_raises_value_error_when_job_is_not_running(self):
         # Arrange
         TranscriptionJob.objects.create(
-            id=1, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+            id=1, owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
         )
         with self.assertRaises(ValueError):
             mark_succeeded(1, self.TRANSCRIPT)
@@ -37,7 +44,7 @@ class TranscriptionServiceTests(TestCase):
     def test_mark_succeeded_is_idempotent_when_already_succeeded(self):
         # Arrange：已經 SUCCEEDED 的 job 再被呼叫一次（at-least-once 重複執行情境）
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.SUCCEEDED
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.SUCCEEDED
         )
         # Act / Assert：不該丟例外
         mark_succeeded(job.id, self.TRANSCRIPT)
@@ -48,7 +55,7 @@ class TranscriptionServiceTests(TestCase):
     def test_mark_failed_updates_running_job(self):
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
         )
         # Act
         mark_failed(job.id, self.ERROR)
@@ -65,7 +72,7 @@ class TranscriptionServiceTests(TestCase):
     def test_mark_failed_raises_value_error_when_job_is_not_running(self):
         # Arrange
         TranscriptionJob.objects.create(
-            id=1, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+            id=1, owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
         )
         with self.assertRaises(ValueError):
             mark_failed(1, self.ERROR)
@@ -73,7 +80,7 @@ class TranscriptionServiceTests(TestCase):
     def test_mark_failed_is_idempotent_when_already_failed(self):
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.FAILED
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.FAILED
         )
         # Act / Assert：不該丟例外
         mark_failed(job.id, self.ERROR)
@@ -84,7 +91,7 @@ class TranscriptionServiceTests(TestCase):
     def test_retry_job_resets_failed_job_to_pending(self):
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.FAILED
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.FAILED
         )
         # Act
         retry_job(job.id)
@@ -97,7 +104,7 @@ class TranscriptionServiceTests(TestCase):
     def test_retry_job_raises_value_error_when_job_is_not_failed(self):
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.SUCCEEDED
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.SUCCEEDED
         )
         # Act / Assert
         with self.assertRaises(ValueError):

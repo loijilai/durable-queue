@@ -1,5 +1,9 @@
 from rest_framework import serializers
 from .models import TranscriptionJob
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class TranscriptionJobSerializer(serializers.ModelSerializer):
@@ -13,6 +17,7 @@ class TranscriptionJobSerializer(serializers.ModelSerializer):
             "error",
             "created_at",
             "finished_at",
+            "owner",
         ]
         read_only_fields = [
             "id",
@@ -21,4 +26,24 @@ class TranscriptionJobSerializer(serializers.ModelSerializer):
             "error",
             "created_at",
             "finished_at",
+            "owner",
         ]
+
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True,
+    )
+
+    class Meta:
+        model = User
+        fields = ["username", "password", "email"]
+
+    def create(self, validated_data):
+        return User.objects.create_user(
+            **validated_data
+        )  # create_user will hash password
+
+    def validate_password(self, value):
+        validate_password(value)
+        return value

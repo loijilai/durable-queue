@@ -1,7 +1,10 @@
 from django.test import TestCase
+from django.contrib.auth import get_user_model
 from jobs.tasks import execute_job
 from jobs.models import TranscriptionJob
 from unittest.mock import patch
+
+User = get_user_model()
 
 
 class ExecuteJobTaskTests(TestCase):
@@ -9,10 +12,14 @@ class ExecuteJobTaskTests(TestCase):
     TRANSCRIPT = "This is a test script"
     ERROR = "This is a test error message"
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="tester", password="x")
+
     def test_execute_job_succeeded(self):
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
         )
         # Act
         execute_job(job.id)
@@ -26,7 +33,7 @@ class ExecuteJobTaskTests(TestCase):
     def test_execute_job_failed(self, mock_transcribe):
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
         )
 
         # Act
@@ -47,7 +54,7 @@ class ExecuteJobTaskTests(TestCase):
         重送後應如同第一次執行，正常跑完 → SUCCEEDED。"""
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
         )
         # Act
         execute_job(job.id)
@@ -63,7 +70,7 @@ class ExecuteJobTaskTests(TestCase):
         worker B 拿不到 A 的成果，必須重跑 transcribe → 最終 SUCCEEDED。"""
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
         )
         # Act
         execute_job(job.id)
@@ -77,7 +84,7 @@ class ExecuteJobTaskTests(TestCase):
         """SUCCEEDED 重送：job 已完成、ACK 前掛。guard 應攔住，不重跑 transcribe。"""
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL,
+            owner=self.user, video_url=self.VALID_URL,
             status=TranscriptionJob.SUCCEEDED,
             transcript=self.TRANSCRIPT,
         )
@@ -94,7 +101,7 @@ class ExecuteJobTaskTests(TestCase):
         """FAILED 重送：job 已失敗、ACK 前掛。guard 應攔住，不重跑 transcribe。"""
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL,
+            owner=self.user, video_url=self.VALID_URL,
             status=TranscriptionJob.FAILED,
             error=self.ERROR,
         )

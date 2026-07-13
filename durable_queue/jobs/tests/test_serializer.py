@@ -1,11 +1,18 @@
 from django.test import TestCase
+from django.contrib.auth import get_user_model
 from jobs.serializers import TranscriptionJobSerializer
 from jobs.models import TranscriptionJob
+
+User = get_user_model()
 
 
 class TranscriptionJobSerializerTests(TestCase):
     VALID_URL = "https://www.youtube.com/watch?v=test123"
     INVALID_URL = "htt://www.youtube.com/watch?v=test123"
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="tester", password="x")
 
     def test_valid_url_creates_pending_job(self):
         # Arrange
@@ -16,7 +23,7 @@ class TranscriptionJobSerializerTests(TestCase):
 
         # Assert
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save()
+        job = serializer.save(owner=self.user)
 
         self.assertEqual(job.status, TranscriptionJob.PENDING)
         self.assertEqual(job.video_url, self.VALID_URL)
@@ -42,7 +49,7 @@ class TranscriptionJobSerializerTests(TestCase):
 
         # Assert
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save()
+        job = serializer.save(owner=self.user)
 
         # status is not changed by client
         self.assertEqual(job.status, TranscriptionJob.PENDING)

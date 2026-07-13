@@ -1,13 +1,21 @@
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 from rest_framework import status
 from jobs.models import TranscriptionJob
 from unittest.mock import patch
 
+User = get_user_model()
+
 
 class TranscriptionJobAPITests(APITestCase):
     VALID_URL = "https://www.youtube.com/watch?v=test123"
     INVALID_URL = "htt://www.youtube.com/watch?v=test123"
+
+    def setUp(self):
+        # 每個測試都以登入身份出發（授權隔離另在 test_authz.py 測）
+        self.user = User.objects.create_user(username="tester", password="x")
+        self.client.force_authenticate(user=self.user)
 
     def test_create_job(self):
         # Arrange
@@ -42,7 +50,7 @@ class TranscriptionJobAPITests(APITestCase):
     def test_retry_failed_job_dispatches_task(self, mock_execute_job):
         # Arrange
         job = TranscriptionJob.objects.create(
-            video_url=self.VALID_URL, status=TranscriptionJob.FAILED
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.FAILED
         )
         url = reverse("job-retry", kwargs={"job_id": job.id})
 
