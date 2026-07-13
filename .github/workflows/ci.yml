@@ -41,7 +41,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r durable_queue/requirements.txt
 
-      - name: Run migrations & tests
+      - name: Run tests
+        working-directory: durable_queue
         env:
           POSTGRES_DB: durable_queue
           POSTGRES_USER: durable_queue
@@ -55,7 +56,7 @@ jobs:
           GOOGLE_CLIENT_SECRET: test-client-secret
           GOOGLE_REDIRECT_URI: http://localhost:8000/api/auth/google/callback
         run: |
-          python durable_queue/manage.py test
+          python manage.py test
 
   # 目標：確認 Dockerfile 在乾淨環境下 build 得過（A 階段不 push、不 deploy）。
   build:

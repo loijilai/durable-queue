@@ -17,7 +17,8 @@ class TranscriptionJobAPITests(APITestCase):
         self.user = User.objects.create_user(username="tester", password="x")
         self.client.force_authenticate(user=self.user)
 
-    def test_create_job(self):
+    @patch("jobs.views.execute_job.delay")
+    def test_create_job(self, mock_execute_job):
         # Arrange
         url = reverse("job-list-create")
         data = {"video_url": self.VALID_URL}

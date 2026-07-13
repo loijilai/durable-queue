@@ -29,7 +29,8 @@ class JobAuthzTests(APITestCase):
 
     # --- 正向：自己對自己的 job ---
 
-    def test_create_stamps_request_user_as_owner(self):
+    @patch("jobs.views.execute_job.delay")
+    def test_create_stamps_request_user_as_owner(self, mock_execute_job):
         # Arrange
         self.client.force_authenticate(user=self.alice)
         # Act
