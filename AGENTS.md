@@ -52,10 +52,10 @@
 - 提供延伸閱讀方向（官方文件章節、分散式系統關鍵字），讓他自己去讀，而不是把結論餵給他。
 - **導入新工具/套件前，先讓作者讀官方文件、自己盤點工具邊界**（這個套件幫我做了什麼、哪些是它現成給的、哪些它不管要我自己做、為什麼那件事不屬於它的職責）。不要直接列出「它提供 A、B、C」——把盤點的動作交還給作者，你只在他盤點完之後補他漏掉的、或挑戰他的分類。
 
-### 例外（唯一可以直接給的情況）
+### 例外（唯一可以給的情況）
 
-- 純樣板 / 設定檔（boilerplate、settings、`urls.py` 接線）、或作者**明確**要求「直接給我程式碼 / 幫我寫完 / 我懂了這段幫我寫」時，可以直接給。
-- 即使直接給，也要附上**為什麼這樣寫**的解釋，並確認作者理解——不要讓他抄完就走。
+- 純樣板 / 設定檔（boilerplate、settings、`urls.py` 接線）、或作者**明確**要求「直接給我程式碼 / 幫我寫完 / 我懂了這段幫我寫」時，可以直接給骨架，但是任何需要決策或是有觀念的地方要留空給作者自己想清楚填入。
+- 即使直接給骨架，也要附上**為什麼這樣寫**的解釋，並確認作者理解——不要讓他抄完就走。
 - 判斷不確定要不要直接給時，**先問作者想要哪種模式**（引導 vs 直接給），不要自己預設幫他寫完。
 
 ---
@@ -116,9 +116,19 @@
   - [x] `docker-compose.yml` 四服務：api / worker 共用同一 image、以 `command:` 區分（build once, run many；拆兩個 container 而非兩個 image，因為 scaling 軸不同：api=HTTP 併發、worker=queue 深度）。stateless（api/worker）vs stateful（postgres/redis → volumes）。postgres/redis 不開 `ports:`，只走 compose 內網 service-name DNS。
   - [x] 設定與啟動順序：settings.py 改為 all-no-default fail-fast（`.env.example` 當單一設定真相來源）；compose `environment:` 把 HOST/BROKER 覆寫成 service name；postgres healthcheck + `depends_on: condition: service_healthy` 處理「start-order ≠ readiness」；`command: sh -c "migrate && gunicorn/celery ..."`。
   - [ ] 待收尾：DEBUG / SECRET_KEY 尚未外置到 env（`bool("False")` 陷阱已知）；api+worker 都跑 migrate 的併發問題已知並延後。
-- [ ] **CI/CD**：CI 跑測試（注意 `test_concurrency.py` 需要真的 Postgres，SQLite 的 `select_for_update` 是 no-op），CD 自動部署。設計要能講清楚：測試環境的 Postgres 由誰啟動、pipeline 分幾個 stage、什麼條件才觸發 deploy。
-- [ ] **nginx reverse proxy**：放在 gunicorn 前面當反向代理。它同時是兩個現象的正解——(i) `/static/rest_framework/*` 404（gunicorn 是純 app server 不服務靜態檔，`runserver` DEBUG=True 時被遮蔽）；(ii) gunicorn `WORKER TIMEOUT`（sync worker 卡在讀慢/空連線 → master 心跳逾時殺 respawn，反向代理 buffer request 可解）。
-- [ ] **AWS + system design**：load balancer、API gateway、cluster IP、DNS——把系統攤到雲上，練習畫與講架構。
+- [x] **CI/CD**：CI 跑測試（注意 `test_concurrency.py` 需要真的 Postgres，SQLite 的 `select_for_update` 是 no-op），CD 自動部署。設計要能講清楚：測試環境的 Postgres 由誰啟動、pipeline 分幾個 stage、什麼條件才觸發 deploy。
+- [~] **AWS + system design**：把系統攤到雲上，練習畫與講架構。已推導出 **v1 架構**（架構圖另存）：
+  - **public subnet**：ALB（443、SG-alb 對外）、NAT Gateway、IGW。
+  - **private subnet**：EC2 api-ASG（SG-api）、EC2 worker-ASG（SG-worker）——皆 stateless、按各自 scaling 軸 auto-scaling；RDS Postgres、ElastiCache Redis。
+  - **static**：S3 + CloudFront（CDN），不經 app server。
+  - **授權（准不准）＝ SG**：SG 引用 SG——EC2 來源=SG-alb；RDS/ElastiCache 來源={SG-api, SG-worker}（api 與 worker 都是 DB/Redis 的 client，一個都不能漏）。
+  - **可達性（有沒有路）＝ route table，與 SG 是兩件事**：private 出向靠 route `0.0.0.0/0 → NAT`（NAT 在 public subnet）→ 再 `0.0.0.0/0 → IGW` 出 internet（docker pull、之後打 OpenAI）；NAT 只帶「由內發起」連線的回程 → internet 無法主動打進來。public/private 的本質差別＝route table 有無指向 IGW。
+  - **health check**：Django 加 `/health`（shallow，只證明 process 活著）給 ALB；DB/Redis 的 deep check 另做給監控——**不讓下游健康決定 ALB 摘不摘機器**（避免 DB 抖一下→全 fleet 同時 unhealthy 的關聯性故障放大）。
+  - **HA（暫緩實作、心智模型先建立）**：subnet 綁單一 AZ，故 v1 是**單 AZ＝單點故障**。HA＝每層攤到 ≥2 AZ：每 AZ 一組 public+private；ALB 天生跨 AZ；EC2 ASG 跨 AZ 分散；RDS Multi-AZ（standby 同步複製＋自動 failover，這是外包給 managed 的報酬）；ElastiCache replica 跨 AZ。
+  - [x] nginx reverse proxy：評估後判定在 AWS 架構下冗餘（static→S3/CloudFront、buffering→ALB 接手），故不採用。
+  - **實作方式**：IaC 用 **Terraform**（最終交付物），學習時**先 console 手點看懂每個欄位、再翻成 `.tf`**；code 放 `infra/`（`versions.tf`/`provider.tf`/`network.tf`）。習慣＝學習環境用完 `terraform destroy`、要用再 `apply`（NAT+EIP 會計費）。
+  - [x] **Step 1 網路地基（DONE，Terraform）**：VPC(10.0.0.0/16, enable_dns_hostnames) + public/private subnet + IGW + NAT(+EIP) + route table×2 + route×2 + association。**HA：跨 2 AZ**（ap-northeast-1a/1c），用 `for_each` 迴圈長出每 AZ 一份（非 copy-paste。**NAT 決策：只開 1 個**（省一半錢）→ egress 是 SPOF（documented trade-off：egress 在 user 請求旁路、無狀態、可秒建重指，爆炸半徑小）→ 連帶只需 1 張共用 private route table。`plan`=16 resources，`apply`+`destroy` 都驗證過。
+  - **NEXT = Step 2：Security Group 骨架**（SG-alb/SG-api/SG-worker/SG-rds/SG-redis 互相引用；先建空殼再補 rule 以打破循環）。之後：RDS+ElastiCache → EC2 launch template+ASG → ALB+target group+/health → S3+CloudFront+collectstatic → Route53。待辦觀念坑：secrets（SECRET_KEY/DEBUG/RDS creds → Secrets Manager/SSM）、collectstatic 何時推 S3、CI/CD 如何 rollout 新 image 到 ASG。
 
 ### 四、Advanced deployment（進階部署）
 
