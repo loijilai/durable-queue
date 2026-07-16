@@ -30,7 +30,9 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "*"
+]  # Host header 攻擊的前提是能直連 EC2; SG-api 只放行 SG-alb → 前提不成立
 
 
 # Application definition

@@ -98,6 +98,14 @@ resource "aws_vpc_security_group_ingress_rule" "alb_https" {
   cidr_ipv4 = "0.0.0.0/0" # 來源可以是所有 IPv4 位址
 }
 
+resource "aws_vpc_security_group_ingress_rule" "alb_http" {
+  security_group_id = aws_security_group.alb.id
+  ip_protocol       = "tcp"
+  from_port = 80
+  to_port = 80
+  cidr_ipv4 = "0.0.0.0/0" # 來源可以是所有 IPv4 位址
+}
+
 # ── SG-api：只收 ALB 轉進來的流量 ───────────────────────────────────
 resource "aws_vpc_security_group_ingress_rule" "api_from_alb" {
   security_group_id = aws_security_group.api.id

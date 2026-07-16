@@ -22,9 +22,11 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from jobs.views import ShallowHealthCheckView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("health/", ShallowHealthCheckView.as_view(), name="shallow-health-check"),
     # API 文件
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

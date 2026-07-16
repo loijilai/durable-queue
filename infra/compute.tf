@@ -101,7 +101,7 @@ resource "aws_launch_template" "api" {
     celery_broker_url = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
     celery_result_backend = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
     google_redirect_uri = "" # TODO: Step 5 ALB 建好後改成 ALB DNS 並在 Google Console 註冊
-    run_command = "sh -c \"python manage.py migrate && gunicorn durable_queue.wsgi:application --bind 0.0.0.0:8000\""
+    run_command = "sh -c \"python manage.py migrate && gunicorn durable_queue.wsgi:application --bind 0.0.0.0:8000 --access-logfile -\""
   }))
 
   tag_specifications {
@@ -170,7 +170,7 @@ resource "aws_autoscaling_group" "api" {
     version = "$Latest"
   }
 
-  # TODO: target_group_arns 在 Step 5（ALB）接上——現在 api 還沒有人導流量進來。
+  target_group_arns = [aws_lb_target_group.api.arn]
 
   tag {
     key                 = "Name"

@@ -246,3 +246,11 @@ class GoogleCallbackView(APIView):
         # === 三種情況匯流:發你自己的 JWT===
         refresh = RefreshToken.for_user(user)
         return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
+
+
+class ShallowHealthCheckView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # 完全不碰資料庫與快取，只回傳 200 OK
+        return Response("OK", content_type="text/plain", status=status.HTTP_200_OK)

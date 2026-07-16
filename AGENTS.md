@@ -133,9 +133,9 @@
   - [x] EC2 launch template+ASG: 兩個 Launch Template、兩個 ASG、EC2 正確位於 private subnet、掛正確 SG 與 instance profile，且 role 只能讀指定的 RDS secret
   - [x] EC2 user_data: ECR；IAM 加 ECR pull 三 action；app secret 用 `aws_secretsmanager_secret`（**只建容器、值帶外 CLI 注入**，明文永不進 `.tf`/tfstate）；user_data 用**共用 `templatefile()`**（api/worker 差在 `run_command` 一個參數），三類 env 分流：**secret→開機 `get-secret-value`+jq 撈**、**非機密 endpoint→Terraform 模板注入**、**固定 config→literal**；**觀念主軸：secret 不進 user_data（IMDS 全機可讀 + tfstate），此為 Secrets Manager 的主因，tfstate 只是附帶**。
   - [ ] **apply 前置：ECR 還沒 image（CI 尚未 push），機器 pull 會失敗 → 下一步先解「image 怎麼進 ECR」。GOOGLE_REDIRECT_URI + ALLOWED_HOSTS 是 forward dep，待 Step 5 ALB DNS。**
-  - [ ] ALB+target group+/health
+  - [ ] ALB 本身的四個部件:ALB + listener(443/80) + target group(指向 api ASG、health check path=/health)+ 把 target group 綁上 ASG
   - [ ] S3+CloudFront+collectstatic
-  - [ ] Route53。
+  - [ ] Route53 (Domain + HTTPS)
   - [ ] 待辦觀念坑：collectstatic 何時推 S3、CI/CD 如何 push image 到 ECR + rollout 新 image 到 ASG（ties to ECR-image-apply-blocker）。（SECRET_KEY/DEBUG 外置已完成；RDS creds 走 RDS-managed→Secrets Manager 已完成。）
 
 ### 四、Presentation(呈現層)
