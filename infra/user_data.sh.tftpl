@@ -1,0 +1,44 @@
+#!/bin/bash
+# =====================================================================
+# EC2 開機腳本（api / worker 共用；差異由 templatefile 傳入的參數決定）
+# =====================================================================
+set -euo pipefail
+
+# ── 1. 裝 + 起 docker（AL2023 預設沒有）───────────────────────────────
+dnf install -y docker jq
+systemctl enable --now docker
+
+# ── 2. 登入 ECR + pull image ─────────────────────────────────────────
+aws ecr get-login-password --region ${region} \
+  | docker login --username AWS --password-stdin ${registry}
+docker pull ${image}
+
+# ── 3. 撈 secret（開機時，走 instance profile 權限）──────────────────
+# get-secret-value 回傳的 SecretString 是一段 JSON，用 jq 拆欄位。
+DB_SECRET=$(aws secretsmanager get-secret-value --region ${region} \
+  --secret-id ${db_secret_id} --query SecretString --output text)
+APP_SECRET=$(aws secretsmanager get-secret-value --region ${region} \
+  --secret-id ${app_secret_id} --query SecretString --output text)
+
+POSTGRES_PASSWORD=$(echo "$${DB_SECRET}" | jq -r '.password') # RDS managed secret json has password field
+SECRET_KEY=$(echo "$${APP_SECRET}" | jq -r '.secret_key')
+GOOGLE_CLIENT_ID=$(echo "$${APP_SECRET}" | jq -r '.google_client_id')
+GOOGLE_CLIENT_SECRET=$(echo "$${APP_SECRET}" | jq -r '.google_client_secret')
+
+# ── 4. 起 container ──────────────────────────────────────────────────
+docker run -d --restart always \
+  -e POSTGRES_DB=${db_name} \
+  -e POSTGRES_USER=${db_user} \
+  -e POSTGRES_PASSWORD=$${POSTGRES_PASSWORD} \
+  -e POSTGRES_HOST=${db_host} \
+  -e POSTGRES_PORT=${db_port} \
+  -e CELERY_BROKER_URL=${celery_broker_url} \
+  -e CELERY_RESULT_BACKEND=${celery_result_backend} \
+  -e GOOGLE_CLIENT_ID=$${GOOGLE_CLIENT_ID} \
+  -e GOOGLE_CLIENT_SECRET=$${GOOGLE_CLIENT_SECRET} \
+  -e GOOGLE_REDIRECT_URI=${google_redirect_uri} \
+  -e SECRET_KEY=$${SECRET_KEY} \
+  -e DEBUG="False" \
+  -p 8000:8000 \
+  ${image} \
+  ${run_command}
