@@ -28,7 +28,6 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   publicly_accessible = false # 只走 VPC 內網，不給 public IP
 
-  # ── HA（v1 先不開）──
   multi_az = false
 
   # ── build-and-destroy 學習環境 ──

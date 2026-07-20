@@ -161,9 +161,10 @@ resource "aws_autoscaling_group" "api" {
   # 跨 AZ 分散到兩個 private subnet
   vpc_zone_identifier = [for subnet in aws_subnet.private : subnet.id]
 
-  min_size = 1
-  max_size = 1
-  desired_capacity = 1
+  # HA
+  min_size = 2
+  max_size = 2
+  desired_capacity = 2
 
   launch_template {
     id      = aws_launch_template.api.id
@@ -185,9 +186,10 @@ resource "aws_autoscaling_group" "worker" {
 
   vpc_zone_identifier = [for subnet in aws_subnet.private : subnet.id]
 
-  min_size = 1
-  max_size = 1
-  desired_capacity = 1
+  # HA
+  min_size = 2
+  max_size = 2
+  desired_capacity = 2
 
   launch_template {
     id      = aws_launch_template.worker.id
