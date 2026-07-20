@@ -135,8 +135,8 @@
   - [x] **Step 4 apply（DONE, e2e verified）**：解掉 ECR-no-image apply-blocker——`apply` 建空 ECR+secret 殼 → build+push image → 帶外 `put-secret-value` → 換掉開機失敗的 instance。真 EC2 上 create-job→worker consume 驗過。
   - [x] **Step 5 ALB（DONE, e2e verified）**：`aws_lb` + `aws_lb_target_group`(port 8000, health path `/health/`, matcher 200) + `aws_lb_listener` :80。app 側加 `ShallowHealthCheckView`(AllowAny, 不碰 DB/cache)、`ALLOWED_HOSTS=['*']`。觀念主軸：health check 的 Host = instance 私有 IP（非 ALB DNS）→ 配 DEBUG=False 會 400 → `['*']` 解掉，其安全性由 SG（只放行 SG-alb）在網路層提供，app 層 Host 檢查在此冗餘。
   - [x] **Step 7 Route53 + ACM + 443（DONE）**：子網域 `durable-queue.loijilai.site`——**在 Namecheap 加 NS 記錄委派給 Route53**（委派記錄住父區 Namecheap，子區 Route53 管其下所有記錄）。**架構決策：hosted zone 抽成獨立 state `infra/dns/`（foundation vs app 分離），apply 一次不 destroy**；理由＝NS 綁 zone 身分，destroy 重建 zone 會換 nameserver → 逼你重設 Namecheap，而 zone 內記錄可隨 `infra/` 反覆生滅不影響委派。443 listener(綁憑證) + 80 改 redirect→443(301)。alias A record 指 ALB。**app 收尾：`GOOGLE_REDIRECT_URI` 填 `https://durable-queue.loijilai.site/api/auth/google/callback/`（非機密→Terraform 注入 compute.tf）+ Google Console 註冊同一字串（完全比對）；`ALLOWED_HOSTS` 決定保留 `['*']`（收窄會打壞 health check：ALB health check 用私有 IP 當 Host 且不能自訂 → 要收窄得靠 IMDS 撈動態 IP，成本高於效益，SG 已擋掉攻擊面）。**
-  - [ ] **NEXT：S3 + CloudFront + collectstatic**（static 不經 gunicorn）。待辦觀念坑：collectstatic 何時推 S3、CI/CD 如何 push image 到 ECR + rollout 新 image 到 ASG。
-  - [ ] Route53 補 443 已含在 Step 7；HA（Multi-AZ 實作）仍待。
+  - [x] **Step 6 靜態檔——S3 + CloudFront + collectstatic 評估後砍掉（如 nginx）**：前後端分離的純 JSON API，prod 沒有 static 要 serve。解法＝設 `DEFAULT_RENDERER_CLASSES`，prod 只留 `JSONRenderer`、dev 才掛 `BrowsableAPIRenderer`（用 `DEBUG` 切）。觀念：沒設該 key ≠ 沒行為，DRF 預設暗含 BrowsableAPIRenderer；docs 三頁有各自 view-level renderer，不受全域 default 影響。
+  - [ ] **NEXT：HA（RDS Multi-AZ + ASG >1）實作**；CI→CD（push image 到 ECR + rollout 新 image 到 ASG，目前手動 `deploy.sh`）。
 
 ### 四、Presentation(呈現層)
 

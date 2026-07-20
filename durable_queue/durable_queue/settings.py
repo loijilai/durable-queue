@@ -129,6 +129,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # Celery
@@ -159,6 +160,12 @@ REST_FRAMEWORK = {
     ),
     # 必須是登入使用者才放行
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    # 前後端分離的純 JSON API：prod 只回 JSON。
+    # BrowsableAPIRenderer 只在 DEBUG 時掛上（它吃 /static/rest_framework/，
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        *(["rest_framework.renderers.BrowsableAPIRenderer"] if DEBUG else []),
+    ],
 }
 
 SPECTACULAR_SETTINGS = {
