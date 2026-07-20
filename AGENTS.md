@@ -111,11 +111,11 @@
 
 ### 三、Deployment（部署）
 
-- [~] **Dockerize（容器化與編排）**：多 service（api / worker / redis / postgres）容器化與 compose 編排。
+- [x] **Dockerize（容器化與編排）**：多 service（api / worker / redis / postgres）容器化與 compose 編排。
   - [x] `Dockerfile`（python:3.13-slim；layer-cache 順序；刻意移除預設 CMD，逼 api/worker 各自宣告 `command:`）。
   - [x] `docker-compose.yml` 四服務：api / worker 共用同一 image、以 `command:` 區分（build once, run many；拆兩個 container 而非兩個 image，因為 scaling 軸不同：api=HTTP 併發、worker=queue 深度）。stateless（api/worker）vs stateful（postgres/redis → volumes）。postgres/redis 不開 `ports:`，只走 compose 內網 service-name DNS。
   - [x] 設定與啟動順序：settings.py 改為 all-no-default fail-fast（`.env.example` 當單一設定真相來源）；compose `environment:` 把 HOST/BROKER 覆寫成 service name；postgres healthcheck + `depends_on: condition: service_healthy` 處理「start-order ≠ readiness」；`command: sh -c "migrate && gunicorn/celery ..."`。
-  - [x] 待收尾：DEBUG / SECRET_KEY 尚未外置到 env（`bool("False")` 陷阱已知）；api+worker 都跑 migrate 的併發問題已知並延後。
+  - [x] DEBUG / SECRET_KEY 已外置到 env（`SECRET_KEY=os.environ[...]` fail-fast、`DEBUG=os.environ.get("DEBUG","False")=="True"` 避開 `bool("False")` 陷阱）；api+worker 都跑 migrate 的併發問題已知並延後。
 - [x] **CI/CD**：CI 跑測試（注意 `test_concurrency.py` 需要真的 Postgres，SQLite 的 `select_for_update` 是 no-op），CD 自動部署。設計要能講清楚：測試環境的 Postgres 由誰啟動、pipeline 分幾個 stage、什麼條件才觸發 deploy。
 - [~] **AWS + system design**：把系統攤到雲上，練習畫與講架構。已推導出 **v1 架構**（架構圖另存）：
   - **public subnet**：ALB（443、SG-alb 對外）、NAT Gateway、IGW。
@@ -132,11 +132,11 @@
   - [x] RDS+ElastiCache
   - [x] EC2 launch template+ASG: 兩個 Launch Template、兩個 ASG、EC2 正確位於 private subnet、掛正確 SG 與 instance profile，且 role 只能讀指定的 RDS secret
   - [x] EC2 user_data: ECR；IAM 加 ECR pull 三 action；app secret 用 `aws_secretsmanager_secret`（**只建容器、值帶外 CLI 注入**，明文永不進 `.tf`/tfstate）；user_data 用**共用 `templatefile()`**（api/worker 差在 `run_command` 一個參數），三類 env 分流：**secret→開機 `get-secret-value`+jq 撈**、**非機密 endpoint→Terraform 模板注入**、**固定 config→literal**；**觀念主軸：secret 不進 user_data（IMDS 全機可讀 + tfstate），此為 Secrets Manager 的主因，tfstate 只是附帶**。
-  - [ ] **apply 前置：ECR 還沒 image（CI 尚未 push），機器 pull 會失敗 → 下一步先解「image 怎麼進 ECR」。GOOGLE_REDIRECT_URI + ALLOWED_HOSTS 是 forward dep，待 Step 5 ALB DNS。**
-  - [ ] ALB 本身的四個部件:ALB + listener(443/80) + target group(指向 api ASG、health check path=/health)+ 把 target group 綁上 ASG
-  - [ ] S3+CloudFront+collectstatic
-  - [ ] Route53 (Domain + HTTPS)
-  - [ ] 待辦觀念坑：collectstatic 何時推 S3、CI/CD 如何 push image 到 ECR + rollout 新 image 到 ASG（ties to ECR-image-apply-blocker）。（SECRET_KEY/DEBUG 外置已完成；RDS creds 走 RDS-managed→Secrets Manager 已完成。）
+  - [x] **Step 4 apply（DONE, e2e verified）**：解掉 ECR-no-image apply-blocker——`apply` 建空 ECR+secret 殼 → build+push image → 帶外 `put-secret-value` → 換掉開機失敗的 instance。真 EC2 上 create-job→worker consume 驗過。
+  - [x] **Step 5 ALB（DONE, e2e verified）**：`aws_lb` + `aws_lb_target_group`(port 8000, health path `/health/`, matcher 200) + `aws_lb_listener` :80。app 側加 `ShallowHealthCheckView`(AllowAny, 不碰 DB/cache)、`ALLOWED_HOSTS=['*']`。觀念主軸：health check 的 Host = instance 私有 IP（非 ALB DNS）→ 配 DEBUG=False 會 400 → `['*']` 解掉，其安全性由 SG（只放行 SG-alb）在網路層提供，app 層 Host 檢查在此冗餘。
+  - [x] **Step 7 Route53 + ACM + 443（DONE）**：子網域 `durable-queue.loijilai.site`——**在 Namecheap 加 NS 記錄委派給 Route53**（委派記錄住父區 Namecheap，子區 Route53 管其下所有記錄）。**架構決策：hosted zone 抽成獨立 state `infra/dns/`（foundation vs app 分離），apply 一次不 destroy**；理由＝NS 綁 zone 身分，destroy 重建 zone 會換 nameserver → 逼你重設 Namecheap，而 zone 內記錄可隨 `infra/` 反覆生滅不影響委派。443 listener(綁憑證) + 80 改 redirect→443(301)。alias A record 指 ALB。**app 收尾：`GOOGLE_REDIRECT_URI` 填 `https://durable-queue.loijilai.site/api/auth/google/callback/`（非機密→Terraform 注入 compute.tf）+ Google Console 註冊同一字串（完全比對）；`ALLOWED_HOSTS` 決定保留 `['*']`（收窄會打壞 health check：ALB health check 用私有 IP 當 Host 且不能自訂 → 要收窄得靠 IMDS 撈動態 IP，成本高於效益，SG 已擋掉攻擊面）。**
+  - [ ] **NEXT：S3 + CloudFront + collectstatic**（static 不經 gunicorn）。待辦觀念坑：collectstatic 何時推 S3、CI/CD 如何 push image 到 ECR + rollout 新 image 到 ASG。
+  - [ ] Route53 補 443 已含在 Step 7；HA（Multi-AZ 實作）仍待。
 
 ### 四、Presentation(呈現層)
 
