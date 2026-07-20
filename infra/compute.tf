@@ -100,7 +100,7 @@ resource "aws_launch_template" "api" {
     db_port = aws_db_instance.postgres.port
     celery_broker_url = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
     celery_result_backend = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
-    google_redirect_uri = "" # TODO: Step 5 ALB 建好後改成 ALB DNS 並在 Google Console 註冊
+    google_redirect_uri = "https://durable-queue.loijilai.site/api/auth/google/callback/"
     run_command = "sh -c \"python manage.py migrate && gunicorn durable_queue.wsgi:application --bind 0.0.0.0:8000 --access-logfile -\""
   }))
 
@@ -137,7 +137,7 @@ resource "aws_launch_template" "worker" {
     db_port = aws_db_instance.postgres.port
     celery_broker_url = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
     celery_result_backend = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
-    google_redirect_uri = "" # TODO: Step 5 ALB 建好後改成 ALB DNS 並在 Google Console 註冊
+    google_redirect_uri = "https://durable-queue.loijilai.site/api/auth/google/callback/"
     run_command = "celery -A durable_queue worker -l info"
   }))
 
