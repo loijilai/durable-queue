@@ -54,7 +54,7 @@ Thumbs.db
 
 # Terraform
 # state 記錄真實 infra、可能含敏感值 → 不進版控（之後上 team 才換 remote backend）
-infra/.terraform/
+**/.terraform/
 *.tfstate
 *.tfstate.*
 *.tfvars

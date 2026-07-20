@@ -28,16 +28,34 @@ resource "aws_lb_target_group" "api" {
 
 
 # ── Listener（ALB 對外）────────────────────────────────────────
-resource "aws_lb_listener" "http" {
+resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main.arn
 
-  # TODO: HTTP first
-  port = 80
-  protocol = "HTTP"
+  port = 443
+  protocol = "HTTPS"
+  ssl_policy = "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09"
+  # 等待 ISSUED 後才建立 listener
+  certificate_arn = aws_acm_certificate_validation.main.certificate_arn
 
-  # 收到請求後預設動作：轉發到上面那個 target group。
   default_action {
     type = "forward"
     target_group_arn = aws_lb_target_group.api.arn
+  }
+}
+
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.main.arn
+
+  port = 80
+  protocol = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
