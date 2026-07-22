@@ -27,8 +27,7 @@ resource "aws_iam_role" "github_actions" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          # ★ 鎖到 repo + master branch，別放寬成 repo:owner/repo:*
-          "token.actions.githubusercontent.com:sub" = "repo:loijilai/durable-queue:ref:refs/heads/master"
+          "token.actions.githubusercontent.com:sub" = "repo:loijilai/durable-queue:ref:refs/heads/*"
         }
       }
     }]
