@@ -1,5 +1,5 @@
 # Project-specific agent instructions
-
+.claude/
 
 # Python bytecode and caches
 __pycache__/
