@@ -49,6 +49,7 @@ jobs:
           POSTGRES_PASSWORD: durable_queue_test_password
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
+          SECRET_KEY: test-secret-key
           # Dummy Values: They are not used in tests
           CELERY_BROKER_URL: redis://localhost:6379/0
           CELERY_RESULT_BACKEND: redis://localhost:6379/1
