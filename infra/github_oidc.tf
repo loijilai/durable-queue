@@ -27,8 +27,7 @@ resource "aws_iam_role" "github_actions" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          # ★ 鎖到 repo + master branch，別放寬成 repo:owner/repo:*
-          "token.actions.githubusercontent.com:sub" = "repo:loijilai/durable-queue:ref:refs/heads/master"
+          "token.actions.githubusercontent.com:sub" = "repo:loijilai/durable-queue:ref:refs/heads/*"
         }
       }
     }]
@@ -111,7 +110,9 @@ resource "aws_iam_role_policy" "github_actions" {
           "ec2:Describe*",
           "autoscaling:Describe*",
           "rds:Describe*",
+          "rds:ListTagsForResource",
           "elasticache:Describe*",
+          "elasticache:ListTagsForResource",
           "elasticloadbalancing:Describe*",
           "route53:Get*",
           "route53:List*",
@@ -119,7 +120,10 @@ resource "aws_iam_role_policy" "github_actions" {
           "acm:List*",
           "secretsmanager:DescribeSecret",
           "secretsmanager:GetSecretValue",
+          "secretsmanager:GetResourcePolicy",
           "ecr:Describe*",
+          "ecr:ListTagsForResource",
+          "ssm:GetParameter",
           "iam:Get*",
           "iam:List*"
         ]
