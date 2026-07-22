@@ -6,6 +6,12 @@
 
 這是一個**學習用專案**，作者正在準備**資深後端工程師（senior backend engineer）**求職。專案的目的**不是把功能做完**，而是讓作者透過親手實作，長成一個「能做出成熟設計決策、講得出每個決策的理由、不靠 AI 也能自己寫出程式」的工程師。
 
+求職目標：
+
+- Backend Engineer
+- Cloud Platform
+- 大規模系統 / Distributed System
+
 **你的角色是一位嚴格的資深後端工程師兼 mentor（senior engineer / mentor），不是代寫程式碼的人，更不是 compiler。**
 
 你的成功標準不是「作者的功能有沒有跑起來」，而是「作者的**思考能力、判斷力、獨立解決問題的能力**有沒有在成長」。如果你直接把答案寫出來、或默默把學習 gap 都補起來，這個專案就失敗了——就算程式能跑也一樣。
@@ -46,10 +52,10 @@
 - 提供延伸閱讀方向（官方文件章節、分散式系統關鍵字），讓他自己去讀，而不是把結論餵給他。
 - **導入新工具/套件前，先讓作者讀官方文件、自己盤點工具邊界**（這個套件幫我做了什麼、哪些是它現成給的、哪些它不管要我自己做、為什麼那件事不屬於它的職責）。不要直接列出「它提供 A、B、C」——把盤點的動作交還給作者，你只在他盤點完之後補他漏掉的、或挑戰他的分類。
 
-### 例外（唯一可以直接給的情況）
+### 例外（唯一可以給的情況）
 
-- 純樣板 / 設定檔（boilerplate、settings、`urls.py` 接線）、或作者**明確**要求「直接給我程式碼 / 幫我寫完 / 我懂了這段幫我寫」時，可以直接給。
-- 即使直接給，也要附上**為什麼這樣寫**的解釋，並確認作者理解——不要讓他抄完就走。
+- 純樣板 / 設定檔（boilerplate、settings、`urls.py` 接線）、或作者**明確**要求「直接給我程式碼 / 幫我寫完 / 我懂了這段幫我寫」時，可以直接給骨架，但是任何需要決策或是有觀念的地方要留空給作者自己想清楚填入。
+- 即使直接給骨架，也要附上**為什麼這樣寫**的解釋，並確認作者理解——不要讓他抄完就走。
 - 判斷不確定要不要直接給時，**先問作者想要哪種模式**（引導 vs 直接給），不要自己預設幫他寫完。
 
 ---
@@ -82,7 +88,7 @@
   - [x] concurrency + test：`claim_next_job()` 用 `select_for_update(skip_locked=True)` + `transaction.atomic()` 支援多 worker 不互搶。
   - [x] retry & visibility timeout：retry 迴圈（`ATTEMPT_LIMIT`）+ `reclaim_job()` sweep（`TIMEOUT`）；`mark_*` idempotent guard 處理「worker 完成 vs sweeper 回收」race。
     > Phase 1 手刻原語已全數走過並在 Phase 2 退役（`run_worker.py`/`run_sweeper.py`/`claim_next_job` 已刪，回收交給 Celery `visibility_timeout`）。目的達成：親手痛過才知道工具在擋什麼。
-- [ ] **Celery + Redis + Postgres（Phase 2：換 production 級核心）**
+- [x] **Celery + Redis + Postgres（Phase 2：換 production 級核心）**
   - [x] Celery：`durable_queue/celery.py`，轉錄改 `execute_job.delay()` 派工；`acks_late=True` + `autoretry_for`/`max_retries`/`retry_backoff`/`retry_jitter`；`on_failure` 落地 FAILED。對照映射已釐清（claim↔prefetch、worker loop↔celery worker、「不刪可回收」↔`acks_late`、sweeper TIMEOUT↔`visibility_timeout`、重試迴圈↔`autoretry_for`+`retry_backoff`+`retry_jitter`）。
   - [x] Redis：當 broker（db 0）+ result backend（db 1）；`visibility_timeout=3600`。DB 表是持久化真相來源，Redis 只是派工通道。
   - [x] Dead-letter / 手動 retry：DB 作 DLQ，`retry_job()` service（guard `!= FAILED` → ValueError）+ `POST /jobs/{id}/retry`（409/404/202）。dispatch 留在 view（避免 service→tasks 循環依賴與職責耦合）。
@@ -105,23 +111,54 @@
 
 ### 三、Deployment（部署）
 
-- [ ] **Dockerize + CI/CD**：多 service（api / worker / redis / postgres）容器化與編排；CI 跑測試、CD 自動部署。
-- [ ] **AWS + system design**：load balancer、API gateway、cluster IP、DNS——把系統攤到雲上，練習畫與講架構。
+- [x] **Dockerize（容器化與編排）**：多 service（api / worker / redis / postgres）容器化與 compose 編排。
+  - [x] `Dockerfile`（python:3.13-slim；layer-cache 順序；刻意移除預設 CMD，逼 api/worker 各自宣告 `command:`）。
+  - [x] `docker-compose.yml` 四服務：api / worker 共用同一 image、以 `command:` 區分（build once, run many；拆兩個 container 而非兩個 image，因為 scaling 軸不同：api=HTTP 併發、worker=queue 深度）。stateless（api/worker）vs stateful（postgres/redis → volumes）。postgres/redis 不開 `ports:`，只走 compose 內網 service-name DNS。
+  - [x] 設定與啟動順序：settings.py 改為 all-no-default fail-fast（`.env.example` 當單一設定真相來源）；compose `environment:` 把 HOST/BROKER 覆寫成 service name；postgres healthcheck + `depends_on: condition: service_healthy` 處理「start-order ≠ readiness」；`command: sh -c "migrate && gunicorn/celery ..."`。
+  - [x] DEBUG / SECRET_KEY 已外置到 env（`SECRET_KEY=os.environ[...]` fail-fast、`DEBUG=os.environ.get("DEBUG","False")=="True"` 避開 `bool("False")` 陷阱）；api+worker 都跑 migrate 的併發問題已知並延後。
+- [x] **CI/CD**：CI 跑測試（注意 `test_concurrency.py` 需要真的 Postgres，SQLite 的 `select_for_update` 是 no-op），CD 自動部署。設計要能講清楚：測試環境的 Postgres 由誰啟動、pipeline 分幾個 stage、什麼條件才觸發 deploy。
+- [~] **AWS + system design**：把系統攤到雲上，練習畫與講架構。已推導出 **v1 架構**（架構圖另存）：
+  - **public subnet**：ALB（443、SG-alb 對外）、NAT Gateway、IGW。
+  - **private subnet**：EC2 api-ASG（SG-api）、EC2 worker-ASG（SG-worker）——皆 stateless、按各自 scaling 軸 auto-scaling；RDS Postgres、ElastiCache Redis。
+  - **static**：S3 + CloudFront（CDN），不經 app server。
+  - **授權（准不准）＝ SG**：SG 引用 SG——EC2 來源=SG-alb；RDS/ElastiCache 來源={SG-api, SG-worker}（api 與 worker 都是 DB/Redis 的 client，一個都不能漏）。
+  - **可達性（有沒有路）＝ route table，與 SG 是兩件事**：private 出向靠 route `0.0.0.0/0 → NAT`（NAT 在 public subnet）→ 再 `0.0.0.0/0 → IGW` 出 internet（docker pull、之後打 OpenAI）；NAT 只帶「由內發起」連線的回程 → internet 無法主動打進來。public/private 的本質差別＝route table 有無指向 IGW。
+  - **health check**：Django 加 `/health`（shallow，只證明 process 活著）給 ALB；DB/Redis 的 deep check 另做給監控——**不讓下游健康決定 ALB 摘不摘機器**（避免 DB 抖一下→全 fleet 同時 unhealthy 的關聯性故障放大）。
+  - **HA（暫緩實作、心智模型先建立）**：subnet 綁單一 AZ，故 v1 是**單 AZ＝單點故障**。HA＝每層攤到 ≥2 AZ：每 AZ 一組 public+private；ALB 天生跨 AZ；EC2 ASG 跨 AZ 分散；RDS Multi-AZ（standby 同步複製＋自動 failover，這是外包給 managed 的報酬）；ElastiCache replica 跨 AZ。
+  - [x] nginx reverse proxy：評估後判定在 AWS 架構下冗餘（static→S3/CloudFront、buffering→ALB 接手），故不採用。
+  - **實作方式**：IaC 用 **Terraform**（最終交付物），學習時**先 console 手點看懂每個欄位、再翻成 `.tf`**；code 放 `infra/`（`versions.tf`/`provider.tf`/`network.tf`）。習慣＝學習環境用完 `terraform destroy`、要用再 `apply`（NAT+EIP 會計費）。
+  - [x] **Step 1 網路地基（DONE，Terraform）**：VPC(10.0.0.0/16, enable_dns_hostnames) + public/private subnet + IGW + NAT(+EIP) + route table×2 + route×2 + association。**HA：跨 2 AZ**（ap-northeast-1a/1c），用 `for_each` 迴圈長出每 AZ 一份（非 copy-paste。**NAT 決策：只開 1 個**（省一半錢）→ egress 是 SPOF（documented trade-off：egress 在 user 請求旁路、無狀態、可秒建重指，爆炸半徑小）→ 連帶只需 1 張共用 private route table。`plan`=16 resources，`apply`+`destroy` 都驗證過。
+  - [x] Step 2：Security Group 骨架（SG-alb/SG-api/SG-worker/SG-rds/SG-redis 互相引用；先建空殼再補 rule 以打破循環）
+  - [x] RDS+ElastiCache
+  - [x] EC2 launch template+ASG: 兩個 Launch Template、兩個 ASG、EC2 正確位於 private subnet、掛正確 SG 與 instance profile，且 role 只能讀指定的 RDS secret
+  - [x] EC2 user_data: ECR；IAM 加 ECR pull 三 action；app secret 用 `aws_secretsmanager_secret`（**只建容器、值帶外 CLI 注入**，明文永不進 `.tf`/tfstate）；user_data 用**共用 `templatefile()`**（api/worker 差在 `run_command` 一個參數），三類 env 分流：**secret→開機 `get-secret-value`+jq 撈**、**非機密 endpoint→Terraform 模板注入**、**固定 config→literal**；**觀念主軸：secret 不進 user_data（IMDS 全機可讀 + tfstate），此為 Secrets Manager 的主因，tfstate 只是附帶**。
+  - [x] **Step 4 apply（DONE, e2e verified）**：解掉 ECR-no-image apply-blocker——`apply` 建空 ECR+secret 殼 → build+push image → 帶外 `put-secret-value` → 換掉開機失敗的 instance。真 EC2 上 create-job→worker consume 驗過。
+  - [x] **Step 5 ALB（DONE, e2e verified）**：`aws_lb` + `aws_lb_target_group`(port 8000, health path `/health/`, matcher 200) + `aws_lb_listener` :80。app 側加 `ShallowHealthCheckView`(AllowAny, 不碰 DB/cache)、`ALLOWED_HOSTS=['*']`。觀念主軸：health check 的 Host = instance 私有 IP（非 ALB DNS）→ 配 DEBUG=False 會 400 → `['*']` 解掉，其安全性由 SG（只放行 SG-alb）在網路層提供，app 層 Host 檢查在此冗餘。
+  - [x] **Step 7 Route53 + ACM + 443（DONE）**：子網域 `durable-queue.loijilai.site`——**在 Namecheap 加 NS 記錄委派給 Route53**（委派記錄住父區 Namecheap，子區 Route53 管其下所有記錄）。**架構決策：hosted zone 抽成獨立 state `infra/dns/`（foundation vs app 分離），apply 一次不 destroy**；理由＝NS 綁 zone 身分，destroy 重建 zone 會換 nameserver → 逼你重設 Namecheap，而 zone 內記錄可隨 `infra/` 反覆生滅不影響委派。443 listener(綁憑證) + 80 改 redirect→443(301)。alias A record 指 ALB。**app 收尾：`GOOGLE_REDIRECT_URI` 填 `https://durable-queue.loijilai.site/api/auth/google/callback/`（非機密→Terraform 注入 compute.tf）+ Google Console 註冊同一字串（完全比對）；`ALLOWED_HOSTS` 決定保留 `['*']`（收窄會打壞 health check：ALB health check 用私有 IP 當 Host 且不能自訂 → 要收窄得靠 IMDS 撈動態 IP，成本高於效益，SG 已擋掉攻擊面）。**
+  - [x] **Step 6 靜態檔——S3 + CloudFront + collectstatic 評估後砍掉（如 nginx）**：前後端分離的純 JSON API，prod 沒有 static 要 serve。解法＝設 `DEFAULT_RENDERER_CLASSES`，prod 只留 `JSONRenderer`、dev 才掛 `BrowsableAPIRenderer`（用 `DEBUG` 切）。觀念：沒設該 key ≠ 沒行為，DRF 預設暗含 BrowsableAPIRenderer；docs 三頁有各自 view-level renderer，不受全域 default 影響。
+  - [ ] **NEXT：HA（RDS Multi-AZ + ASG >1）實作**；CI→CD（push image 到 ECR + rollout 新 image 到 ASG，目前手動 `deploy.sh`）。
 
-### 四、Advanced deployment（進階部署）
+### 四、Presentation(呈現層)
 
-- [ ] **AWS + K8s + SQS**：K8s（pod、ingress）編排；把 broker 從 Redis 換成 SQS，對照 SQS 原生的 visibility timeout / DLQ 與手刻/Celery 版本的差異。
-- [ ] **Production observability（metrics / tracing / logging）**：和第一階段 dev-time 的 Flower 不同——這是 production system 級別的可觀測性。metrics（例如 Prometheus 收 queue 深度 / task 延遲 / 失敗率 + Grafana 儀表板與告警）、distributed tracing（一個 request 跨 API→broker→worker 的完整 trace，OpenTelemetry）、structured logging（JSON log、correlation id 串起同一條請求、集中式收集）。重點是三者各自回答什麼問題（metrics=系統現在健不健康、tracing=這一筆慢在哪、logging=到底發生什麼事）。
 - [ ] **Frontend**：前端介面會展示詳細的呼叫流程，並針對專案的重點 demo 觀念給面試官。
+- [ ] 商業邏輯、功能發想
 - [ ] **yt-dlp + OpenAI transcribe**：取代 `fake_transcribe`，處理外部 API 的逾時、錯誤、成本、rate limit——這裡會把上面延後的 execution 層 idempotency 決定重新端上桌。
 
-### 五、Case study（案例研究 / 深入分析）
+### 五、Advanced deployment（進階部署）
+
+- [ ] **AWS + K8s + SQS**：K8s（pod、ingress）編排；把 broker 從 Redis 換成 SQS，對照 SQS 原生的 visibility timeout / DLQ 與手刻/Celery 版本的差異。
+  - redis HA、scalability、migration-on-boot
+- [ ] **Production observability（metrics / tracing / logging）**：和第一階段 dev-time 的 Flower 不同——這是 production system 級別的可觀測性。metrics（例如 Prometheus 收 queue 深度 / task 延遲 / 失敗率 + Grafana 儀表板與告警）、distributed tracing（一個 request 跨 API→broker→worker 的完整 trace，OpenTelemetry）、structured logging（JSON log、correlation id 串起同一條請求、集中式收集）。重點是三者各自回答什麼問題（metrics=系統現在健不健康、tracing=這一筆慢在哪、logging=到底發生什麼事）。
+
+### 六、Case study（案例研究 / 深入分析）
 
 - [ ] **Efficiency**：找瓶頸、要不要引入 cache（哪一層 cache、失效策略、cache 一致性）。
 - [ ] **Failure handling**：系統性盤點故障模型（worker crash、broker 重啟、DB 斷線、外部 API 失敗）與各自的復原策略。
 - [ ] **Concurrency & Race Condition**：目前有兩個可能的方向
   - [ ] 跨系統的 concurrency：DB 新增或是更改 job 的狀態，與 Broker Dispatch 之間的時間差
   - [ ] select_for_update 避免同時兩個 request執行，但這要討論是否有必要
+- [ ] 資訊安全: public/private subnet, https, .env, iam role, tfstate -> rds managed key...
+- [ ] HA: 2 AZ, multi-az
 
 > 路線圖隨進度更新。完成一項時把 `[ ]` 改成 `[x]`。
 

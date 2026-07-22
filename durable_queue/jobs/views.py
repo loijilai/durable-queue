@@ -1,4 +1,5 @@
 from rest_framework import generics
+from rest_framework import serializers
 from jobs.serializers import TranscriptionJobSerializer, UserRegisterSerializer
 from jobs.models import TranscriptionJob
 from jobs.tasks import execute_job
@@ -7,7 +8,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from jobs.services import retry_job
 from django.http import Http404
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+    OpenApiResponse,
+)
 from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
 from django.conf import settings
@@ -30,6 +36,14 @@ GOOGLE_AUTH_STATE = "google_oauth_state"
 
 
 # Create your views here.
+@extend_schema_view(
+    post=extend_schema(
+        responses={
+            201: TranscriptionJobSerializer,
+            400: OpenApiResponse(description="輸入驗證失敗，例如 youtube url 格式錯誤"),
+        },
+    ),
+)
 class JobCreateView(generics.ListCreateAPIView):
     serializer_class = TranscriptionJobSerializer
 
@@ -41,6 +55,14 @@ class JobCreateView(generics.ListCreateAPIView):
         execute_job.delay(job.id)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        responses={
+            200: TranscriptionJobSerializer,
+            404: OpenApiResponse(description="job 不存在或不屬於你"),
+        },
+    ),
+)
 class JobRetrieveView(generics.RetrieveAPIView):
     serializer_class = TranscriptionJobSerializer
 
@@ -81,6 +103,10 @@ class UserRegisterView(generics.CreateAPIView):
 class GoogleLoginView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        responses={302: OpenApiResponse(description="重導向到 Google 授權頁")},
+        description="啟動 Google OAuth：產生 state 存進 session，redirect 到 Google 授權頁",
+    )
     def get(self, request):
         state = secrets.token_urlsafe(32)
         request.session[GOOGLE_AUTH_STATE] = state
@@ -99,6 +125,27 @@ class GoogleLoginView(APIView):
 class GoogleCallbackView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        responses={
+            200: inline_serializer(
+                name="GoogleTokenResponse",
+                fields={
+                    "access": serializers.CharField(),
+                    "refresh": serializers.CharField(),
+                },
+            ),
+            400: OpenApiResponse(
+                description="缺少 code/state，或 state 與 session 不符（CSRF）"
+            ),
+            403: OpenApiResponse(
+                description="Google email 未驗證，不允許以 Google 登入"
+            ),
+            409: OpenApiResponse(
+                description="此 email 已有本地帳號，請先登入再連結 Google"
+            ),
+        },
+        description="Google OAuth callback：驗證 code/state → 換 token → 發本站 JWT",
+    )
     def get(self, request):
         code = request.query_params.get("code")
         state = request.query_params.get("state")
@@ -111,9 +158,13 @@ class GoogleCallbackView(APIView):
         # === 1:state / CSRF 驗證 ===
         # middleware 已用 cookie 的 sessionid 從 backend 載好 session;從載好的 dict 讀出 /login 存的 state
         saved_state = request.session.get(GOOGLE_AUTH_STATE)
-        if saved_state is None or saved_state != state:
+        if saved_state is None:
             return Response(
                 {"detail": "invalid oauth state"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        elif state != saved_state:
+            return Response(
+                {"detail": "state is not valid"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         #   - 比對通過後,把它從 session 移除(one-time,防重放)
@@ -195,3 +246,11 @@ class GoogleCallbackView(APIView):
         # === 三種情況匯流:發你自己的 JWT===
         refresh = RefreshToken.for_user(user)
         return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
+
+
+class ShallowHealthCheckView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # 完全不碰資料庫與快取，只回傳 200 OK
+        return Response("OK", content_type="text/plain", status=status.HTTP_200_OK)

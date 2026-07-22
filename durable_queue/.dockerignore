@@ -1,0 +1,11 @@
+# 祕密：絕不能進 image
+.env
+# Python 垃圾
+__pycache__/
+*.pyc
+# 版控與開發用檔
+.git/
+.gitignore
+db.sqlite3
+# 產物
+schema.yml

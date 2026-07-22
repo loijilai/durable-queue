@@ -52,5 +52,14 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Terraform
+# state 記錄真實 infra、可能含敏感值 → 不進版控（之後上 team 才換 remote backend）
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+# 注意：.terraform.lock.hcl 要「進」版控（它鎖 provider 版本，像 lock file），所以不列在這
+
 # User-defined
 schema.yml

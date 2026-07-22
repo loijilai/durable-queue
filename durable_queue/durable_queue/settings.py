@@ -25,12 +25,14 @@ load_dotenv(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-*gz@i(lbad8xxl!qw(kqn4hx-ez90$jkmud+$u9o_ae-nqd17)"
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "*"
+]  # Host header 攻擊的前提是能直連 EC2; SG-api 只放行 SG-alb → 前提不成立
 
 
 # Application definition
@@ -86,8 +88,8 @@ DATABASES = {
         "NAME": os.environ["POSTGRES_DB"],
         "USER": os.environ["POSTGRES_USER"],
         "PASSWORD": os.environ["POSTGRES_PASSWORD"],
-        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        "HOST": os.environ["POSTGRES_HOST"],
+        "PORT": os.environ["POSTGRES_PORT"],
     }
 }
 
@@ -127,14 +129,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # Celery
 # 這些變數以 CELERY_ 開頭，才會被 celery.py 裡的 config_from_object(namespace="CELERY") 讀到。
 
-CELERY_BROKER_URL = "redis://localhost:6379/0"
+# 全部從 env 讀（12-Factor：config 外置）。no-default = fail-fast，
+# 且 .env.example 成為唯一的設定清單，不用回頭讀 settings.py 找隱藏預設值。
+CELERY_BROKER_URL = os.environ["CELERY_BROKER_URL"]
 
-CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+CELERY_RESULT_BACKEND = os.environ["CELERY_RESULT_BACKEND"]
 
 CELERY_TIMEZONE = TIME_ZONE
 
@@ -155,6 +160,12 @@ REST_FRAMEWORK = {
     ),
     # 必須是登入使用者才放行
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    # 前後端分離的純 JSON API：prod 只回 JSON。
+    # BrowsableAPIRenderer 只在 DEBUG 時掛上（它吃 /static/rest_framework/，
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        *(["rest_framework.renderers.BrowsableAPIRenderer"] if DEBUG else []),
+    ],
 }
 
 SPECTACULAR_SETTINGS = {
