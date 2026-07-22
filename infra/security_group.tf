@@ -93,25 +93,25 @@ resource "aws_vpc_security_group_egress_rule" "redis_all" {
 resource "aws_vpc_security_group_ingress_rule" "alb_https" {
   security_group_id = aws_security_group.alb.id
   ip_protocol       = "tcp"
-  from_port = 443
-  to_port = 443
-  cidr_ipv4 = "0.0.0.0/0" # 來源可以是所有 IPv4 位址
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = "0.0.0.0/0" # 來源可以是所有 IPv4 位址
 }
 
 resource "aws_vpc_security_group_ingress_rule" "alb_http" {
   security_group_id = aws_security_group.alb.id
   ip_protocol       = "tcp"
-  from_port = 80
-  to_port = 80
-  cidr_ipv4 = "0.0.0.0/0" # 來源可以是所有 IPv4 位址
+  from_port         = 80
+  to_port           = 80
+  cidr_ipv4         = "0.0.0.0/0" # 來源可以是所有 IPv4 位址
 }
 
 # ── SG-api：只收 ALB 轉進來的流量 ───────────────────────────────────
 resource "aws_vpc_security_group_ingress_rule" "api_from_alb" {
   security_group_id = aws_security_group.api.id
   ip_protocol       = "tcp"
-  from_port = 8000
-  to_port = 8000
+  from_port         = 8000
+  to_port           = 8000
   # 只有綁定 SG-alb 的資源 才能連到綁定 SG-api 的資源的 TCP 8000 port
   referenced_security_group_id = aws_security_group.alb.id
 }
@@ -122,34 +122,34 @@ resource "aws_vpc_security_group_ingress_rule" "api_from_alb" {
 
 # ── SG-rds：Postgres，准 api 和 worker 進來 ─────────────────────────
 resource "aws_vpc_security_group_ingress_rule" "rds_from_api" {
-  security_group_id = aws_security_group.rds.id
-  ip_protocol       = "tcp"
-  from_port = 5432
-  to_port = 5432
+  security_group_id            = aws_security_group.rds.id
+  ip_protocol                  = "tcp"
+  from_port                    = 5432
+  to_port                      = 5432
   referenced_security_group_id = aws_security_group.api.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "rds_from_worker" {
-  security_group_id = aws_security_group.rds.id
-  ip_protocol       = "tcp"
-  from_port = 5432
-  to_port = 5432
+  security_group_id            = aws_security_group.rds.id
+  ip_protocol                  = "tcp"
+  from_port                    = 5432
+  to_port                      = 5432
   referenced_security_group_id = aws_security_group.worker.id
 }
 
 # ── SG-redis：Redis broker，准 api 和 worker 進來 ───────────────────
 resource "aws_vpc_security_group_ingress_rule" "redis_from_api" {
-  security_group_id = aws_security_group.redis.id
-  ip_protocol       = "tcp"
-  from_port = 6379
-  to_port = 6379
+  security_group_id            = aws_security_group.redis.id
+  ip_protocol                  = "tcp"
+  from_port                    = 6379
+  to_port                      = 6379
   referenced_security_group_id = aws_security_group.api.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "redis_from_worker" {
-  security_group_id = aws_security_group.redis.id
-  ip_protocol       = "tcp"
-  from_port = 6379
-  to_port = 6379
+  security_group_id            = aws_security_group.redis.id
+  ip_protocol                  = "tcp"
+  from_port                    = 6379
+  to_port                      = 6379
   referenced_security_group_id = aws_security_group.worker.id
 }

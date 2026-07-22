@@ -2,9 +2,9 @@
 resource "aws_lb" "main" {
   name               = "durable-queue-alb"
   load_balancer_type = "application"
-  internal = false
-  subnets = [for subnet in aws_subnet.public : subnet.id]
-  security_groups = [aws_security_group.alb.id]
+  internal           = false
+  subnets            = [for subnet in aws_subnet.public : subnet.id]
+  security_groups    = [aws_security_group.alb.id]
 
   tags = { Name = "durable-queue-alb" }
 }
@@ -12,14 +12,14 @@ resource "aws_lb" "main" {
 
 # ── Target Group（後端目標池 + health check）─────────────────────────
 resource "aws_lb_target_group" "api" {
-  name = "durable-queue-api"
-  port = 8000
-  protocol = "HTTP"
-  vpc_id = aws_vpc.main.id
+  name        = "durable-queue-api"
+  port        = 8000
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
   target_type = "instance"
 
   health_check {
-    path = "/health/"
+    path    = "/health/"
     matcher = 200
   }
 
@@ -31,14 +31,14 @@ resource "aws_lb_target_group" "api" {
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main.arn
 
-  port = 443
-  protocol = "HTTPS"
+  port       = 443
+  protocol   = "HTTPS"
   ssl_policy = "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09"
   # 等待 ISSUED 後才建立 listener
   certificate_arn = aws_acm_certificate_validation.main.certificate_arn
 
   default_action {
-    type = "forward"
+    type             = "forward"
     target_group_arn = aws_lb_target_group.api.arn
   }
 }
@@ -46,7 +46,7 @@ resource "aws_lb_listener" "https" {
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
 
-  port = 80
+  port     = 80
   protocol = "HTTP"
 
   default_action {

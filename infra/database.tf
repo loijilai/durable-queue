@@ -12,21 +12,21 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_db_instance" "postgres" {
   identifier = "durable-queue-postgres"
 
-  engine = "postgres"
-  engine_version = "16"
-  instance_class = "db.t4g.micro"
+  engine            = "postgres"
+  engine_version    = "16"
+  instance_class    = "db.t4g.micro"
   allocated_storage = 20
-  storage_type = "gp3"
-  db_name = "durable_queue"
-  username = "durable_queue"
+  storage_type      = "gp3"
+  db_name           = "durable_queue"
+  username          = "durable_queue"
 
   # 密碼交給 Secret Manager 託管
   manage_master_user_password = true
 
   # ── 網路 / 授權 ──
-  db_subnet_group_name = aws_db_subnet_group.main.name
+  db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
-  publicly_accessible = false # 只走 VPC 內網，不給 public IP
+  publicly_accessible    = false # 只走 VPC 內網，不給 public IP
 
   multi_az = false
 
@@ -53,14 +53,14 @@ resource "aws_elasticache_subnet_group" "main" {
 resource "aws_elasticache_cluster" "redis" {
   cluster_id = "durable-queue-redis"
 
-  engine = "redis"
-  engine_version = "7.0"
-  node_type = "cache.t4g.micro"
+  engine          = "redis"
+  engine_version  = "7.0"
+  node_type       = "cache.t4g.micro"
   num_cache_nodes = 1
-  port = 6379
+  port            = 6379
 
   # ── 網路 / 授權 ──
-  subnet_group_name = aws_elasticache_subnet_group.main.name
+  subnet_group_name  = aws_elasticache_subnet_group.main.name
   security_group_ids = [aws_security_group.redis.id]
 
   tags = { Name = "durable-queue-redis" }

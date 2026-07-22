@@ -147,6 +147,7 @@
 ### 五、Advanced deployment（進階部署）
 
 - [ ] **AWS + K8s + SQS**：K8s（pod、ingress）編排；把 broker 從 Redis 換成 SQS，對照 SQS 原生的 visibility timeout / DLQ 與手刻/Celery 版本的差異。
+  - redis HA、scalability、migration-on-boot
 - [ ] **Production observability（metrics / tracing / logging）**：和第一階段 dev-time 的 Flower 不同——這是 production system 級別的可觀測性。metrics（例如 Prometheus 收 queue 深度 / task 延遲 / 失敗率 + Grafana 儀表板與告警）、distributed tracing（一個 request 跨 API→broker→worker 的完整 trace，OpenTelemetry）、structured logging（JSON log、correlation id 串起同一條請求、集中式收集）。重點是三者各自回答什麼問題（metrics=系統現在健不健康、tracing=這一筆慢在哪、logging=到底發生什麼事）。
 
 ### 六、Case study（案例研究 / 深入分析）
