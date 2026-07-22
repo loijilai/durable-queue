@@ -111,7 +111,9 @@ resource "aws_iam_role_policy" "github_actions" {
           "ec2:Describe*",
           "autoscaling:Describe*",
           "rds:Describe*",
+          "rds:ListTagsForResource",
           "elasticache:Describe*",
+          "elasticache:ListTagsForResource",
           "elasticloadbalancing:Describe*",
           "route53:Get*",
           "route53:List*",
@@ -119,7 +121,10 @@ resource "aws_iam_role_policy" "github_actions" {
           "acm:List*",
           "secretsmanager:DescribeSecret",
           "secretsmanager:GetSecretValue",
+          "secretsmanager:GetResourcePolicy",
           "ecr:Describe*",
+          "ecr:ListTagsForResource",
+          "ssm:GetParameter",
           "iam:Get*",
           "iam:List*"
         ]
