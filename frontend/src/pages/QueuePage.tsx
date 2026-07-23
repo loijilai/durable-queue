@@ -4,13 +4,32 @@ import { useAuth } from "../context/AuthContext.tsx";
 import {
   ApiError,
   createJob,
-  getJob,
+  listJobs,
+  retryJob,
   type JobStatus,
   type TranscriptionJob,
 } from "../lib/api.ts";
 
 const POLL_INTERVAL_MS = 2000;
 const TERMINAL_STATUSES: JobStatus[] = ["succeeded", "failed"];
+
+function formatRelativeTime(iso: string): string {
+  const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return `${Math.floor(diffHr / 24)}d ago`;
+}
+
+function formatDuration(startIso: string, endIso: string): string {
+  const totalSec = (new Date(endIso).getTime() - new Date(startIso).getTime()) / 1000;
+  if (totalSec < 60) return `${totalSec.toFixed(1)}s`;
+  const min = Math.floor(totalSec / 60);
+  const sec = Math.round(totalSec % 60);
+  return `${min}m ${sec}s`;
+}
 
 function stepState(
   stepStatus: JobStatus,
@@ -36,25 +55,24 @@ function stepState(
 function JobStep({ status, label, job }: { status: JobStatus; label: string; job: TranscriptionJob }) {
   return (
     <div className={`job-step job-step-${stepState(status, job)}`}>
-      <span className="job-step-dot" />
-      {label}
+      <span className="job-step-rail">
+        <span className="job-step-dot" />
+      </span>
+      <span className="job-step-label">{label}</span>
     </div>
   );
 }
 
-// Pending → Running 是線性的，走到 terminal state 後分岔成 Succeeded / Failed 兩條互斥支線，
-// 用箭頭把線性段落串起來，terminal 的兩個分支並排放在同一欄，呈現真正的狀態機形狀。
+// 卡片寬度有限，橫向排不下四個節點，改用縱向 stepper（訂單追蹤那種常見 pattern）：
+// 由上到下 Pending → Running → Succeeded/Failed，一條連接線貫穿，寬度只吃卡片的一小塊，
+// 不管卡片多窄都不會橫向溢出。
 function JobTimeline({ job }: { job: TranscriptionJob }) {
   return (
     <div className="job-timeline">
       <JobStep status="pending" label="Pending" job={job} />
-      <span className="job-arrow">→</span>
       <JobStep status="running" label="Running" job={job} />
-      <span className="job-arrow">→</span>
-      <div className="job-branch">
-        <JobStep status="succeeded" label="Succeeded" job={job} />
-        <JobStep status="failed" label="Failed" job={job} />
-      </div>
+      <JobStep status="succeeded" label="Succeeded" job={job} />
+      <JobStep status="failed" label="Failed" job={job} />
     </div>
   );
 }
@@ -62,28 +80,43 @@ function JobTimeline({ job }: { job: TranscriptionJob }) {
 function QueuePage() {
   const { accessToken, authedFetch } = useAuth();
   const [videoUrl, setVideoUrl] = useState("");
-  const [job, setJob] = useState<TranscriptionJob | null>(null);
+  const [jobs, setJobs] = useState<TranscriptionJob[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryingId, setRetryingId] = useState<number | null>(null);
+  const [retryErrors, setRetryErrors] = useState<Record<number, string>>({});
 
-  // 輪詢：job 存在且還沒進到 terminal state 時，每 2 秒打一次 GET /api/jobs/{id}/。
+  const hasActiveJob = jobs.some((j) => !TERMINAL_STATUSES.includes(j.status));
+
+  // 進頁面先把使用者現有的 job 歷史抓回來——不只是這次 session 建立的那一批。
+  useEffect(() => {
+    if (!accessToken) return;
+    authedFetch((token) => listJobs(token))
+      .then(setJobs)
+      .catch(() => {
+        // 初次載入失敗就維持空列表，使用者仍可以送出新 job
+      });
+  }, [accessToken, authedFetch]);
+
+  // 輪詢：list 裡只要還有非 terminal 狀態的 job，每 2 秒打一次 GET /api/jobs/，
+  // 一次 request 換回全部 job 的最新狀態，而不是每個 job 各開一條輪詢。
   // 用 authedFetch 包起來，遇到 401（access token 過期）會自動 refresh 一次再重試。
   useEffect(() => {
-    if (!accessToken || !job || TERMINAL_STATUSES.includes(job.status)) {
+    if (!accessToken || !hasActiveJob) {
       return;
     }
 
     const id = setInterval(async () => {
       try {
-        const updated = await authedFetch((token) => getJob(token, job.id));
-        setJob(updated);
+        const updated = await authedFetch((token) => listJobs(token));
+        setJobs(updated);
       } catch {
         // 輪詢中的暫時性失敗（含 refresh 也失敗）不中斷 loop，下一次 tick 再試
       }
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(id);
-  }, [accessToken, job, authedFetch]);
+  }, [accessToken, hasActiveJob, authedFetch]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -92,12 +125,33 @@ function QueuePage() {
     setError(null);
     try {
       const created = await authedFetch((token) => createJob(token, videoUrl));
-      setJob(created);
+      setJobs((prev) => [created, ...prev]);
       setVideoUrl("");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleRetry(id: number) {
+    setRetryingId(id);
+    setRetryErrors((prev) => {
+      const { [id]: _discard, ...rest } = prev;
+      return rest;
+    });
+    try {
+      const updated = await authedFetch((token) => retryJob(token, id));
+      // retry 把該 job 重設回 PENDING 並清掉 error/finished_at（見後端 retry_job）；
+      // 換掉 list 裡對應那一筆，hasActiveJob 會自動變 true，輪詢 effect 自己接手繼續追蹤。
+      setJobs((prev) => prev.map((j) => (j.id === id ? updated : j)));
+    } catch (err) {
+      setRetryErrors((prev) => ({
+        ...prev,
+        [id]: err instanceof ApiError ? err.message : "Retry failed",
+      }));
+    } finally {
+      setRetryingId(null);
     }
   }
 
@@ -142,23 +196,52 @@ function QueuePage() {
               {submitting ? "Submitting…" : "Submit job"}
             </button>
           </form>
-
-          {job && (
-            <div className="job-panel">
-              <p className="job-meta">
-                Job created, now processing asynchronously —{" "}
-                <strong>#{job.id}</strong>
-              </p>
-              <JobTimeline job={job} />
-              {job.status === "failed" && job.error && (
-                <p className="auth-error">{job.error}</p>
-              )}
-              {job.status === "succeeded" && job.transcript && (
-                <p className="job-transcript">{job.transcript}</p>
-              )}
-            </div>
-          )}
         </div>
+      )}
+
+      {accessToken && jobs.length > 0 && (
+        <>
+          <p className="eyebrow job-board-eyebrow">
+            <span className="eyebrow-dot" />
+            YOUR JOBS
+          </p>
+          <div className="job-board">
+            {jobs.map((j) => (
+              <div key={j.id} className="job-card">
+                <p className="job-meta">
+                  <strong>#{j.id}</strong> — {j.video_url}
+                </p>
+                <p className="job-timestamp">
+                  {j.finished_at
+                    ? `Completed in ${formatDuration(j.created_at, j.finished_at)}`
+                    : `Created ${formatRelativeTime(j.created_at)}`}
+                </p>
+                <JobTimeline job={j} />
+                {j.status === "failed" && j.error && (
+                  <p className="auth-error">{j.error}</p>
+                )}
+                {j.status === "succeeded" && j.transcript && (
+                  <p className="job-transcript">{j.transcript}</p>
+                )}
+                {j.status === "failed" && (
+                  <>
+                    <button
+                      type="button"
+                      className="btn-secondary btn-retry"
+                      onClick={() => handleRetry(j.id)}
+                      disabled={retryingId === j.id}
+                    >
+                      {retryingId === j.id ? "Retrying…" : "Retry"}
+                    </button>
+                    {retryErrors[j.id] && (
+                      <p className="auth-error">{retryErrors[j.id]}</p>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </section>
   );

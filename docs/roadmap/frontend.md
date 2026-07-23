@@ -30,11 +30,11 @@ Notes: 為了降低 MVP 的實作成本，目前由 OAuth callback 使用 URL fr
 
 ### 2. 核心功能頁面：Distributed Queue & Async Pattern
 
-- [ ] URL 提交表單：貼 YouTube URL → 呼叫真實 `POST /api/jobs/`，立刻拿到 job id。
-- [ ] Job 狀態 timeline：PENDING → RUNNING → SUCCEEDED/FAILED，用輪詢真實 `GET /api/jobs/{id}` 更新，不是假動畫。
-- [ ] 文案用「Job created, now processing asynchronously」（英文）。
-- retry
-- transcription job list
+- [x] URL 提交表單：貼 YouTube URL → 呼叫真實 `POST /api/jobs/`，立刻拿到 job id。
+- [x] Job 狀態 timeline：PENDING → RUNNING → SUCCEEDED/FAILED，用輪詢真實 `GET /api/jobs/{id}` 更新，不是假動畫。分岔畫法：Pending → Running 線性，走到 terminal state 後 Succeeded/Failed 並排呈現互斥分支，箭頭串接。
+- [x] 文案用「Job created, now processing asynchronously」（英文）。
+- [x] **transcription job list（下一步）**：顯示目前使用者所有 job 的列表（不只是剛建立的那一個），對應 `GET /api/jobs/`（`JobCreateView` 本身是 `ListCreateAPIView`，已經有 list 能力，前端還沒接）。
+- [x] retry：串接既有後端 `POST /api/jobs/{id}/retry/`（`JobRetryView`），只對 `FAILED` 狀態的 job 顯示 retry 按鈕。
 
 ### 2-1. Concurrency Issues（併發問題）
 
