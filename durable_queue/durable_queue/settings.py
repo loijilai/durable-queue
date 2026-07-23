@@ -194,3 +194,6 @@ AUTH_USER_MODEL = "jobs.CustomUser"
 GOOGLE_CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
 GOOGLE_REDIRECT_URI = os.environ["GOOGLE_REDIRECT_URI"]
+
+# Google callback 完成後，要把 access/refresh token 導回的前端網址（React SPA）
+FRONTEND_URL = os.environ["FRONTEND_URL"]

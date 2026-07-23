@@ -122,6 +122,31 @@ a {
   color: var(--canvas);
 }
 
+.auth-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--slate);
+}
+
+.auth-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dust);
+}
+
+.auth-status-in {
+  color: var(--ink);
+}
+
+.auth-status-in .auth-status-dot {
+  background: var(--ink);
+}
+
 .content {
   flex: 1;
   width: 100%;
@@ -234,6 +259,28 @@ a {
   cursor: not-allowed;
 }
 
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--canvas);
+  color: var(--ink);
+  border: 1.5px solid var(--dust);
+  border-radius: 20px;
+  padding: 6px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  text-decoration: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-google {
+  gap: 10px;
+}
+
 .link-button {
   background: none;
   border: none;
@@ -290,6 +337,15 @@ a {
   color: var(--signal-orange);
   font-size: 14px;
   font-weight: 500;
+}
+
+.auth-divider {
+  text-align: center;
+  color: var(--slate);
+  font-size: 13px;
+  margin: 20px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .auth-switch {

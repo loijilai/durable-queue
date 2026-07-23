@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
-import { login as loginRequest, registerUser, type LoginCredentials, type RegisterFields } from '../lib/api.ts'
+import {
+  login as loginRequest,
+  registerUser,
+  type LoginCredentials,
+  type RegisterFields,
+  type TokenPair,
+} from '../lib/api.ts'
 import {
   saveTokens,
   getAccessToken,
@@ -13,6 +19,7 @@ interface AuthContextValue {
   user: JwtPayload | null
   login: (credentials: LoginCredentials) => Promise<void>
   register: (fields: RegisterFields) => Promise<void>
+  completeGoogleLogin: (tokens: TokenPair) => void
   logout: () => void
 }
 
@@ -31,6 +38,11 @@ function AuthProvider({ children }: { children: ReactNode }) {
     await registerUser(fields)
   }
 
+  function completeGoogleLogin(tokens: TokenPair) {
+    saveTokens(tokens)
+    setAccessToken(tokens.access)
+  }
+
   function logout() {
     clearTokens()
     setAccessToken(null)
@@ -38,7 +50,14 @@ function AuthProvider({ children }: { children: ReactNode }) {
 
   const user = accessToken ? decodeJwtPayload(accessToken) : null
 
-  const value: AuthContextValue = { accessToken, user, login, register, logout }
+  const value: AuthContextValue = {
+    accessToken,
+    user,
+    login,
+    register,
+    completeGoogleLogin,
+    logout,
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.tsx'
 
 const NAV_ITEMS = [
   { to: '/auth', label: 'Authentication' },
@@ -9,6 +10,8 @@ const NAV_ITEMS = [
 ]
 
 function Layout() {
+  const { user } = useAuth()
+
   return (
     <div className="page">
       <header className="topbar">
@@ -29,6 +32,10 @@ function Layout() {
               </NavLink>
             ))}
           </div>
+          <span className={user ? 'auth-status auth-status-in' : 'auth-status'}>
+            <span className="auth-status-dot" />
+            {user ? (user.username ?? `user #${user.user_id}`) : 'Not signed in'}
+          </span>
         </nav>
       </header>
 

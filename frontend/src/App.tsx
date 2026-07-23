@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout.tsx'
 import HomePage from './pages/HomePage.tsx'
 import AuthPage from './pages/AuthPage.tsx'
+import GoogleCallbackPage from './pages/GoogleCallbackPage.tsx'
 import QueuePage from './pages/QueuePage.tsx'
 import ConcurrencyPage from './pages/ConcurrencyPage.tsx'
 import ScalabilityPage from './pages/ScalabilityPage.tsx'
@@ -13,6 +14,7 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
         <Route path="/queue" element={<QueuePage />} />
         <Route path="/concurrency" element={<ConcurrencyPage />} />
         <Route path="/scalability" element={<ScalabilityPage />} />

@@ -1,5 +1,7 @@
+from urllib.parse import urlparse, parse_qs
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from rest_framework.test import APITestCase
 from rest_framework import status
 from unittest.mock import patch, MagicMock
@@ -15,6 +17,14 @@ def _token_response(json_data):
     resp.raise_for_status.return_value = None
     resp.json.return_value = json_data
     return resp
+
+
+def _fragment_params(resp):
+    """整段 OAuth 流程都是整頁導頁，callback 一律 302 回前端、資料放在 URL fragment。"""
+    location = resp.url
+    assert location.startswith(f"{settings.FRONTEND_URL}/auth/google/callback#")
+    fragment = urlparse(location).fragment
+    return {k: v[0] for k, v in parse_qs(fragment).items()}
 
 
 class GoogleCallbackTests(APITestCase):
@@ -58,10 +68,11 @@ class GoogleCallbackTests(APITestCase):
         users_before = User.objects.count()
         # Act
         resp = self._callback()
-        # Assert:發了 JWT,而且沒有重複建 user
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertIn("access", resp.data)
-        self.assertIn("refresh", resp.data)
+        # Assert:302 導回前端,fragment 帶 JWT,而且沒有重複建 user
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+        params = _fragment_params(resp)
+        self.assertIn("access", params)
+        self.assertIn("refresh", params)
         self.assertEqual(User.objects.count(), users_before)
 
     # --- Case 3:全新且 email 已驗證 → 建 user + identity,密碼設 unusable ---
@@ -81,9 +92,10 @@ class GoogleCallbackTests(APITestCase):
         }
         # Act
         resp = self._callback()
-        # Assert:發 JWT + user 和 identity 兩張都建了
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertIn("access", resp.data)
+        # Assert:302 導回前端,fragment 帶 JWT + user 和 identity 兩張都建了
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+        params = _fragment_params(resp)
+        self.assertIn("access", params)
         user = User.objects.get(email="newbie@test.com")
         self.assertTrue(
             SocialIdentity.objects.filter(
@@ -112,8 +124,9 @@ class GoogleCallbackTests(APITestCase):
         users_before = User.objects.count()
         # Act
         resp = self._callback()
-        # Assert:409 擋下,而且「什麼都沒發生」— 沒建人、沒自動綁 identity
-        self.assertEqual(resp.status_code, status.HTTP_409_CONFLICT)
+        # Assert:擋下,302 導回前端 fragment 帶 error,而且「什麼都沒發生」— 沒建人、沒自動綁 identity
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+        self.assertIn("error", _fragment_params(resp))
         self.assertEqual(User.objects.count(), users_before)
         self.assertFalse(SocialIdentity.objects.exists())
 
@@ -132,8 +145,9 @@ class GoogleCallbackTests(APITestCase):
         }
         # Act
         resp = self._callback()
-        # Assert:403,且沒建任何帳號 / identity
-        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+        # Assert:302 導回前端 fragment 帶 error,且沒建任何帳號 / identity
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+        self.assertIn("error", _fragment_params(resp))
         self.assertFalse(User.objects.filter(email="unverified@test.com").exists())
         self.assertFalse(SocialIdentity.objects.exists())
 
@@ -146,7 +160,8 @@ class GoogleCallbackTests(APITestCase):
         self._set_state("real_state")
         # Act:callback 帶回一個對不上的偽造 state
         resp = self._callback(state="forged_state")
-        # Assert:400,而且根本沒去打 Google(擋在換 token 之前)
-        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        # Assert:302 導回前端 fragment 帶 error,而且根本沒去打 Google(擋在換 token 之前)
+        self.assertEqual(resp.status_code, status.HTTP_302_FOUND)
+        self.assertIn("error", _fragment_params(resp))
         mock_post.assert_not_called()
         mock_verify.assert_not_called()
