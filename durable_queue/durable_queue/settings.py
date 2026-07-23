@@ -34,10 +34,17 @@ ALLOWED_HOSTS = [
     "*"
 ]  # Host header 攻擊的前提是能直連 EC2; SG-api 只放行 SG-alb → 前提不成立
 
+# 前端 (Vite dev server) 開發時的 origin，允許它讀取跨 origin 的 response
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
 
 # Application definition
 
 INSTALLED_APPS = [
+    "corsheaders",
     "rest_framework",
     "drf_spectacular",
     "jobs",
@@ -51,6 +58,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
