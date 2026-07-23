@@ -21,6 +21,14 @@ export function getAccessToken(): string | null {
   return sessionStorage.getItem(ACCESS_KEY)
 }
 
+export function getRefreshToken(): string | null {
+  return sessionStorage.getItem(REFRESH_KEY)
+}
+
+export function saveAccessToken(access: string): void {
+  sessionStorage.setItem(ACCESS_KEY, access)
+}
+
 export function clearTokens(): void {
   sessionStorage.removeItem(ACCESS_KEY)
   sessionStorage.removeItem(REFRESH_KEY)

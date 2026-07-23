@@ -45,6 +45,7 @@ Typography is rendered entirely in **MarkForMC**, Mastercard's proprietary geome
 
 ### Semantic & Accent
 - **Link Blue** (`#3860BE`): A deep, slightly dusty blue used for inline links and informational callouts. Saturated enough to read as a link without being neon.
+- **Signal Green** (`#2F7A3D`): Confirmation / success / "correct" state color — logged-in status, completed steps, passed checks. A muted forest green (not a neon success green) to stay in the same low-saturation register as the rest of the palette. Reserved for states that are actually done/verified, not for in-progress or neutral states.
 - **Priceless Red + Yellow**: The full-color Mastercard logo mark is the only place the brand's red and yellow appear together; they lock the identity to the page without acting as a UI palette.
 
 ### Gradient System
@@ -337,6 +338,7 @@ Circular portraits scale proportionally (maintaining the perfect circle at every
 - Body text: "Ink Black (`#141413`) at weight 450"
 - Muted text: "Slate Gray (`#696969`)"
 - Signal / Consent: "Signal Orange (`#CF4500`) — reserve for cookie consent and legal actions"
+- Success / Confirmed: "Signal Green (`#2F7A3D`) — reserve for completed/verified states (logged-in, done steps, passed checks), never for in-progress"
 - Accent arc: "Light Signal Orange (`#F37338`) — orbital decorative lines only"
 - Border / Outline: "Ink Black at 1.5px for pill buttons; 1px at low opacity elsewhere"
 - Footer: "Ink Black (`#141413`) with White text"

@@ -8,6 +8,7 @@
   --white: #ffffff;
   --signal-orange: #cf4500;
   --light-orange: #f37338;
+  --signal-green: #2f7a3d;
   --footer-black: #141413;
   --shadow: rgba(0, 0, 0, 0.08) 0px 24px 48px;
 
@@ -140,11 +141,11 @@ a {
 }
 
 .auth-status-in {
-  color: var(--ink);
+  color: var(--signal-green);
 }
 
 .auth-status-in .auth-status-dot {
-  background: var(--ink);
+  background: var(--signal-green);
 }
 
 .content {
@@ -353,6 +354,112 @@ a {
   color: var(--slate);
 }
 
+/* Queue page */
+.queue-page {
+  padding-top: 32px;
+}
+
+.queue-card {
+  margin-top: 32px;
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+  max-width: 560px;
+}
+
+.queue-card .auth-form input {
+  width: 100%;
+}
+
+.job-panel {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1.5px solid var(--dust);
+}
+
+.job-meta {
+  font-size: 14px;
+  color: var(--slate);
+  margin-bottom: 16px;
+}
+
+.job-timeline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.job-arrow {
+  color: var(--dust);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.job-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.job-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--canvas-lifted);
+  color: var(--slate);
+  border: 1.5px solid var(--dust);
+}
+
+.job-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dust);
+}
+
+.job-step-done {
+  color: var(--signal-green);
+  border-color: var(--signal-green);
+}
+
+.job-step-done .job-step-dot {
+  background: var(--signal-green);
+}
+
+.job-step-active {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.job-step-active .job-step-dot {
+  background: var(--light-orange);
+}
+
+.job-step-failed {
+  color: var(--signal-orange);
+  border-color: var(--signal-orange);
+}
+
+.job-step-failed .job-step-dot {
+  background: var(--signal-orange);
+}
+
+.job-transcript {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--charcoal);
+  background: var(--canvas-lifted);
+  border-radius: 12px;
+  padding: 16px;
+  white-space: pre-wrap;
+}
+
 /* JWT inspector */
 .jwt-inspector {
   margin-top: 32px;
@@ -399,4 +506,26 @@ a {
 .jwt-expired {
   color: var(--signal-orange);
   font-weight: 700;
+}
+
+/* Manual refresh demo */
+.refresh-demo {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1.5px solid var(--dust);
+}
+
+.refresh-demo .jwt-note code {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  background: var(--canvas-lifted);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.refresh-success {
+  color: var(--signal-green);
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 12px;
 }

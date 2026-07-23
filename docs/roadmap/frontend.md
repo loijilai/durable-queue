@@ -24,6 +24,7 @@
 - [x] 登入 / 註冊表單頁面，打真實的 `/api/auth/token/`、`/api/auth/register/` endpoint。Access + refresh token 都存 `sessionStorage`（[authStorage.ts](../../frontend/src/lib/authStorage.ts) `saveTokens()`），access token 另外同步一份到 React state 供 UI 即時反應——已知簡化版（不防 XSS，只縮小跨分頁/非 XSS 情境下的曝險面），production 版本會走 access 純記憶體 + refresh HttpOnly cookie + CSRF 防護。
 - [x] 「Inspect my token」面板：前端當場用瀏覽器內建方式（`atob` 手刻，非後端 API、非 `jwt-decode` 套件）解碼 JWT payload，秀出 exp/iat/user_id 等欄位給面試官看，並顯示距離過期的即時倒數，藉此具體展示「stateless」這個概念。
 - [x] **Google 登入**（下一步）：串接既有後端 `GET /api/auth/google/login/` → `GET /api/auth/google/callback/`。注意目前 `GoogleCallbackView` 是直接回傳 JSON `{access, refresh}`，不是 redirect 回前端——這個 callback 是走整頁導頁（瀏覽器直接打，不是 fetch），跟 SPA 的整合方式（callback 完要怎麼把 token 交回前端 React state）要在開工前先講清楚設計。
+- [x] manual refresh
 
 Notes: 為了降低 MVP 的實作成本，目前由 OAuth callback 使用 URL fragment 將 JWT 傳給 SPA，前端讀取後立即清除 URL，並將 access 與 refresh token 儲存在 sessionStorage。這避免 token 進入伺服器 access log，也避免長期持久化；已知代價是 token 仍可被同源 JavaScript 存取，因此存在 XSS token exfiltration 風險。產品成熟後會將 refresh token 遷移至 HttpOnly Cookie。
 
@@ -32,6 +33,8 @@ Notes: 為了降低 MVP 的實作成本，目前由 OAuth callback 使用 URL fr
 - [ ] URL 提交表單：貼 YouTube URL → 呼叫真實 `POST /api/jobs/`，立刻拿到 job id。
 - [ ] Job 狀態 timeline：PENDING → RUNNING → SUCCEEDED/FAILED，用輪詢真實 `GET /api/jobs/{id}` 更新，不是假動畫。
 - [ ] 文案用「Job created, now processing asynchronously」（英文）。
+- retry
+- transcription job list
 
 ### 2-1. Concurrency Issues（併發問題）
 
