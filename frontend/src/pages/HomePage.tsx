@@ -15,9 +15,9 @@ const SECTIONS = [
   },
   {
     to: '/concurrency',
-    eyebrow: 'CONCURRENCY ISSUES',
-    title: 'Row locking under concurrent claims',
-    description: 'select_for_update in action, backed by a real concurrency test log.',
+    eyebrow: 'DURABILITY WALKTHROUGH',
+    title: 'Why every piece of this queue exists',
+    description: 'The causal chain from "a worker can die mid-task" to visibility timeout, idempotency, locking, and retry.',
   },
   {
     to: '/scalability',

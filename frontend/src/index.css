@@ -571,3 +571,278 @@ a {
   font-weight: 500;
   margin-top: 12px;
 }
+
+/* Durability walkthrough page */
+.durability-walkthrough {
+  padding-top: 32px;
+}
+
+.story-nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.story-node {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.story-node-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.story-node-facts {
+  margin: 16px 0 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 20px;
+}
+
+.story-node-facts dt {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--slate);
+  padding-top: 4px;
+}
+
+.story-node-facts dd {
+  margin: 0;
+  font-size: 15px;
+  color: var(--charcoal);
+  padding-bottom: 12px;
+}
+
+.story-node-diagram {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1.5px solid var(--dust);
+}
+
+/* Story diagrams — small CSS-box illustrations, one per node */
+.diagram {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.diagram-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--canvas-lifted);
+  border: 1.5px solid var(--dust);
+  border-radius: 16px;
+  padding: 12px 16px;
+  min-width: 120px;
+}
+
+.diagram-box-wide {
+  min-width: 200px;
+  align-items: center;
+}
+
+.diagram-box-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.diagram-box-sub {
+  font-size: 12px;
+  color: var(--slate);
+}
+
+.diagram-box-dying {
+  border-style: dashed;
+  border-color: var(--signal-orange);
+  opacity: 0.7;
+}
+
+.diagram-box-broker {
+  border-color: var(--light-orange);
+}
+
+.diagram-box-db {
+  border-color: var(--signal-green);
+  background: #eef6ef;
+}
+
+.diagram-box-guard {
+  border-color: var(--signal-green);
+  background: #eef6ef;
+}
+
+.diagram-arrow {
+  font-size: 20px;
+  color: var(--slate);
+}
+
+.diagram-arrow-broken {
+  color: var(--signal-orange);
+  font-weight: 700;
+}
+
+/* Node 2: visibility timeout ring */
+.timeout-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: conic-gradient(var(--light-orange) 0deg 270deg, var(--dust) 270deg 360deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeout-ring-label {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Node 3: timeout trade-off */
+.diagram-tradeoff {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.tradeoff-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tradeoff-tag {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--white);
+  flex-shrink: 0;
+  width: 84px;
+  text-align: center;
+}
+
+.tradeoff-tag-short {
+  background: var(--signal-orange);
+}
+
+.tradeoff-tag-long {
+  background: var(--slate);
+}
+
+.tradeoff-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--dust);
+}
+
+.tradeoff-bar-short {
+  width: 30%;
+}
+
+.tradeoff-bar-long {
+  width: 85%;
+}
+
+/* Node 5: locking lanes */
+.diagram-locking {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.lock-lane {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lock-lane-label {
+  width: 72px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.lock-bar {
+  flex: 1;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.lock-bar-active {
+  background: #eef6ef;
+  border: 1.5px solid var(--signal-green);
+  color: var(--signal-green);
+}
+
+.lock-bar-waiting {
+  background: var(--canvas-lifted);
+  border: 1.5px dashed var(--dust);
+  color: var(--slate);
+}
+
+/* Node 6: retry backoff bars */
+.diagram-retry {
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.retry-bar-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.retry-bar {
+  width: 20px;
+  background: var(--light-orange);
+  border-radius: 6px 6px 0 0;
+}
+
+/* Node 7: synthesis */
+.diagram-synthesis {
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.synthesis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .story-node {
+    padding: 24px;
+  }
+
+  .story-node-facts {
+    grid-template-columns: 1fr;
+  }
+}

@@ -13,7 +13,6 @@
 ## 前置準備事項
 
 - [x] **CORS 設定**：`django-cors-headers`，白名單 `http://localhost:5173`，未開 `CORS_ALLOW_CREDENTIALS`（JWT 走 header，不需要）。
-- [ ] **Concurrency demo log**：2-1 節需要的兩個 thread 交錯時間戳記 log，需使用者手動跑一次併發測試產生，非前端自動產生。
 
 ---
 
@@ -36,13 +35,12 @@ Notes: 為了降低 MVP 的實作成本，目前由 OAuth callback 使用 URL fr
 - [x] **transcription job list（下一步）**：顯示目前使用者所有 job 的列表（不只是剛建立的那一個），對應 `GET /api/jobs/`（`JobCreateView` 本身是 `ListCreateAPIView`，已經有 list 能力，前端還沒接）。
 - [x] retry：串接既有後端 `POST /api/jobs/{id}/retry/`（`JobRetryView`），只對 `FAILED` 狀態的 job 顯示 retry 按鈕。
 
-### 2-1. Concurrency Issues（併發問題）
+### 2-1. Durability Walkthrough
 
-> 定位為「靜態教學卡片」而非即時 API demo，分三步驟展開：
-
-- [ ] 展示真實程式碼（`select_for_update` 鎖的實作 + 併發測試程式碼）。
-- [ ] 展示 sequence diagram（先用 placeholder 頂著，待補真圖）。
-- [ ] 展示真實跑出來的測試 log（兩個 thread 的時間戳記，證明鎖真的序列化了寫入）——這份 log 需要使用者手動產生（見前置準備事項）。
+- [x] `/concurrency` 路由現在渲染 `DurabilityWalkthroughPage`：把 at-least-once / visibility timeout / retry(backoff+jitter) / concurrency / idempotency / broker-vs-DB 串成七個節點的因果鏈（每個 solution 都因為上一個 solution 開出新問題而存在），每節 Problem → Requirement → Solution 三段式，配一個對應的小 CSS/SVG diagram。
+- [x] Scroll-triggered reveal（`IntersectionObserver`，一次性，捲上去不重播）。
+- [x] Nav label 改成「Durability Walkthrough」，Home 卡片同步更新。
+- [ ] 原本的「展示真實程式碼 + 真實 sequence diagram + 真實併發測試 log」三步驟仍未做，可視為這頁未來的 polish（目前 locking 節點是文字 + CSS diagram，不是真實程式碼截圖）。
 
 ### 3. Scalability（Scale out worker / API）
 

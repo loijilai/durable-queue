@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.tsx'
 const NAV_ITEMS = [
   { to: '/auth', label: 'Authentication' },
   { to: '/queue', label: 'Distributed Queue' },
-  { to: '/concurrency', label: 'Concurrency' },
+  { to: '/concurrency', label: 'Durability Walkthrough' },
   { to: '/scalability', label: 'Scalability' },
   { to: '/high-availability', label: 'High Availability' },
 ]

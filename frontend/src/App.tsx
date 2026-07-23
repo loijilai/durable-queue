@@ -4,7 +4,7 @@ import HomePage from './pages/HomePage.tsx'
 import AuthPage from './pages/AuthPage.tsx'
 import GoogleCallbackPage from './pages/GoogleCallbackPage.tsx'
 import QueuePage from './pages/QueuePage.tsx'
-import ConcurrencyPage from './pages/ConcurrencyPage.tsx'
+import DurabilityWalkthroughPage from './pages/DurabilityWalkthroughPage.tsx'
 import ScalabilityPage from './pages/ScalabilityPage.tsx'
 import HighAvailabilityPage from './pages/HighAvailabilityPage.tsx'
 
@@ -16,7 +16,7 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
         <Route path="/queue" element={<QueuePage />} />
-        <Route path="/concurrency" element={<ConcurrencyPage />} />
+        <Route path="/concurrency" element={<DurabilityWalkthroughPage />} />
         <Route path="/scalability" element={<ScalabilityPage />} />
         <Route path="/high-availability" element={<HighAvailabilityPage />} />
       </Route>
