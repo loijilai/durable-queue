@@ -8,11 +8,11 @@
 
 整個前端頁面必須用英文。
 
-**技術選型（已與使用者確認）**：React + Vite，本地跑（`npm run dev` 打本地 Django）。
+**技術選型（已與使用者確認）**：React + Vite + TypeScript，本地跑（`npm run dev` 打本地 Django）。
 
 ## 前置準備事項
 
-- [ ] **CORS 設定**：屬於後端改動，本輪 roadmap 不做，先列為前置準備事項，前端開發前需先完成。
+- [x] **CORS 設定**：`django-cors-headers`，白名單 `http://localhost:5173`，未開 `CORS_ALLOW_CREDENTIALS`（JWT 走 header，不需要）。
 - [ ] **Concurrency demo log**：2-1 節需要的兩個 thread 交錯時間戳記 log，需使用者手動跑一次併發測試產生，非前端自動產生。
 
 ---
@@ -21,9 +21,9 @@
 
 ### 1. Authentication
 
-- [ ] 登入 / 註冊表單頁面，打真實的 `/api/auth/token/`、`/api/auth/register/` endpoint。
-- [ ] 顯示過程經歷哪些步驟。
-- [ ] 「Inspect my token」面板：前端當場用瀏覽器內建方式（非後端 API）解碼 JWT payload，秀出 exp/iat/user_id 等欄位給面試官看，並顯示距離過期的即時倒數，藉此具體展示「stateless」這個概念。
+- [x] 登入 / 註冊表單頁面，打真實的 `/api/auth/token/`、`/api/auth/register/` endpoint。Access + refresh token 都存 `sessionStorage`（[authStorage.ts](../../frontend/src/lib/authStorage.ts) `saveTokens()`），access token 另外同步一份到 React state 供 UI 即時反應——已知簡化版（不防 XSS，只縮小跨分頁/非 XSS 情境下的曝險面），production 版本會走 access 純記憶體 + refresh HttpOnly cookie + CSRF 防護。
+- [x] 「Inspect my token」面板：前端當場用瀏覽器內建方式（`atob` 手刻，非後端 API、非 `jwt-decode` 套件）解碼 JWT payload，秀出 exp/iat/user_id 等欄位給面試官看，並顯示距離過期的即時倒數，藉此具體展示「stateless」這個概念。
+- [ ] **Google 登入**（下一步）：串接既有後端 `GET /api/auth/google/login/` → `GET /api/auth/google/callback/`。注意目前 `GoogleCallbackView` 是直接回傳 JSON `{access, refresh}`，不是 redirect 回前端——這個 callback 是走整頁導頁（瀏覽器直接打，不是 fetch），跟 SPA 的整合方式（callback 完要怎麼把 token 交回前端 React state）要在開工前先講清楚設計。
 
 ### 2. 核心功能頁面：Distributed Queue & Async Pattern
 

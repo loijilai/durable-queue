@@ -1,4 +1,4 @@
-import PlaceholderPage from '../components/PlaceholderPage.jsx'
+import PlaceholderPage from '../components/PlaceholderPage.tsx'
 
 function ConcurrencyPage() {
   return (

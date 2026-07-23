@@ -1,4 +1,10 @@
-function PlaceholderPage({ eyebrow, title, description }) {
+interface PlaceholderPageProps {
+  eyebrow: string
+  title: string
+  description: string
+}
+
+function PlaceholderPage({ eyebrow, title, description }: PlaceholderPageProps) {
   return (
     <section className="placeholder-page">
       <p className="eyebrow">

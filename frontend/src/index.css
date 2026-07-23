@@ -233,3 +233,114 @@ a {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--signal-orange);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Auth page */
+.auth-page {
+  padding-top: 32px;
+}
+
+.auth-card {
+  margin-top: 32px;
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+  max-width: 420px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--charcoal);
+}
+
+.auth-form input {
+  font: inherit;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--dust);
+  background: var(--canvas-lifted);
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.auth-error {
+  color: var(--signal-orange);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auth-switch {
+  font-size: 14px;
+  color: var(--slate);
+}
+
+/* JWT inspector */
+.jwt-inspector {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1.5px solid var(--dust);
+}
+
+.jwt-note {
+  font-size: 14px;
+  color: var(--slate);
+  margin-bottom: 16px;
+}
+
+.jwt-raw {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  word-break: break-all;
+  background: var(--canvas-lifted);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--charcoal);
+  margin-bottom: 16px;
+}
+
+.jwt-fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.jwt-fields dt {
+  color: var(--slate);
+  font-weight: 500;
+}
+
+.jwt-fields dd {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  color: var(--ink);
+}
+
+.jwt-expired {
+  color: var(--signal-orange);
+  font-weight: 700;
+}

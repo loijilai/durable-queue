@@ -1,11 +1,11 @@
 import { Routes, Route } from 'react-router-dom'
-import Layout from './components/Layout.jsx'
-import HomePage from './pages/HomePage.jsx'
-import AuthPage from './pages/AuthPage.jsx'
-import QueuePage from './pages/QueuePage.jsx'
-import ConcurrencyPage from './pages/ConcurrencyPage.jsx'
-import ScalabilityPage from './pages/ScalabilityPage.jsx'
-import HighAvailabilityPage from './pages/HighAvailabilityPage.jsx'
+import Layout from './components/Layout.tsx'
+import HomePage from './pages/HomePage.tsx'
+import AuthPage from './pages/AuthPage.tsx'
+import QueuePage from './pages/QueuePage.tsx'
+import ConcurrencyPage from './pages/ConcurrencyPage.tsx'
+import ScalabilityPage from './pages/ScalabilityPage.tsx'
+import HighAvailabilityPage from './pages/HighAvailabilityPage.tsx'
 
 function App() {
   return (
