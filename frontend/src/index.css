@@ -599,33 +599,133 @@ a {
   transform: translateY(0);
 }
 
-.story-node-facts {
-  margin: 16px 0 0;
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 4px 20px;
+/* Steps 1–3 stepper — one card, fixed diagram frame, swap active step in place */
+.stepper-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
-.story-node-facts dt {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.stepper-tab {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--dust);
+  background: var(--white);
   color: var(--slate);
-  padding-top: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.story-node-facts dd {
-  margin: 0;
-  font-size: 15px;
+.stepper-tab:hover {
+  border-color: var(--signal-orange);
+}
+
+.stepper-tab.is-active {
+  background: var(--signal-orange);
+  border-color: var(--signal-orange);
+  color: var(--white);
+}
+
+.stepper-frame {
+  position: relative;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1.5px solid var(--dust);
+  aspect-ratio: 1210 / 375;
+}
+
+/* Inactive slides are lifted out of flow so the active one sets the frame's
+   real height (all three share the same aspect, so switching never shifts). */
+.stepper-slide {
+  position: absolute;
+  inset: 24px 0 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease;
+}
+
+.stepper-slide.is-active {
+  position: relative;
+  inset: auto;
+  opacity: 1;
+  visibility: visible;
+}
+
+.stepper-timeline {
+  margin-top: 20px;
+}
+
+.stepper-timeline-toggle {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--signal-orange);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.stepper-timeline-toggle:hover {
+  text-decoration: underline;
+}
+
+.stepper-timeline .excalidraw-diagram {
+  margin-top: 16px;
+}
+
+.story-node-term {
+  margin: 16px 0 0;
+  display: inline-block;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   color: var(--charcoal);
-  padding-bottom: 12px;
+  border-left: 3px solid var(--signal-orange);
+  padding-left: 12px;
+}
+
+.story-node-desc {
+  margin: 16px 0 0;
+  max-width: 68ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--slate);
 }
 
 .story-node-diagram {
   margin-top: 24px;
   padding-top: 24px;
   border-top: 1.5px solid var(--dust);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Excalidraw scenes rendered inline from the .excalidraw source files */
+.excalidraw-diagram {
+  width: 100%;
+}
+
+/* Sequence/timeline diagrams are tall and wide — cap their width so they don't
+   dominate the card. Tune the max-width value to taste. */
+.excalidraw-diagram-compact {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.excalidraw-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.excalidraw-diagram-error {
+  font-size: 14px;
+  color: var(--signal-orange);
 }
 
 /* Story diagrams — small CSS-box illustrations, one per node */
@@ -840,9 +940,5 @@ a {
 @media (max-width: 640px) {
   .story-node {
     padding: 24px;
-  }
-
-  .story-node-facts {
-    grid-template-columns: 1fr;
   }
 }

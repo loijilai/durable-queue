@@ -14,7 +14,7 @@ const SECTIONS = [
     description: 'Submit a job, poll real status transitions from PENDING to SUCCEEDED.',
   },
   {
-    to: '/concurrency',
+    to: '/durability',
     eyebrow: 'DURABILITY WALKTHROUGH',
     title: 'Why every piece of this queue exists',
     description: 'The causal chain from "a worker can die mid-task" to visibility timeout, idempotency, locking, and retry.',

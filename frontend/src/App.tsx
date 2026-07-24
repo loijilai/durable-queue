@@ -16,7 +16,7 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
         <Route path="/queue" element={<QueuePage />} />
-        <Route path="/concurrency" element={<DurabilityWalkthroughPage />} />
+        <Route path="/durability" element={<DurabilityWalkthroughPage />} />
         <Route path="/scalability" element={<ScalabilityPage />} />
         <Route path="/high-availability" element={<HighAvailabilityPage />} />
       </Route>
