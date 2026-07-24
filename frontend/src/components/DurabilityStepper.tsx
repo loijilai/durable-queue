@@ -66,11 +66,7 @@ function DurabilityStepper({ nodes }: { nodes: StoryNode[] }) {
             {showTimeline ? 'Hide timeline' : 'Show timeline'}
           </button>
           {showTimeline && (
-            <ExcalidrawDiagram
-              scene={scenes.timeline}
-              label={`${node.id} timeline`}
-              className="excalidraw-diagram-compact"
-            />
+            <ExcalidrawDiagram scene={scenes.timeline} label={`${node.id} timeline`} />
           )}
         </div>
       )}

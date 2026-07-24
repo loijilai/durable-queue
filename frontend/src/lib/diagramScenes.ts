@@ -8,6 +8,7 @@ import visibilityTimeout from '../../../docs/2-1-visibility-timeout.excalidraw?r
 import workerStuckDuplicate from '../../../docs/3-worker-stuck-duplicate.excalidraw?raw'
 import raceCondition from '../../../docs/3-1-race-condition.excalidraw?raw'
 import sequenceConcurrency from '../../../docs/4-sequence-concurrency.excalidraw?raw'
+import authSequenceGoogleOidc from '../../../docs/auth-sequence-google-oidc.excalidraw?raw'
 
 export interface StepScenes {
   // The architecture diagram — steps 1–3 all share this same layout, only the
@@ -26,3 +27,6 @@ export const STEP_DIAGRAMS = {
 
 // Step 4 (race-idempotency) — a standalone sequence diagram card.
 export const raceIdempotencyScene = sequenceConcurrency
+
+// Auth page — Google OIDC authorization-code login sequence (RFC-worded).
+export const authSequenceScene = authSequenceGoogleOidc

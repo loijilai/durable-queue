@@ -2,6 +2,48 @@ import { useState, type FormEvent } from "react";
 import { useAuth } from "../context/AuthContext.tsx";
 import { ApiError, API_BASE_URL } from "../lib/api.ts";
 import JwtInspector from "../components/JwtInspector.tsx";
+import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";
+import DiagramLightbox from "../components/DiagramLightbox.tsx";
+import { authSequenceScene } from "../lib/diagramScenes.ts";
+
+const DIAGRAM_LABEL = "Google OIDC authorization-code login sequence";
+
+// Educational explainer that sits below the login card — the sequence diagram
+// is too wide/dense to read inline, so it renders fit-to-width and opens a
+// zoomable lightbox on click. Always visible, independent of auth state.
+function AuthFlowExplainer() {
+  const [zoomed, setZoomed] = useState(false);
+  return (
+    <section className="auth-explainer">
+      <p className="eyebrow">
+        <span className="eyebrow-dot" />
+        HOW GOOGLE LOGIN WORKS
+      </p>
+      <h2>OpenID Connect — authorization-code flow</h2>
+      <p className="auth-explainer-caption">
+        RFC-worded sequence: front-channel authorization, back-channel token
+        exchange, then the app swaps Google's <code>id_token</code> for its own
+        JWT. Click the diagram to zoom in on the fine print.
+      </p>
+      <button
+        type="button"
+        className="diagram-zoom-trigger"
+        onClick={() => setZoomed(true)}
+        aria-label={`Open ${DIAGRAM_LABEL} full size`}
+      >
+        <ExcalidrawDiagram scene={authSequenceScene} label={DIAGRAM_LABEL} />
+        <span className="diagram-zoom-hint">⤢ Click to zoom</span>
+      </button>
+      {zoomed && (
+        <DiagramLightbox
+          scene={authSequenceScene}
+          label={DIAGRAM_LABEL}
+          onClose={() => setZoomed(false)}
+        />
+      )}
+    </section>
+  );
+}
 
 function GoogleIcon() {
   return (
@@ -267,6 +309,8 @@ function AuthPage() {
           <RefreshDemo />
         </div>
       )}
+
+      <AuthFlowExplainer />
     </section>
   );
 }
