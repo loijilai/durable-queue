@@ -40,23 +40,39 @@ Notes: 為了降低 MVP 的實作成本，目前由 OAuth callback 使用 URL fr
 - [x] `/concurrency` 路由現在渲染 `DurabilityWalkthroughPage`：把 at-least-once / visibility timeout / retry(backoff+jitter) / concurrency / idempotency / broker-vs-DB 串成七個節點的因果鏈（每個 solution 都因為上一個 solution 開出新問題而存在），每節 Problem → Requirement → Solution 三段式，配一個對應的小 CSS/SVG diagram。
 - [x] Scroll-triggered reveal（`IntersectionObserver`，一次性，捲上去不重播）。
 - [x] Nav label 改成「Durability Walkthrough」，Home 卡片同步更新。
-- [ ] 原本的「展示真實程式碼 + 真實 sequence diagram + 真實併發測試 log」三步驟仍未做，可視為這頁未來的 polish（目前 locking 節點是文字 + CSS diagram，不是真實程式碼截圖）。
 
 ### 3. Scalability（Scale out worker / API）
 
-- [ ] 「Generate Load」按鈕：一次觸發約 20~50 個 job 建立請求（前端連續呼叫既有的單一 job API，不新增後端 bulk endpoint）。
-- [ ] Queue 深度即時圖表：用輪詢既有 job 列表 API，統計「pending + running」數量畫成隨時間變化的圖，直觀呈現「負載進來、worker 慢慢消化」的 backpressure 現象。
-- [ ] 明確標示：這個深度是「DB 狀態的代理指標」，不是 Redis/Celery broker 的真實 queue 深度；並附文字說明「真正的 ASG 擴縮要花幾分鐘，無法在 demo 中即時展示，這裡展示的是真實可觀察的 buffering 行為」。
-- [ ] 旁邊放 scalability 架構圖（placeholder 頂著）。
+> 核心論點：**queue 解耦 producer/consumer，worker 可獨立線性水平擴展**。這頁不是靜態投影片，要用一個可重現的吞吐 demo 把「線性擴展」演出來（場景 B）。
+
+- [ ] **場景 B — 水平擴展 = 吞吐線性成長**：
+  - 操作腳本：一次提交 N 個 job（例如 20），記錄 2 個 worker 跑完的耗時 T；把 worker ASG `desired` 從 2 調到 4（[compute.tf:184-206](../../infra/compute.tf#L184-L206)），再跑一次同樣 N 個，時間約砍半。
+  - 前端呈現：job list 即時 polling，畫面上同時有多個 job 從 PENDING → RUNNING → SUCCEEDED 並行跳動；配一個「worker 數 vs 完成耗時」的對照數字（T@2workers vs T@4workers），把線性關係講出來。
+  - 依賴 `worker_hostname` 欄位（見 §4 共用備註）：畫面顯示每個 job 由哪台 worker 處理，一眼看出負載被多台分擔。
+  - 支撐機制：queue 解耦（[celery.py](../../durable_queue/durable_queue/celery.py)）、`select_for_update()` 行鎖讓多 worker 併發搶 job 不重複（[services.py:6-19](../../durable_queue/jobs/services.py#L6-L19)）。
+- [ ] 旁邊放 scalability 架構圖：ALB → API ASG（×2）→ Redis broker → worker ASG（×2），標出「無狀態層可任意 scale out」。
+- [ ] **擴展瓶頸的誠實標示**（答辯用）：worker 線性擴展到某點後，瓶頸轉移到 RDS 連線/寫入吞吐、外部轉錄 API 的 rate limit、單節點 Redis。下一步會是 read replica、連線池（PgBouncer）、對外部 API 做 backpressure/批次。
 
 ### 4. High Availability
 
-> 先用 placeholder，本輪不做。定位為「投影片式」靜態區塊，不假裝做了 HA：
+> 核心論點：**無狀態層（API / worker）已經跨 2 AZ、ASG `desired=2`，真的具備 HA**（[compute.tf:158-206](../../infra/compute.tf#L158-L206)）。用兩個失敗場景把「已經蓋好的 HA」演出來，並標示刻意保留的 SPOF。
 
-- [ ] 架構圖（placeholder 頂著）。
-- [ ] 「目前 single-AZ，已知 SPOF」的標示。
-- [ ] Multi-AZ 路徑打勾清單：RDS standby、ElastiCache replica、ASG 跨 AZ（此項目前已實作，可打勾）。
-- [ ] 一句話說明：刻意延後到 K8s 階段一併做，因為屆時 broker 也會換成 SQS，HA 拓樸要整套重新評估，這是判斷力的呈現而非逃避。
+- [ ] **場景 A — Worker 崩潰不丟工作**（durability，最貼專案主題）：
+  - 操作：提交 job → 處理到一半 SIGKILL 掉那台 worker → 任務被重新投遞到另一台 worker → 最終 SUCCEEDED，無人工介入、無資料遺失。
+  - 前端呈現：job list 即時 polling，畫面上看到該 job 從 RUNNING 退回、被另一台 worker 接手（靠 `worker_hostname` 顯示「換人處理」）再走到 SUCCEEDED。
+  - 支撐機制：`acks_late=True` at-least-once 重投 + `mark_running` 冪等 guard（已 succeeded/failed 就跳過）（[tasks.py:14-27](../../durable_queue/jobs/tasks.py#L14-L27)、[services.py:6-19](../../durable_queue/jobs/services.py#L6-L19)）。
+  - [ ]️ demo 前置：Redis broker `visibility_timeout` 預設 1 小時，不改 kill 完要等一小時才重投。demo 前要調短（30-60s）。
+- [ ] **場景 C — API 掉一台自動復原**：
+  - 操作：AWS console 手動 terminate 一台 API EC2 → ALB `/health/` health check 標記 unhealthy、流量全導到另一台 → 前端不中斷 → ASG 幾分鐘後自動補一台。
+  - 前端呈現：demo 全程頁面持續可用（持續 polling 不中斷），佐證無狀態層 HA + ALB health check + ASG self-healing。
+  - 支撐機制：ALB target group health check（[alb.tf:14-27](../../infra/alb.tf#L14-L27)）、API ASG 跨 2 AZ self-healing（[compute.tf:158-181](../../infra/compute.tf#L158-L181)）。
+- [ ] HA 架構圖：ALB（跨 2 AZ）→ API ASG（每 AZ 一台）；標出無狀態層綠色（HA 已達成）。
+- [ ] **刻意保留的 SPOF 標示**（答辯武器，主動講取捨）：RDS `multi_az=false`（[database.tf:31](../../infra/database.tf#L31)）、Redis 單節點（[database.tf:53-59](../../infra/database.tf#L53-L59)）、單一 NAT（[network.tf:67-81](../../infra/network.tf#L67-L81)）。生產環境會：RDS Multi-AZ standby、ElastiCache replication group + AOF、每 AZ 一個 NAT。並誠實點出 durability 缺口：**佇列本身就在單節點 Redis 上**，broker 一掛在途任務就沒了，真要 durable 會考慮 SQS 或 mirrored RabbitMQ。
+
+### 共用前置：讓失敗/擴展 demo「看得見」
+
+- [ ] **前端 job status polling**（場景 A/B/C 全部依賴）：job list 定期輪詢 `GET /api/jobs/`，讓狀態轉換即時跳動——§2 的 timeline 已有輪詢基礎，這裡擴到整個 list。
+- [ ] **後端 `worker_hostname` 欄位**（場景 A/B 讓畫面可讀，高 ROI 小改動）：`TranscriptionJob` 加一個欄位，在 `mark_running` 寫入處理它的 worker hostname（`socket.gethostname()`），前端顯示「processed by worker-xxx」。一個 migration + 一行寫入。
 
 ---
 
