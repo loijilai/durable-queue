@@ -9,6 +9,7 @@ import workerStuckDuplicate from '../../../docs/3-worker-stuck-duplicate.excalid
 import raceCondition from '../../../docs/3-1-race-condition.excalidraw?raw'
 import sequenceConcurrency from '../../../docs/4-sequence-concurrency.excalidraw?raw'
 import authSequenceGoogleOidc from '../../../docs/auth-sequence-google-oidc.excalidraw?raw'
+import scaleOut from '../../../docs/5-scale-out.excalidraw?raw'
 
 export interface StepScenes {
   // The architecture diagram — steps 1–3 all share this same layout, only the
@@ -30,3 +31,6 @@ export const raceIdempotencyScene = sequenceConcurrency
 
 // Auth page — Google OIDC authorization-code login sequence (RFC-worded).
 export const authSequenceScene = authSequenceGoogleOidc
+
+// Scalability page — producer → queue → fan-out to a worker pool that scales out.
+export const scaleOutScene = scaleOut
