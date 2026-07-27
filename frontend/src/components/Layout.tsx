@@ -5,8 +5,8 @@ const NAV_ITEMS = [
   { to: '/auth', label: 'Authentication' },
   { to: '/queue', label: 'Distributed Queue' },
   { to: '/durability', label: 'Durability' },
-  { to: '/scalability', label: 'Scalability' },
   { to: '/high-availability', label: 'High Availability' },
+  { to: '/scalability', label: 'Scalability' },
 ]
 
 function Layout() {

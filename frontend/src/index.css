@@ -613,6 +613,8 @@ a {
 /* High Availability page — scenario A */
 .ha-page {
   padding-top: 32px;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .ha-demo {
@@ -689,6 +691,176 @@ a {
   padding: 1px 6px;
   border-radius: 6px;
   color: var(--ink);
+}
+
+/* HA scenario sections + SPOF footer */
+.ha-scenario {
+  margin-top: 56px;
+  padding-top: 40px;
+  border-top: 1.5px solid var(--dust);
+}
+
+.ha-scenario-tag {
+  color: var(--signal-orange);
+}
+
+.ha-scenario-title {
+  margin: 8px 0 12px;
+}
+
+.ha-spof {
+  margin-top: 56px;
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--canvas-lifted);
+  border: 1.5px solid var(--dust);
+}
+
+.ha-caveat {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+/* Scenario B — architecture diagram */
+.ha-diagram {
+  margin: 24px 0 0;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--canvas-lifted);
+  border: 1.5px solid var(--dust);
+}
+
+.ha-diagram .diagram-zoom-trigger img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ha-diagram figcaption {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Scenario B — recorded evidence slot */
+.ha-recording {
+  margin: 24px 0 0;
+}
+
+.ha-recording-slot {
+  margin-top: 12px;
+  padding: 20px;
+  border: 1.5px dashed var(--dust);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.5;
+}
+
+.ha-recording-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--signal-orange);
+}
+
+/* Scenario C — live health probe */
+.hp-card {
+  display: flex;
+  flex-direction: column;
+  margin-top: 24px;
+}
+
+.hp-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.hp-target {
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.hp-target code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: var(--canvas);
+  padding: 2px 6px;
+  border-radius: 6px;
+  word-break: break-all;
+}
+
+.hp-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  gap: 3px;
+  min-height: 24px;
+  align-items: center;
+  margin: 8px 0 20px;
+}
+
+.hp-strip-empty {
+  font-size: 13px;
+  color: var(--slate);
+}
+
+/* 固定寬度，一格一格往右長；不折行，超出就在自己容器裡橫向捲。 */
+.hp-tick {
+  flex: none;
+  width: 8px;
+  height: 20px;
+  border-radius: 2px;
+  background: var(--dust);
+}
+
+.hp-tick-ok {
+  background: var(--signal-green);
+}
+
+.hp-tick-fail {
+  background: var(--signal-orange);
+}
+
+.hp-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.hp-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hp-stats dt {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.hp-stats dd {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.hp-bad {
+  color: var(--signal-orange);
 }
 
 /* JWT inspector */
@@ -1050,6 +1222,12 @@ a {
   padding: 24px;
   border-radius: 16px;
   background: var(--white);
+}
+
+.lightbox-image {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* Story diagrams — small CSS-box illustrations, one per node */

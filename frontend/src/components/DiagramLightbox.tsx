@@ -10,12 +10,16 @@ const STEP = 0.25
 // diagram is vector (SVG), so zooming stays crisp. Zoom is expressed as the
 // canvas width (scale × 100% of the scroll viewport); anything over 100%
 // overflows and is panned by dragging or scrolling.
+// Pass either an Excalidraw `scene` or a static `imageSrc` (e.g. an exported
+// SVG). Both render inside the same zoom/pan viewport.
 function DiagramLightbox({
   scene,
+  imageSrc,
   label,
   onClose,
 }: {
-  scene: string
+  scene?: string
+  imageSrc?: string
   label: string
   onClose: () => void
 }) {
@@ -78,7 +82,11 @@ function DiagramLightbox({
         onPointerCancel={endDrag}
       >
         <div className="lightbox-canvas" style={{ width: `${scale * 100}%` }}>
-          <ExcalidrawDiagram scene={scene} label={label} />
+          {imageSrc ? (
+            <img className="lightbox-image" src={imageSrc} alt={label} />
+          ) : (
+            <ExcalidrawDiagram scene={scene ?? ''} label={label} />
+          )}
         </div>
       </div>
     </div>,
