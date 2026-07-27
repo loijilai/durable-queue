@@ -29,7 +29,7 @@ class ExecuteJobTaskTests(TestCase):
         self.assertEqual(job.transcript, self.TRANSCRIPT)
         self.assertIsNotNone(job.finished_at)
 
-    @patch("jobs.tasks.fake_transcribe", side_effect=ConnectionError(ERROR))
+    @patch("jobs.transcribers.fake_transcribe", side_effect=ConnectionError(ERROR))
     def test_execute_job_failed(self, mock_transcribe):
         # Arrange
         job = TranscriptionJob.objects.create(
@@ -64,7 +64,7 @@ class ExecuteJobTaskTests(TestCase):
         self.assertEqual(job.transcript, self.TRANSCRIPT)
         self.assertIsNotNone(job.finished_at)
 
-    @patch("jobs.tasks.fake_transcribe", return_value=TRANSCRIPT)
+    @patch("jobs.transcribers.fake_transcribe", return_value=TRANSCRIPT)
     def test_redelivery_running_reruns_transcribe(self, mock_transcribe):
         """RUNNING 重送：worker A transcribe 途中掛，job 停在 RUNNING。
         worker B 拿不到 A 的成果，必須重跑 transcribe → 最終 SUCCEEDED。"""
@@ -79,7 +79,7 @@ class ExecuteJobTaskTests(TestCase):
         self.assertEqual(mock_transcribe.call_count, 1)
         self.assertEqual(job.status, TranscriptionJob.SUCCEEDED)
 
-    @patch("jobs.tasks.fake_transcribe")
+    @patch("jobs.transcribers.fake_transcribe")
     def test_redelivery_succeeded_skips(self, mock_transcribe):
         """SUCCEEDED 重送：job 已完成、ACK 前掛。guard 應攔住，不重跑 transcribe。"""
         # Arrange
@@ -96,7 +96,7 @@ class ExecuteJobTaskTests(TestCase):
         self.assertEqual(job.status, TranscriptionJob.SUCCEEDED)
         self.assertEqual(job.transcript, self.TRANSCRIPT)
 
-    @patch("jobs.tasks.fake_transcribe")
+    @patch("jobs.transcribers.fake_transcribe")
     def test_redelivery_failed_skips(self, mock_transcribe):
         """FAILED 重送：job 已失敗、ACK 前掛。guard 應攔住，不重跑 transcribe。"""
         # Arrange

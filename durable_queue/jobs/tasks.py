@@ -1,6 +1,6 @@
 from celery import Task, shared_task
 from jobs.services import mark_running, mark_succeeded, mark_failed
-from jobs.transcribers import fake_transcribe
+from jobs.transcribers import get_transcriber
 
 
 class ExecuteJobTask(Task):
@@ -23,5 +23,5 @@ def execute_job(job_id):
     job = mark_running(job_id)
     if job is None:
         return
-    transcript = fake_transcribe(job.video_url)
+    transcript = get_transcriber()(job.video_url)
     mark_succeeded(job.id, transcript)

@@ -151,10 +151,9 @@ CELERY_RESULT_BACKEND = os.environ["CELERY_RESULT_BACKEND"]
 
 CELERY_TIMEZONE = TIME_ZONE
 
-# Worker crash 保護：task 執行超過此時間未 ACK，Redis 會重新派發
-# 設定需比預期最長的 task 執行時間還長，避免誤判 worker 死亡而重送
+# 不變式：visibility_timeout 必須 > task 最長執行時間，否則正常 job 被誤判死亡而重送
 CELERY_BROKER_TRANSPORT_OPTIONS = {
-    "visibility_timeout": 3600,  # 1 小時
+    "visibility_timeout": int(os.environ["CELERY_VISIBILITY_TIMEOUT"]),
 }
 
 

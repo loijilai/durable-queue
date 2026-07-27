@@ -23,6 +23,7 @@ class TranscriptionJob(models.Model):
     error = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True)
+    worker_attempts = models.JSONField(default=list)
 
 
 class CustomUser(AbstractUser):
