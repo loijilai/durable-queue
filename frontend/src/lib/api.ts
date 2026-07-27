@@ -29,6 +29,11 @@ export class ApiError extends Error {
 
 export type JobStatus = "pending" | "running" | "succeeded" | "failed";
 
+export interface WorkerAttempt {
+  host: string;
+  at: string;
+}
+
 export interface TranscriptionJob {
   id: number;
   video_url: string;
@@ -38,6 +43,7 @@ export interface TranscriptionJob {
   created_at: string;
   finished_at: string | null;
   owner: number;
+  worker_attempts: WorkerAttempt[];
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
