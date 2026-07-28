@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";
+import { AUTH_ATTACK_SCENES } from "../lib/diagramScenes.ts";
 
 // =====================================================================
 // 全頁的組織原則：攻擊者進得來的三條路——公開網路、部署管線、一個合法
@@ -69,6 +71,9 @@ interface Lens {
   // 既有的 excalidraw 管道（scene = .excalidraw 原始 JSON）。兩者擇一。
   src?: string | null;
   scene?: string | null;
+  // 攻擊鏡頭專用：沒有這道檢查會發生什麼。刻意跟 caption 分開兩段——
+  // 「代價」和「機制」混在同一段裡，讀者只會記得後者。
+  stakes?: string;
 }
 
 const TOPOLOGY_LENSES: Lens[] = [
@@ -91,7 +96,7 @@ const TOPOLOGY_LENSES: Lens[] = [
     tab: "Encryption boundary",
     src: "/sec-topology-tls.svg",
     caption:
-      "TLS terminates at the ALB against an ACM certificate; :80 exists only to 301 clients up to :443. Inside the VPC traffic is plaintext — a deliberate trade-off that leans on the two boundaries above, and one we name again under Out of Scope.",
+      "TLS terminates at the ALB against an ACM certificate; :80 exists only to 301 clients up to :443. Inside the VPC traffic is plaintext — a deliberate trade-off that leans on the two boundaries above.",
   },
 ];
 
@@ -174,33 +179,46 @@ const CONFIG_SOURCES: ConfigSource[] = [
   },
 ];
 
-// ── ③ APP（authentication）：同一趟登入往返上的三道檢查 ────────────
-// Auth 頁已經畫過 authorization code flow 了，這裡不重畫流程——主體是
-// 「檢查點」，鏡頭切的是「這一道在擋什麼」。時序圖 → 用 excalidraw，
-// 跟 repo 既有的分工一致（drawio 畫基礎設施，excalidraw 畫時序/概念）。
-// TODO(diagram): 複製 docs/auth-sequence-google-oidc.excalidraw 當底稿，
-// 標三組註解另存三份，這裡的 scene 換掉即可。
+// ── ③ APP（authentication）：三種變成別人的方式 ────────────────────
+// Auth 頁已經完整畫過 authorization code flow 了，這裡不重畫流程——重畫
+// 就只是炒冷飯。security 圖要回答的不是「登入怎麼運作」而是「不做這個檢查
+// 會怎樣」，所以主角換成攻擊者：舞台（lane 幾何）跟 Auth 頁那張是同一個，
+// 但正常流程壓灰，亮起來的是攻擊箭頭和擋下它的那一格。
+// 攻擊者沒有自己的 lane——多一條會讓圖變寬、也對不上原圖的幾何；攻擊改成
+// 既有訊息「被冒名頂替」的樣子，靠紅色講清楚它是敵人。
+// 三個鏡頭的排序是「越後面越像設計判斷」：state 是 table stakes，aud 檢查
+// 是中段，account linking 是唯一一個沒有標準答案、要自己想威脅模型的。
+// 圖源 docs/auth-sequence-google-oidc.excalidraw（Auth 頁用的同一張）。
+// 改圖：編輯那張 → python3 docs/8-auth-attacks.build.py。
+// 三張圖都是同一張場景上的 760×600 取景框，只是框的位置不同：全圖 1520 寬、
+// 欄位只有 760，整張放進來等於 0.5×，13px 的字到螢幕上剩 6px，而且畫面九成
+// 是這個鏡頭不談的步驟。框固定大小所以切 tab 不會跳，框往下移所以 tab 條順
+// 便變成一條登入時序的 scrub。散文留在這裡而不是畫進圖裡——畫進去就會被取景
+// 倍率一起縮放，而且框馬上被撐開。
 const LOGIN_LENSES: Lens[] = [
   {
     id: "state",
-    tab: "State check",
-    caption:
-      "/login mints a secrets.token_urlsafe(32) into the session; the callback compares it and immediately pops it. A login CSRF has no valid state to present, and a captured callback URL cannot be replayed a second time.",
-    scene: null,
+    tab: "Login CSRF / replay",
+    scene: AUTH_ATTACK_SCENES.state,
+    stakes:
+      "The attacker starts a login as themselves, then makes the victim's browser deliver the resulting callback — or replays a callback URL captured once. Either way the victim's account ends up bound to the attacker's Google identity, and they can sign in as the victim from then on.",
+    caption: "",
   },
   {
     id: "verify",
-    tab: "Token verification",
-    caption:
-      "The id_token is checked against Google's signing keys and against this client_id — a token minted for a different application is rejected rather than decoded and trusted. The code-for-token exchange happens server-side, so client_secret never leaves the host.",
-    scene: null,
+    tab: "Token for another app",
+    scene: AUTH_ATTACK_SCENES.token,
+    stakes:
+      "An id_token is signed by Google no matter which application asked for it, so the signature on its own proves nothing about who the token is for. Decode-and-trust means any developer with a Google client can mint a token for their own app and present it here as one of our users.",
+    caption: "",
   },
   {
     id: "binding",
-    tab: "Identity binding",
-    caption:
-      "Identity is anchored on Google's immutable sub, not on the email address. If a Google login arrives with an email that already has a local account, it is refused rather than silently linked — auto-linking on email is how OAuth account takeover works.",
-    scene: null,
+    tab: "Account takeover by email",
+    scene: AUTH_ATTACK_SCENES.linking,
+    stakes:
+      "The attacker signs up to Google with an address that already has a local account here. If the callback matched on email, this login would be linked straight into the victim's account — a full takeover, with no password ever entered.",
+    caption: "",
   },
 ];
 
@@ -245,44 +263,6 @@ function mockProbe(probe: Probe): Promise<number> {
     setTimeout(() => resolve(probe.expected), 450),
   );
 }
-
-// ── 收尾 ───────────────────────────────────────────────────────────
-const THREATS: { threat: string; control: string }[] = [
-  {
-    threat: "IDOR — reading another user's jobs",
-    control: "per-user get_queryset scoping",
-  },
-  {
-    threat: "OAuth login CSRF / replay",
-    control: "one-time state + id_token verification",
-  },
-  {
-    threat: "Credential exfiltration from the repo",
-    control: "Secrets Manager + instance profile",
-  },
-  {
-    threat: "Direct exposure of the data stores",
-    control: "SG-referenced ingress, no public CIDR",
-  },
-  {
-    threat: "Leaked long-lived cloud keys",
-    control: "GitHub OIDC AssumeRole, no static keys",
-  },
-  {
-    threat: "CI pipeline privilege escalation",
-    control: "PassRole pinned by ARN and service",
-  },
-  { threat: "Eavesdropping in transit", control: "ACM cert + TLS at the ALB" },
-];
-
-const OUT_OF_SCOPE: string[] = [
-  "Traffic inside the VPC is plaintext — no TLS between the ALB and the app, none to Redis.",
-  "No WAF in front of the ALB — no managed rule sets for common web exploits.",
-  "No API rate limiting / throttling — DRF throttle classes are not wired up.",
-  "JWTs cannot be revoked — the blacklist app is off, so logout waits out the 15-minute expiry.",
-  "No automated secret rotation for the app secret (SECRET_KEY, Google client secret).",
-  "No network-flow monitoring — GuardDuty / VPC flow logs are not enabled.",
-];
 
 // =====================================================================
 // 共用小元件
@@ -355,7 +335,14 @@ function LensFigure({ lenses, label }: { lenses: Lens[]; label: string }) {
             </span>
           </div>
         )}
-        <figcaption>{lens.caption}</figcaption>
+        <figcaption>
+          {/* stakes 先於 caption：安全圖跟流程圖的差別就在「沒有這個會怎樣」，
+              那句話必須先被讀到，機制才有重量。 */}
+          {lens.stakes ? (
+            <span className="sec-lens-stakes">{lens.stakes}</span>
+          ) : null}
+          {lens.caption}
+        </figcaption>
       </figure>
     </div>
   );
@@ -470,8 +457,21 @@ function SecurityPage() {
       <section id="app" className="sec-section">
         <SectionHead layer={LAYERS[2]} />
 
+        <p className="eyebrow sec-subsection-tag">
+          <span className="eyebrow-dot" />
+          AUTHENTICATION · THREE WAYS TO BECOME SOMEONE ELSE
+        </p>
+        {/* 圖只講被擋下的東西；流程本身在 Auth 頁，這裡明說一次，讀者才不會
+            以為 security 頁欠他一張流程圖。 */}
+        <p className="placeholder-body sec-authn-note">
+          The happy path is greyed out — it is the same sequence the{" "}
+          <Link to="/auth">Auth page</Link> walks through. What is lit here is
+          the attack, and the one check that ends it.
+        </p>
+        <LensFigure lenses={LOGIN_LENSES} label="login attack lenses" />
+
         <div className="sec-prober">
-          <p className="eyebrow sec-subsection-tag">
+          <p className="eyebrow sec-subsection-tag sec-subsection-gap">
             <span className="eyebrow-dot" />
             AUTHORIZATION · TRY IT
           </p>
@@ -513,45 +513,8 @@ function SecurityPage() {
           </ul>
         </div>
 
-        <p className="eyebrow sec-subsection-tag sec-authn-tag">
-          <span className="eyebrow-dot" />
-          AUTHENTICATION · THE THREE CHECKS
-        </p>
-        <LensFigure lenses={LOGIN_LENSES} label="login check lenses" />
       </section>
 
-      {/* ── 收尾 ────────────────────────────────────────────────── */}
-      <div className="ha-columns sec-closing">
-        <div className="ha-col">
-          <p className="eyebrow">
-            <span className="eyebrow-dot" />
-            THREATS DEFENDED
-          </p>
-          <ul className="sec-threats">
-            {THREATS.map((t) => (
-              <li key={t.threat} className="sec-threat-row">
-                <span className="sec-threat">{t.threat}</span>
-                <span className="sec-threat-arrow" aria-hidden>
-                  →
-                </span>
-                <span className="sec-threat-control">{t.control}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="ha-col">
-          <p className="eyebrow">
-            <span className="eyebrow-dot" />
-            OUT OF SCOPE
-          </p>
-          <ul className="ha-mechanism sec-gaps">
-            {OUT_OF_SCOPE.map((g) => (
-              <li key={g}>{g}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
     </section>
   );
 }

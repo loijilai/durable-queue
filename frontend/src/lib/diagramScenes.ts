@@ -9,6 +9,9 @@ import workerStuckDuplicate from '../../../docs/3-worker-stuck-duplicate.excalid
 import raceCondition from '../../../docs/3-1-race-condition.excalidraw?raw'
 import sequenceConcurrency from '../../../docs/4-sequence-concurrency.excalidraw?raw'
 import authSequenceGoogleOidc from '../../../docs/auth-sequence-google-oidc.excalidraw?raw'
+import authAttackState from '../../../docs/8-auth-attack-1-state.excalidraw?raw'
+import authAttackToken from '../../../docs/8-auth-attack-2-token.excalidraw?raw'
+import authAttackLinking from '../../../docs/8-auth-attack-3-linking.excalidraw?raw'
 import scaleOut from '../../../docs/5-scale-out.excalidraw?raw'
 
 export interface StepScenes {
@@ -31,6 +34,15 @@ export const raceIdempotencyScene = sequenceConcurrency
 
 // Auth page — Google OIDC authorization-code login sequence (RFC-worded).
 export const authSequenceScene = authSequenceGoogleOidc
+
+// Security page § APP — the same login sequence ghosted down to one attack at a
+// time. Derived from the scene above by docs/8-auth-attacks.build.py, so they
+// cannot drift from it; never hand-edit the three files.
+export const AUTH_ATTACK_SCENES = {
+  state: authAttackState,
+  token: authAttackToken,
+  linking: authAttackLinking,
+} satisfies Record<string, string>
 
 // Scalability page — producer → queue → fan-out to a worker pool that scales out.
 export const scaleOutScene = scaleOut

@@ -931,6 +931,17 @@ a {
   max-width: 720px;
 }
 
+/* 攻擊鏡頭的圖說分兩段：先「沒有這道檢查會怎樣」，再「擋它的是什麼」。
+   前者是獨立段落而不是同段的第一句——排版必須讓代價先被看見，不然讀者
+   會直接跳到機制，安全圖就退化成流程圖的註解。 */
+.sec-lens-stakes {
+  display: block;
+  margin-bottom: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--signal-orange);
+  color: var(--ink);
+}
+
 /* 佔位框：圖還沒畫時撐出版面，並直說它是暫時的 */
 .sec-mock {
   display: flex;
@@ -1121,52 +1132,17 @@ a {
   line-height: 1.6;
 }
 
-/* authentication 的鏡頭組跟上面的 prober 之間要有呼吸 */
-.sec-authn-tag {
+/* ③ APP 底下兩個子節之間要有呼吸。掛在「排第二的那一段」上，不綁定
+   authn / authz 哪一個——順序是會換的。 */
+.sec-subsection-gap {
   margin-top: 40px;
 }
 
-.sec-closing {
-  margin-top: 64px;
-  padding-top: 40px;
-  border-top: 1.5px solid var(--dust);
-}
-
-/* ── Threats defended ─────────────────────────────────────────────── */
-.sec-threats {
-  list-style: none;
-  margin: 12px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sec-threat-row {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 8px;
-  align-items: baseline;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.sec-threat {
-  color: var(--charcoal);
-}
-
-.sec-threat-arrow {
-  color: var(--signal-orange);
-  font-weight: 700;
-}
-
-.sec-threat-control {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.sec-gaps li {
-  list-style: disc;
+/* 圖不再自己解釋流程，改由這行把讀者指去 Auth 頁——所以它必須貼著圖，
+   不能讀成一般段落。 */
+.sec-authn-note {
+  margin: 12px 0 20px;
+  max-width: 68ch;
 }
 
 @media (max-width: 620px) {
@@ -1175,13 +1151,6 @@ a {
   }
   .sec-probe-head {
     align-items: flex-start;
-  }
-  .sec-threat-row {
-    grid-template-columns: 1fr;
-    gap: 2px;
-  }
-  .sec-threat-arrow {
-    display: none;
   }
 }
 
