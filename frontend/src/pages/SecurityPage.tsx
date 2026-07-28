@@ -122,7 +122,7 @@ const PIPELINE_LENSES: Lens[] = [
     tab: "2",
     src: "/sec-pipeline-2-identity.svg",
     caption:
-      "The runner holds no AWS key. It presents a GitHub OIDC id_token and STS hands back credentials that expire with the job — so there is nothing in the repository to leak, and nothing to rotate.",
+      "The runner holds no AWS key. It presents a GitHub OIDC id_token and STS hands back credentials that expire with the job — so there is nothing in the repository to leak, and nothing to rotate. The role it lands in is least-privilege, with iam:PassRole pinned to a single role ARN.",
   },
   {
     id: "image",
