@@ -1145,6 +1145,19 @@ a {
   max-width: 68ch;
 }
 
+/* 對照全圖的入口，推到 tab 條的另一端：它跟 tab 同一列，但不是第四個鏡頭，
+   靠這段距離把「切鏡頭」和「打開全圖」分成兩種動作。窄螢幕 tab 條會 wrap，
+   auto margin 自然失效，按鈕就落到下一行。 */
+.sec-lens-action {
+  margin-left: auto;
+}
+
+.sec-lens-compare {
+  font-size: 12px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
 @media (max-width: 620px) {
   .sec-section-title {
     font-size: 24px;

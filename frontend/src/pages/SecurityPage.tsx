@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";
-import { AUTH_ATTACK_SCENES } from "../lib/diagramScenes.ts";
+import DiagramLightbox from "../components/DiagramLightbox.tsx";
+import { AUTH_ATTACK_SCENES, authSequenceScene } from "../lib/diagramScenes.ts";
+
+// 每個攻擊鏡頭都是這張全圖的一個取景框，讀者想確認「這一格在整條流程的哪裡」
+// 時，得能把原圖叫出來對照——不然就得離開這頁去 Auth 頁再找回來。
+const FULL_SEQUENCE_LABEL = "Google OIDC authorization-code login sequence";
 
 // =====================================================================
 // 全頁的組織原則：攻擊者進得來的三條路——公開網路、部署管線、一個合法
@@ -281,7 +286,17 @@ function groupLenses(lenses: Lens[]) {
   }, []);
 }
 
-function LensFigure({ lenses, label }: { lenses: Lens[]; label: string }) {
+// action：跟這組鏡頭有關的一顆按鈕，掛在 tab 條的右端。它是圖的工具列的一
+// 部分，自己佔一行會被讀成內文。
+function LensFigure({
+  lenses,
+  label,
+  action,
+}: {
+  lenses: Lens[];
+  label: string;
+  action?: ReactNode;
+}) {
   const [lensId, setLensId] = useState(lenses[0].id);
   const lens = lenses.find((l) => l.id === lensId) ?? lenses[0];
 
@@ -315,6 +330,7 @@ function LensFigure({ lenses, label }: { lenses: Lens[]; label: string }) {
             </div>
           </div>
         ))}
+        {action ? <div className="sec-lens-action">{action}</div> : null}
       </div>
 
       <figure className="sec-lens-frame">
@@ -367,6 +383,7 @@ function SecurityPage() {
   const [results, setResults] = useState<Record<string, number | "loading">>(
     {},
   );
+  const [fullSequence, setFullSequence] = useState(false);
 
   async function runProbe(probe: Probe) {
     setResults((prev) => ({ ...prev, [probe.id]: "loading" }));
@@ -468,7 +485,28 @@ function SecurityPage() {
           <Link to="/auth">Auth page</Link> walks through. What is lit here is
           the attack, and the one check that ends it.
         </p>
-        <LensFigure lenses={LOGIN_LENSES} label="login attack lenses" />
+        {/* 對照鈕掛在 tab 條右端：它服務的是「這一格在全圖的哪裡」這個當下的
+            疑問，跟切鏡頭是同一類動作，離圖越近越好。 */}
+        <LensFigure
+          lenses={LOGIN_LENSES}
+          label="login attack lenses"
+          action={
+            <button
+              type="button"
+              className="btn-secondary sec-lens-compare"
+              onClick={() => setFullSequence(true)}
+            >
+              ⤢ Open the full login sequence
+            </button>
+          }
+        />
+        {fullSequence && (
+          <DiagramLightbox
+            scene={authSequenceScene}
+            label={FULL_SEQUENCE_LABEL}
+            onClose={() => setFullSequence(false)}
+          />
+        )}
 
         <div className="sec-prober">
           <p className="eyebrow sec-subsection-tag sec-subsection-gap">

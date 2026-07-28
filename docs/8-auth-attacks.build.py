@@ -283,7 +283,11 @@ LENSES = [
         # Entirely inside the backend: the attack is a decision, not a message,
         # so it is annotated onto the claims rather than coloured onto an arrow.
         # sb_mint stays in frame but ghosted — it is the step that never happens.
-        "window": (745, 980),
+        # The camera sits high enough to keep the token exchange (m10/m11) in
+        # frame, ghosted: "verify + decode" is meaningless without the reader
+        # seeing where those claims came from. That costs the strict downward
+        # pan across lenses 2 -> 3, which is the cheaper thing to give up.
+        "window": (760, 830),
         "lit": [
             "life_backend",
             "sb_verify", "sb_verify_t",
