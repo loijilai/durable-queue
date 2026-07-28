@@ -1,0 +1,609 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="65bd71144e">
+    <diagram id="master" name="master — EDIT THIS PAGE">
+        <mxGraphModel dx="1770" dy="343" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1220" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="dev" value="&lt;b&gt;Developer&lt;/b&gt;&#10;durable_queue/.env" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="30" width="200" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="gha" value="&lt;b&gt;GitHub Actions&lt;/b&gt;&#10;no AWS key stored in the repo" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="590" y="160" width="220" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="cloud" value="AWS Cloud  ap-northeast-1" style="outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=13;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="290" width="1180" height="890" as="geometry" />
+                </mxCell>
+                <mxCell id="sts" value="AWS STS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sts;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="70" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="cd_role" value="IAM role  durable-queue-github-actions&#10;least privilege · PassRole pinned by ARN" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="230" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="tfstate" value="S3  tfstate bucket" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="state_props" value="&lt;b&gt;treated as a secret&lt;/b&gt;&lt;br&gt;SSE-AES256 at rest&lt;br&gt;public access blocked" style="rounded=1;arcSize=6;html=1;whiteSpace=wrap;fillColor=#F2F6E8;strokeColor=#7AA116;strokeWidth=1;fontSize=11;fontColor=#3F6212;align=left;verticalAlign=middle;spacingLeft=10;" parent="cloud" vertex="1">
+                    <mxGeometry x="613" y="418.5" width="157" height="83" as="geometry" />
+                </mxCell>
+                <mxCell id="ecr" value="Amazon ECR&#10;image tagged :commit-SHA" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecr;" parent="cloud" vertex="1">
+                    <mxGeometry x="920" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="ec2" value="EC2 boot&#10;instance profile" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="cloud" vertex="1">
+                    <mxGeometry x="151" y="571" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="secrets" value="Secrets Manager&#10;durable-queue-app · RDS-managed" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="710" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="env_note" value="&lt;b&gt;env vars → container&lt;/b&gt;&#10;never written to disk&#10;never baked into the image&#10;gone when the instance dies" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#FDECEE;strokeColor=#DD344C;strokeWidth=1;fontSize=11;fontColor=#9F1239;align=left;verticalAlign=middle;spacingLeft=10;" parent="cloud" vertex="1">
+                    <mxGeometry x="599" y="672" width="240" height="110" as="geometry" />
+                </mxCell>
+                <mxCell id="e_refresh" value="start-instance-refresh" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="cloud" source="cd_role" target="ec2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="550" y="360" />
+                            <mxPoint x="178" y="360" />
+                        </Array>
+                        <mxPoint x="200" y="430" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_gitpush" value="git push to master" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="dev" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_oidc" value="OIDC id_token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="gha" target="sts" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_assume" value="AssumeRoleWithWebIdentity" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="sts" target="cd_role" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_creds" value="short-lived credentials&#10;expire with the job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;dashPattern=6 4;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;verticalAlign=bottom;" parent="1" source="cd_role" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="550" />
+                            <mxPoint x="480" y="195" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_tf" value="terraform apply&#10;read + write state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7AA116;strokeWidth=2;fontSize=11;fontColor=#3F6212;endArrow=blockThin;endFill=1;startArrow=blockThin;startFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cd_role" target="tfstate" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_ecrpush" value="docker push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cd_role" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="550" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_pull" value="pull the same :commit-SHA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="ec2" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="361" y="891" />
+                            <mxPoint x="1100" y="891" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_get" value="GetSecretValue at boot&#10;via the instance profile" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="ec2" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="331" y="1030" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_put" value="put-secret-value — once, by hand" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;verticalAlign=bottom;" parent="1" source="dev" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="80" y="65" />
+                            <mxPoint x="80" y="1130" />
+                            <mxPoint x="700" y="1130" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="seed" name="1 seed (derived)">
+        <mxGraphModel dx="1770" dy="343" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1220" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="dev" value="&lt;b&gt;Developer&lt;/b&gt;&#10;durable_queue/.env" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="30" width="200" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="gha" value="&lt;b&gt;GitHub Actions&lt;/b&gt;&#10;no AWS key stored in the repo" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;opacity=45;textOpacity=45;" parent="1" vertex="1">
+                    <mxGeometry x="590" y="160" width="220" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="cloud" value="AWS Cloud  ap-northeast-1" style="outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=13;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="290" width="1180" height="890" as="geometry" />
+                </mxCell>
+                <mxCell id="sts" value="AWS STS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sts;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="70" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="cd_role" value="IAM role  durable-queue-github-actions&#10;least privilege · PassRole pinned by ARN" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="230" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="tfstate" value="S3  tfstate bucket" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="state_props" value="&lt;b&gt;treated as a secret&lt;/b&gt;&lt;br&gt;SSE-AES256 at rest&lt;br&gt;public access blocked" style="rounded=1;arcSize=6;html=1;whiteSpace=wrap;fillColor=#F2F6E8;strokeColor=#7AA116;strokeWidth=1;fontSize=11;fontColor=#3F6212;align=left;verticalAlign=middle;spacingLeft=10;opacity=0;textOpacity=0;" parent="cloud" vertex="1">
+                    <mxGeometry x="613" y="418.5" width="157" height="83" as="geometry" />
+                </mxCell>
+                <mxCell id="ecr" value="Amazon ECR&#10;image tagged :commit-SHA" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecr;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="920" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="ec2" value="EC2 boot&#10;instance profile" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="151" y="571" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="secrets" value="Secrets Manager&#10;durable-queue-app · RDS-managed" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="710" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="env_note" value="&lt;b&gt;env vars → container&lt;/b&gt;&#10;never written to disk&#10;never baked into the image&#10;gone when the instance dies" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#FDECEE;strokeColor=#DD344C;strokeWidth=1;fontSize=11;fontColor=#9F1239;align=left;verticalAlign=middle;spacingLeft=10;opacity=0;textOpacity=0;" parent="cloud" vertex="1">
+                    <mxGeometry x="599" y="672" width="240" height="110" as="geometry" />
+                </mxCell>
+                <mxCell id="e_refresh" value="start-instance-refresh" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;opacity=45;textOpacity=45;" parent="cloud" source="cd_role" target="ec2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="550" y="360" />
+                            <mxPoint x="178" y="360" />
+                        </Array>
+                        <mxPoint x="200" y="430" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_gitpush" value="git push to master" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="dev" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_oidc" value="OIDC id_token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="gha" target="sts" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_assume" value="AssumeRoleWithWebIdentity" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="sts" target="cd_role" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_creds" value="short-lived credentials&#10;expire with the job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;dashPattern=6 4;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;verticalAlign=bottom;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="550" />
+                            <mxPoint x="480" y="195" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_tf" value="terraform apply&#10;read + write state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7AA116;strokeWidth=2;fontSize=11;fontColor=#3F6212;endArrow=blockThin;endFill=1;startArrow=blockThin;startFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="tfstate" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_ecrpush" value="docker push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="550" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_pull" value="pull the same :commit-SHA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="ec2" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="361" y="891" />
+                            <mxPoint x="1100" y="891" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_get" value="GetSecretValue at boot&#10;via the instance profile" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="ec2" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="331" y="1030" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_put" value="put-secret-value — once, by hand" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;verticalAlign=bottom;" parent="1" source="dev" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="80" y="65" />
+                            <mxPoint x="80" y="1130" />
+                            <mxPoint x="700" y="1130" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="identity" name="2 identity (derived)">
+        <mxGraphModel dx="1770" dy="343" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1220" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="dev" value="&lt;b&gt;Developer&lt;/b&gt;&#10;durable_queue/.env" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="30" width="200" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="gha" value="&lt;b&gt;GitHub Actions&lt;/b&gt;&#10;no AWS key stored in the repo" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="590" y="160" width="220" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="cloud" value="AWS Cloud  ap-northeast-1" style="outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=13;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="290" width="1180" height="890" as="geometry" />
+                </mxCell>
+                <mxCell id="sts" value="AWS STS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sts;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="70" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="cd_role" value="IAM role  durable-queue-github-actions&#10;least privilege · PassRole pinned by ARN" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="230" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="tfstate" value="S3  tfstate bucket" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="state_props" value="&lt;b&gt;treated as a secret&lt;/b&gt;&lt;br&gt;SSE-AES256 at rest&lt;br&gt;public access blocked" style="rounded=1;arcSize=6;html=1;whiteSpace=wrap;fillColor=#F2F6E8;strokeColor=#7AA116;strokeWidth=1;fontSize=11;fontColor=#3F6212;align=left;verticalAlign=middle;spacingLeft=10;opacity=0;textOpacity=0;" parent="cloud" vertex="1">
+                    <mxGeometry x="613" y="418.5" width="157" height="83" as="geometry" />
+                </mxCell>
+                <mxCell id="ecr" value="Amazon ECR&#10;image tagged :commit-SHA" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecr;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="920" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="ec2" value="EC2 boot&#10;instance profile" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="151" y="571" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="secrets" value="Secrets Manager&#10;durable-queue-app · RDS-managed" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="710" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="env_note" value="&lt;b&gt;env vars → container&lt;/b&gt;&#10;never written to disk&#10;never baked into the image&#10;gone when the instance dies" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#FDECEE;strokeColor=#DD344C;strokeWidth=1;fontSize=11;fontColor=#9F1239;align=left;verticalAlign=middle;spacingLeft=10;opacity=0;textOpacity=0;" parent="cloud" vertex="1">
+                    <mxGeometry x="599" y="672" width="240" height="110" as="geometry" />
+                </mxCell>
+                <mxCell id="e_refresh" value="start-instance-refresh" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;opacity=45;textOpacity=45;" parent="cloud" source="cd_role" target="ec2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="550" y="360" />
+                            <mxPoint x="178" y="360" />
+                        </Array>
+                        <mxPoint x="200" y="430" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_gitpush" value="git push to master" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="dev" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_oidc" value="OIDC id_token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="gha" target="sts" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_assume" value="AssumeRoleWithWebIdentity" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="sts" target="cd_role" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_creds" value="short-lived credentials&#10;expire with the job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;dashPattern=6 4;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;verticalAlign=bottom;" parent="1" source="cd_role" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="550" />
+                            <mxPoint x="480" y="195" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_tf" value="terraform apply&#10;read + write state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7AA116;strokeWidth=2;fontSize=11;fontColor=#3F6212;endArrow=blockThin;endFill=1;startArrow=blockThin;startFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="tfstate" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_ecrpush" value="docker push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="550" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_pull" value="pull the same :commit-SHA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="ec2" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="361" y="891" />
+                            <mxPoint x="1100" y="891" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_get" value="GetSecretValue at boot&#10;via the instance profile" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="ec2" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="331" y="1030" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_put" value="put-secret-value — once, by hand" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;verticalAlign=bottom;opacity=45;textOpacity=45;" parent="1" source="dev" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="80" y="65" />
+                            <mxPoint x="80" y="1130" />
+                            <mxPoint x="700" y="1130" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="image" name="3 image (derived)">
+        <mxGraphModel dx="1770" dy="343" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1220" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="dev" value="&lt;b&gt;Developer&lt;/b&gt;&#10;durable_queue/.env" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="30" width="200" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="gha" value="&lt;b&gt;GitHub Actions&lt;/b&gt;&#10;no AWS key stored in the repo" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="590" y="160" width="220" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="cloud" value="AWS Cloud  ap-northeast-1" style="outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=13;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="290" width="1180" height="890" as="geometry" />
+                </mxCell>
+                <mxCell id="sts" value="AWS STS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sts;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="70" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="cd_role" value="IAM role  durable-queue-github-actions&#10;least privilege · PassRole pinned by ARN" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="230" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="tfstate" value="S3  tfstate bucket" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="state_props" value="&lt;b&gt;treated as a secret&lt;/b&gt;&lt;br&gt;SSE-AES256 at rest&lt;br&gt;public access blocked" style="rounded=1;arcSize=6;html=1;whiteSpace=wrap;fillColor=#F2F6E8;strokeColor=#7AA116;strokeWidth=1;fontSize=11;fontColor=#3F6212;align=left;verticalAlign=middle;spacingLeft=10;opacity=0;textOpacity=0;" parent="cloud" vertex="1">
+                    <mxGeometry x="613" y="418.5" width="157" height="83" as="geometry" />
+                </mxCell>
+                <mxCell id="ecr" value="Amazon ECR&#10;image tagged :commit-SHA" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecr;" parent="cloud" vertex="1">
+                    <mxGeometry x="920" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="ec2" value="EC2 boot&#10;instance profile" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="151" y="571" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="secrets" value="Secrets Manager&#10;durable-queue-app · RDS-managed" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="710" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="env_note" value="&lt;b&gt;env vars → container&lt;/b&gt;&#10;never written to disk&#10;never baked into the image&#10;gone when the instance dies" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#FDECEE;strokeColor=#DD344C;strokeWidth=1;fontSize=11;fontColor=#9F1239;align=left;verticalAlign=middle;spacingLeft=10;opacity=0;textOpacity=0;" parent="cloud" vertex="1">
+                    <mxGeometry x="599" y="672" width="240" height="110" as="geometry" />
+                </mxCell>
+                <mxCell id="e_refresh" value="start-instance-refresh" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;opacity=45;textOpacity=45;" parent="cloud" source="cd_role" target="ec2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="550" y="360" />
+                            <mxPoint x="178" y="360" />
+                        </Array>
+                        <mxPoint x="200" y="430" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_gitpush" value="git push to master" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="dev" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_oidc" value="OIDC id_token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="gha" target="sts" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_assume" value="AssumeRoleWithWebIdentity" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="sts" target="cd_role" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_creds" value="short-lived credentials&#10;expire with the job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;dashPattern=6 4;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;verticalAlign=bottom;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="550" />
+                            <mxPoint x="480" y="195" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_tf" value="terraform apply&#10;read + write state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7AA116;strokeWidth=2;fontSize=11;fontColor=#3F6212;endArrow=blockThin;endFill=1;startArrow=blockThin;startFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="tfstate" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_ecrpush" value="docker push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cd_role" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="550" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_pull" value="pull the same :commit-SHA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="ec2" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="361" y="891" />
+                            <mxPoint x="1100" y="891" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_get" value="GetSecretValue at boot&#10;via the instance profile" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="ec2" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="331" y="1030" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_put" value="put-secret-value — once, by hand" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;verticalAlign=bottom;opacity=45;textOpacity=45;" parent="1" source="dev" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="80" y="65" />
+                            <mxPoint x="80" y="1130" />
+                            <mxPoint x="700" y="1130" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="state" name="4 state (derived)">
+        <mxGraphModel dx="1770" dy="343" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1220" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="dev" value="&lt;b&gt;Developer&lt;/b&gt;&#10;durable_queue/.env" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="30" width="200" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="gha" value="&lt;b&gt;GitHub Actions&lt;/b&gt;&#10;no AWS key stored in the repo" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="590" y="160" width="220" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="cloud" value="AWS Cloud  ap-northeast-1" style="outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=13;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="290" width="1180" height="890" as="geometry" />
+                </mxCell>
+                <mxCell id="sts" value="AWS STS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sts;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="70" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="cd_role" value="IAM role  durable-queue-github-actions&#10;least privilege · PassRole pinned by ARN" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="230" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="tfstate" value="S3  tfstate bucket" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="state_props" value="&lt;b&gt;treated as a secret&lt;/b&gt;&lt;br&gt;SSE-AES256 at rest&lt;br&gt;public access blocked" style="rounded=1;arcSize=6;html=1;whiteSpace=wrap;fillColor=#F2F6E8;strokeColor=#7AA116;strokeWidth=1;fontSize=11;fontColor=#3F6212;align=left;verticalAlign=middle;spacingLeft=10;" parent="cloud" vertex="1">
+                    <mxGeometry x="613" y="418.5" width="157" height="83" as="geometry" />
+                </mxCell>
+                <mxCell id="ecr" value="Amazon ECR&#10;image tagged :commit-SHA" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecr;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="920" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="ec2" value="EC2 boot&#10;instance profile" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="151" y="571" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="secrets" value="Secrets Manager&#10;durable-queue-app · RDS-managed" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="710" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="env_note" value="&lt;b&gt;env vars → container&lt;/b&gt;&#10;never written to disk&#10;never baked into the image&#10;gone when the instance dies" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#FDECEE;strokeColor=#DD344C;strokeWidth=1;fontSize=11;fontColor=#9F1239;align=left;verticalAlign=middle;spacingLeft=10;opacity=0;textOpacity=0;" parent="cloud" vertex="1">
+                    <mxGeometry x="599" y="672" width="240" height="110" as="geometry" />
+                </mxCell>
+                <mxCell id="e_refresh" value="start-instance-refresh" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;opacity=45;textOpacity=45;" parent="cloud" source="cd_role" target="ec2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="550" y="360" />
+                            <mxPoint x="178" y="360" />
+                        </Array>
+                        <mxPoint x="200" y="430" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_gitpush" value="git push to master" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="dev" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_oidc" value="OIDC id_token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="gha" target="sts" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_assume" value="AssumeRoleWithWebIdentity" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="sts" target="cd_role" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_creds" value="short-lived credentials&#10;expire with the job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;dashPattern=6 4;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;verticalAlign=bottom;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="550" />
+                            <mxPoint x="480" y="195" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_tf" value="terraform apply&#10;read + write state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7AA116;strokeWidth=2;fontSize=11;fontColor=#3F6212;endArrow=blockThin;endFill=1;startArrow=blockThin;startFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cd_role" target="tfstate" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_ecrpush" value="docker push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="550" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_pull" value="pull the same :commit-SHA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="ec2" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="361" y="891" />
+                            <mxPoint x="1100" y="891" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_get" value="GetSecretValue at boot&#10;via the instance profile" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="ec2" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="331" y="1030" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_put" value="put-secret-value — once, by hand" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;verticalAlign=bottom;opacity=45;textOpacity=45;" parent="1" source="dev" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="80" y="65" />
+                            <mxPoint x="80" y="1130" />
+                            <mxPoint x="700" y="1130" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="boot" name="5 boot (derived)">
+        <mxGraphModel dx="1770" dy="343" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1220" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                <mxCell id="dev" value="&lt;b&gt;Developer&lt;/b&gt;&#10;durable_queue/.env" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="30" width="200" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="gha" value="&lt;b&gt;GitHub Actions&lt;/b&gt;&#10;no AWS key stored in the repo" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#F4F4F5;strokeColor=#232F3E;strokeWidth=2;fontSize=12;fontColor=#232F3E;align=center;verticalAlign=middle;opacity=45;textOpacity=45;" parent="1" vertex="1">
+                    <mxGeometry x="590" y="160" width="220" height="70" as="geometry" />
+                </mxCell>
+                <mxCell id="cloud" value="AWS Cloud  ap-northeast-1" style="outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=13;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="290" width="1180" height="890" as="geometry" />
+                </mxCell>
+                <mxCell id="sts" value="AWS STS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sts;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="70" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="cd_role" value="IAM role  durable-queue-github-actions&#10;least privilege · PassRole pinned by ARN" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="230" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="tfstate" value="S3  tfstate bucket" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3;opacity=45;textOpacity=45;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="state_props" value="&lt;b&gt;treated as a secret&lt;/b&gt;&lt;br&gt;SSE-AES256 at rest&lt;br&gt;public access blocked" style="rounded=1;arcSize=6;html=1;whiteSpace=wrap;fillColor=#F2F6E8;strokeColor=#7AA116;strokeWidth=1;fontSize=11;fontColor=#3F6212;align=left;verticalAlign=middle;spacingLeft=10;opacity=0;textOpacity=0;" parent="cloud" vertex="1">
+                    <mxGeometry x="613" y="418.5" width="157" height="83" as="geometry" />
+                </mxCell>
+                <mxCell id="ecr" value="Amazon ECR&#10;image tagged :commit-SHA" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecr;" parent="cloud" vertex="1">
+                    <mxGeometry x="920" y="430" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="ec2" value="EC2 boot&#10;instance profile" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="cloud" vertex="1">
+                    <mxGeometry x="151" y="571" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="secrets" value="Secrets Manager&#10;durable-queue-app · RDS-managed" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;" parent="cloud" vertex="1">
+                    <mxGeometry x="520" y="710" width="60" height="60" as="geometry" />
+                </mxCell>
+                <mxCell id="env_note" value="&lt;b&gt;env vars → container&lt;/b&gt;&#10;never written to disk&#10;never baked into the image&#10;gone when the instance dies" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fillColor=#FDECEE;strokeColor=#DD344C;strokeWidth=1;fontSize=11;fontColor=#9F1239;align=left;verticalAlign=middle;spacingLeft=10;" parent="cloud" vertex="1">
+                    <mxGeometry x="599" y="672" width="240" height="110" as="geometry" />
+                </mxCell>
+                <mxCell id="e_refresh" value="start-instance-refresh" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="cloud" source="cd_role" target="ec2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="550" y="360" />
+                            <mxPoint x="178" y="360" />
+                        </Array>
+                        <mxPoint x="200" y="430" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_gitpush" value="git push to master" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="dev" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_oidc" value="OIDC id_token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="gha" target="sts" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_assume" value="AssumeRoleWithWebIdentity" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#232F3E;strokeWidth=2;fontSize=11;fontColor=#232F3E;endArrow=blockThin;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="sts" target="cd_role" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_creds" value="short-lived credentials&#10;expire with the job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;dashPattern=6 4;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;verticalAlign=bottom;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="gha" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="550" />
+                            <mxPoint x="480" y="195" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_tf" value="terraform apply&#10;read + write state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#7AA116;strokeWidth=2;fontSize=11;fontColor=#3F6212;endArrow=blockThin;endFill=1;startArrow=blockThin;startFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="tfstate" edge="1">
+                    <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <mxCell id="e_ecrpush" value="docker push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;opacity=45;textOpacity=45;" parent="1" source="cd_role" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="550" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_pull" value="pull the same :commit-SHA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#B35400;endArrow=blockThin;endFill=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="ec2" target="ecr" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="361" y="891" />
+                            <mxPoint x="1100" y="891" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_get" value="GetSecretValue at boot&#10;via the instance profile" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="ec2" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="331" y="1030" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_put" value="put-secret-value — once, by hand" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#DD344C;strokeWidth=2;fontSize=11;fontColor=#DD344C;endArrow=blockThin;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;verticalAlign=bottom;opacity=45;textOpacity=45;" parent="1" source="dev" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="80" y="65" />
+                            <mxPoint x="80" y="1130" />
+                            <mxPoint x="700" y="1130" />
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

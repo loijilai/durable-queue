@@ -62,6 +62,9 @@ interface Lens {
   id: string;
   tab: string;
   caption: string;
+  // 有 group 的鏡頭組會改用「組名 + 編號」的 tab 條：打光要細（每一步一格），
+  // 標題要粗（三個階段）。連續同 group 的鏡頭收成一組，不用巢狀結構。
+  group?: string;
   // 拓撲 / 管線是 draw.io 匯出的 SVG（src）；登入檢查是時序圖，走 repo 裡
   // 既有的 excalidraw 管道（scene = .excalidraw 原始 JSON）。兩者擇一。
   src?: string | null;
@@ -92,62 +95,82 @@ const TOPOLOGY_LENSES: Lens[] = [
   },
 ];
 
-// ── ② CI/CD：一條部署管線、三個鏡頭 ───────────────────────────────
-// 跟 ① 同一個契約（一個主體、三個鏡頭），只是主體從空間換成時間。
-// lens 2 高亮的那段不在管線主幹上——secret 是 EC2 自己岔出去拉的，
-// 「明文從沒經過 pipeline」因此是一個看得出來的事實，不必用文字論證。
-// TODO(diagram): docs/7-deploy-pipeline.drawio，三個 layer → 三張 SVG。
+// ── ② CI/CD：一次部署的完整路徑、五個步驟 ─────────────────────────
+// 跟 ① 的差別是維度：① 是空間（同一張拓撲的三個切面，彼此平行），
+// ② 是時間（同一條管線的五個先後步驟）。tab 因此帶編號 —— tab 這個元件
+// 天生讀作平行選項，不編號的話讀者拿不到順序。
+// 打光五格、標題三組：group 相同的連續鏡頭在 UI 上收在同一個組名底下。
+// 圖源 docs/7-deploy-pipeline.drawio 的 master 頁（幾何的單一真相來源）。
+// 改圖：編輯 master → python3 docs/7-deploy-pipeline.build.py --export。
 const PIPELINE_LENSES: Lens[] = [
   {
-    id: "identity",
-    tab: "Deploy identity",
+    id: "seed",
+    group: "Secret flow",
+    tab: "1",
+    src: "/sec-pipeline-1-seed.svg",
     caption:
-      "GitHub Actions presents an OIDC id_token and STS hands back credentials that expire with the job — no AWS key is stored in the repo, so there is nothing to leak and nothing to rotate.",
-    src: null,
+      "The only plaintext copy of the app secrets sits in a local .env file. One manual put-secret-value writes it into Secrets Manager — it never enters the repository, and it never travels down the pipeline in the steps that follow.",
   },
   {
-    id: "secrets",
-    tab: "Secret flow",
+    id: "identity",
+    group: "Deploy identity & state protection",
+    tab: "2",
+    src: "/sec-pipeline-2-identity.svg",
     caption:
-      "No secret travels along the pipeline. The instance fetches them itself at boot through its instance profile, and they exist only as environment variables inside the container.",
-    src: null,
+      "The runner holds no AWS key. It presents a GitHub OIDC id_token and STS hands back credentials that expire with the job — so there is nothing in the repository to leak, and nothing to rotate.",
+  },
+  {
+    id: "image",
+    group: "Deploy identity & state protection",
+    tab: "3",
+    src: "/sec-pipeline-3-image.svg",
+    caption:
+      "Those credentials push one artifact, tagged with the commit SHA. The thing that ships is addressable back to the commit that was tested, and a redeploy of the same SHA is the same bytes.",
   },
   {
     id: "state",
-    tab: "State protection",
+    group: "Deploy identity & state protection",
+    tab: "4",
+    src: "/sec-pipeline-4-state.svg",
     caption:
-      "Terraform's state records real infrastructure and resolved secret ARNs, so the bucket is treated as a secret in its own right: encrypted, versioned, and unreachable from outside the account.",
-    src: null,
+      "The same credentials read and write Terraform's state, which records real infrastructure and resolved secret ARNs. That makes the bucket a secret in its own right: encrypted at rest, versioned, and blocked from public access.",
+  },
+  {
+    id: "boot",
+    group: "Runtime",
+    tab: "5",
+    src: "/sec-pipeline-5-boot.svg",
+    caption:
+      "The instance refresh replaces the machine, and the new one authenticates as itself. Its instance profile pulls that same commit SHA and fetches the secrets, which land as environment variables inside the container and nowhere else.",
   },
 ];
 
-// 這張表真正要說的話是最後一欄：明文在任何一段都沒有停下來過。
-interface SecretStage {
-  stage: string;
-  produced: string;
-  verdict: string;
-  detail: string;
+// 這張表真正要說的話是最後一欄：user_data 存在 instance metadata 裡，只有
+// base64、沒有加密，任何碰得到那台機器的人都讀得到。所以「可不可以出現在
+// user_data」就是機密與否的判準——分類不是憑感覺分的。no / no / yes 讀完，
+// 三個來源為什麼走三條不同的路就講完了。
+interface ConfigSource {
+  source: string;
+  origin: string;
+  delivery: string;
+  note?: string;
 }
 
-const SECRET_STAGES: SecretStage[] = [
+const CONFIG_SOURCES: ConfigSource[] = [
   {
-    stage: "RDS master password",
-    produced: "manage_master_user_password = true — AWS generates and owns it",
-    verdict: "never",
-    detail: "Terraform only reads master_user_secret[0].secret_arn",
+    source: "RDS master password",
+    origin: "AWS (manage_master_user_password = true)",
+    delivery: "Secrets Manager",
   },
   {
-    stage: "App secret",
-    produced:
-      "Terraform creates an empty shell; deploy.sh puts the value from a local .env",
-    verdict: "never",
-    detail: "not in .tf, not in tfstate",
+    source: "App secret",
+    origin: "Developer",
+    delivery: "Secrets Manager",
   },
   {
-    stage: "Consumer",
-    produced: "EC2 reads it at boot through the instance profile",
-    verdict: "never",
-    detail: "env vars only — not written to disk, not baked into the image",
+    source: "Config & endpoints",
+    origin: "Terraform, computed from other resources",
+    delivery: "user_data templated into docker run -e",
   },
 ];
 
@@ -267,6 +290,17 @@ const OUT_OF_SCOPE: string[] = [
 
 // 一個主體、三個鏡頭。圖框從頭到尾是同一個節點，切 tab 不會有 layout
 // jump——視覺上要忠實傳達「圖沒有換，只是鏡頭換了」。
+// 連續同 group 的鏡頭收成一組。用 reduce 而不是 Map，是因為順序就是時序，
+// 而 group 只會連續出現——不需要能處理交錯的資料結構。
+function groupLenses(lenses: Lens[]) {
+  return lenses.reduce<{ name?: string; lenses: Lens[] }[]>((groups, lens) => {
+    const last = groups[groups.length - 1];
+    if (last && last.name === lens.group) last.lenses.push(lens);
+    else groups.push({ name: lens.group, lenses: [lens] });
+    return groups;
+  }, []);
+}
+
 function LensFigure({ lenses, label }: { lenses: Lens[]; label: string }) {
   const [lensId, setLensId] = useState(lenses[0].id);
   const lens = lenses.find((l) => l.id === lensId) ?? lenses[0];
@@ -274,17 +308,32 @@ function LensFigure({ lenses, label }: { lenses: Lens[]; label: string }) {
   return (
     <div className="sec-lens">
       <div className="sec-lens-tabs" role="tablist" aria-label={label}>
-        {lenses.map((l) => (
-          <button
-            key={l.id}
-            type="button"
-            role="tab"
-            aria-selected={l.id === lensId}
-            className={`sec-lens-tab${l.id === lensId ? " is-active" : ""}`}
-            onClick={() => setLensId(l.id)}
+        {groupLenses(lenses).map((group) => (
+          <div
+            className="sec-lens-group"
+            key={group.name ?? group.lenses[0].id}
           >
-            {l.tab}
-          </button>
+            {group.name ? (
+              <span className="sec-lens-group-name">{group.name}</span>
+            ) : null}
+            <div className="sec-lens-group-tabs">
+              {group.lenses.map((l) => (
+                <button
+                  key={l.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={l.id === lensId}
+                  aria-label={group.name ? `${group.name} — ${l.tab}` : l.tab}
+                  className={`sec-lens-tab${group.name ? " is-step" : ""}${
+                    l.id === lensId ? " is-active" : ""
+                  }`}
+                  onClick={() => setLensId(l.id)}
+                >
+                  {l.tab}
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 
@@ -381,39 +430,39 @@ function SecurityPage() {
 
         <LensFigure lenses={PIPELINE_LENSES} label="deploy pipeline lenses" />
 
-        {/* 明文的生命週期：最後一欄整排都是 never，這件事要一眼成立 */}
+        {/* 三個來源匯流成同一組環境變數；分類的依據放在最後一欄 */}
         <div className="sec-secrets">
           <p className="eyebrow sec-subsection-tag">
             <span className="eyebrow-dot" />
-            WHERE THE PLAINTEXT LIVES
+            THREE SOURCES, ONE PROCESS
           </p>
           <div className="sec-table-scroll">
             <table className="sec-secret-table">
               <thead>
                 <tr>
-                  <th>Stage</th>
-                  <th>Who produces it</th>
-                  <th>Plaintext at rest?</th>
+                  <th>Source</th>
+                  <th>Who creates the value</th>
+                  <th>How it reaches the process</th>
                 </tr>
               </thead>
               <tbody>
-                {SECRET_STAGES.map((s) => (
-                  <tr key={s.stage}>
-                    <td className="sec-secret-stage">{s.stage}</td>
-                    <td className="sec-secret-produced">{s.produced}</td>
-                    <td>
-                      <span className="sec-verdict">{s.verdict}</span>
-                      <span className="sec-secret-detail">{s.detail}</span>
+                {CONFIG_SOURCES.map((c) => (
+                  <tr key={c.source}>
+                    <td className="sec-secret-stage">{c.source}</td>
+                    <td className="sec-secret-produced">
+                      {c.origin}
+                      {c.note ? (
+                        <span className="sec-secret-note">{c.note}</span>
+                      ) : null}
+                    </td>
+                    <td className="sec-secret-produced">
+                      <code>{c.delivery}</code>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="ha-caveat">
-            Read the last column downwards: the plaintext never comes to rest
-            anywhere along the path.
-          </p>
         </div>
       </section>
 

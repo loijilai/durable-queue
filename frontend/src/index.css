@@ -848,6 +848,41 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: flex-end;
+}
+
+/* 有組名時 tab 條變兩層：組名在上、編號在下。組名不可點，它只負責讓
+   「五步分成三段」這件事在一眼裡成立。組與組之間拉開，段落界線才看得見。 */
+.sec-lens-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sec-lens-group + .sec-lens-group {
+  margin-left: 20px;
+}
+
+.sec-lens-group-name {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.sec-lens-group-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+/* 編號 tab 是圓的、等寬的——它讀作「第幾步」，不是一個標籤。只有帶組名的
+   那種才套用；沒有組名時 tab 仍是文字，要保留原本的左右內距。 */
+.sec-lens-tab.is-step {
+  min-width: 38px;
+  padding: 8px 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .sec-lens-tab {
@@ -939,7 +974,7 @@ a {
 
 .sec-secret-table {
   width: 100%;
-  min-width: 640px;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: 13px;
   text-align: left;
@@ -970,20 +1005,26 @@ a {
 }
 
 .sec-secret-produced {
-  max-width: 340px;
+  max-width: 280px;
 }
 
-/* verdict chip：整欄都是 never，要一眼看得出來 */
-.sec-verdict {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: rgba(47, 122, 61, 0.12);
-  color: var(--signal-green);
+.sec-secret-table code {
+  font-family: ui-monospace, monospace;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  line-height: 1.6;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+/* 補充說明：誠實標註但不搶正文的重量 */
+.sec-secret-note {
+  display: block;
+  margin-top: 8px;
+  padding-left: 10px;
+  border-left: 2px solid var(--dust);
+  font-size: 12px;
+  color: var(--slate);
+  line-height: 1.45;
 }
 
 .sec-secret-detail {
