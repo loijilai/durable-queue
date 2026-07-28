@@ -53,10 +53,11 @@ const LAYERS: Layer[] = [
 ];
 
 // ── ① INFRA：一張拓撲圖、三個鏡頭 ──────────────────────────────────
-// 三個子題（subnet 隔離 / SG 鏈 / HTTPS）是同一張圖的三個圖層，不拆成
-// 三張卡——要讓人帶走的是「這是同一個防禦姿態的三個切面」。
-// TODO(diagram): 一份 docs/6-security-topology.drawio 開三個 layer，
-// 匯出三張 SVG 到 public/，這裡的 src 換掉即可。
+// 三個子題（subnet 隔離 / SG 鏈 / HTTPS）是同一張圖的三個切面，不拆成
+// 三張卡——要讓人帶走的是「這是同一個防禦姿態的三個面向」。
+// 圖源 docs/6-security-topology.drawio 的 master 頁（幾何的單一真相來源）。
+// 改圖：在 draw.io 編輯 master → 存檔 → python3 docs/6-security-topology.build.py
+// --export，它會重算三個鏡頭頁並覆寫下面這三張 SVG。
 interface Lens {
   id: string;
   tab: string;
@@ -71,23 +72,23 @@ const TOPOLOGY_LENSES: Lens[] = [
   {
     id: "network",
     tab: "Network boundary",
+    src: "/sec-topology-network.svg",
     caption:
       "The public subnets hold only the ALB and the NAT gateway. Every compute and data node lives in a private subnet with no public IP — and no security group anywhere opens :22. The admin plane is SSM Session Manager, so there is no bastion and no SSH surface to attack.",
-    src: null,
   },
   {
     id: "sg",
     tab: "SG authorization chain",
+    src: "/sec-topology-sg.svg",
     caption:
       "Each hop authorizes the security group upstream of it rather than a CIDR block, so the boundary follows the resource instead of its IP — instances can scale out or move AZ without a rule change. The worker has zero ingress at all: it is a client that pulls work.",
-    src: null,
   },
   {
     id: "tls",
     tab: "Encryption boundary",
+    src: "/sec-topology-tls.svg",
     caption:
       "TLS terminates at the ALB against an ACM certificate; :80 exists only to 301 clients up to :443. Inside the VPC traffic is plaintext — a deliberate trade-off that leans on the two boundaries above, and one we name again under Out of Scope.",
-    src: null,
   },
 ];
 
