@@ -9,8 +9,19 @@
   --signal-orange: #cf4500;
   --light-orange: #f37338;
   --signal-green: #2f7a3d;
+  --link-blue: #3860be;
+  --clay: #9a3a0a;
+  --error-red: #a3232b;
+  --watermark: #e8e2da;
   --footer-black: #141413;
   --shadow: rgba(0, 0, 0, 0.08) 0px 24px 48px;
+  --shadow-soft: rgba(0, 0, 0, 0.04) 0px 4px 24px;
+
+  /* DESIGN.md §2 Job Status Colors —— 一個顏色在全站只代表一件事 */
+  --status-pending: var(--dust);
+  --status-running: var(--link-blue);
+  --status-succeeded: var(--signal-green);
+  --status-failed: var(--error-red);
 
   --sans: 'Sofia Sans', Inter, Arial, sans-serif;
 
@@ -177,43 +188,438 @@ a {
   display: inline-block;
 }
 
-/* Home */
+/* ── Home ─────────────────────────────────────────────────────── */
 .home {
   padding-top: 32px;
+}
+
+.hero {
+  max-width: 780px;
+}
+
+.hero h1 {
+  font-size: clamp(38px, 5.4vw, 64px);
+  line-height: 1;
 }
 
 .home-lede {
   font-size: 18px;
   color: var(--charcoal);
   max-width: 640px;
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
-.section-grid {
+/* Hero figure frame：DESIGN.md §2 的 Lifted Cream —— 「紙疊在紙上」。
+   深色 ink 在這套系統裡是保留給 footer 和 CTA 的（§7 Do：canvas cream →
+   lifted cream → ink footer），中段再放一塊 ink 會跟 footer 互相打架。
+   §4 的 hero media frame 之所以深色是因為它裝影片／攝影，不是裝文字圖表。 */
+.hero-frame {
+  margin: 56px 0 0;
+  padding: 28px 32px 32px;
+  background: var(--canvas-lifted);
+  border-radius: 40px;
+  box-shadow: var(--shadow);
+}
+
+.hero-frame-eyebrow {
+  margin-bottom: 0;
+}
+
+/* Hero 圖：左堆疊 + 右 pipeline */
+.stackfig {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
-  margin-top: 48px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 40px;
+  margin-top: 28px;
 }
 
-.section-card {
-  background: var(--white);
-  border-radius: 24px;
-  padding: 24px;
+/* ── 左欄：技術堆疊 ─────────────────────────────────────────── */
+.stack-col {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.stack-layer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  border: 1px solid var(--dust);
+  border-radius: 14px;
+  padding: 12px 16px;
+  transition:
+    border-color 0.35s ease,
+    background 0.35s ease;
+}
+
+/* pipeline 目前這一站打到的層 —— 兩欄之間的對應關係就靠這個點亮傳達。
+   淺底上用 Signal Orange 而非 Light Signal Orange：後者是裝飾弧線用的，
+   在 cream 上做邊框對比不夠。 */
+.stack-layer.is-lit {
+  border-color: var(--signal-orange);
+  background: rgba(207, 69, 0, 0.05);
+}
+
+/* 兩欄網格：1 個 glyph 佔一格、2 個排成一列、4 個自然疊成 2×2 正方形，
+   不會拉出一條長 row。固定 46px（20px × 2 + 6px gap）讓每一層的文字欄
+   都從同一個 x 起算 —— 否則 glyph 數量不同會讓左邊界參差。 */
+.stack-glyphs {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  justify-items: start;
+  align-items: center;
+  gap: 6px;
+  width: 46px;
+  padding-top: 2px;
+}
+
+.stack-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--slate);
+  transition: color 0.35s ease;
+}
+
+.stack-layer.is-lit .stack-icon {
+  color: var(--ink);
+}
+
+/* AWS 自家服務沒有可用的品牌圖示，用字母牌代替，尺寸對齊 icon 讓兩者同排 */
+.stack-mark {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 5px;
+  border: 1px solid var(--dust);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--slate);
+  transition:
+    color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.stack-layer.is-lit .stack-mark {
+  color: var(--ink);
+  border-color: var(--slate);
+}
+
+.stack-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stack-tier {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+  transition: color 0.35s ease;
+}
+
+.stack-layer.is-lit .stack-tier {
+  color: var(--signal-orange);
+}
+
+.stack-primary {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.stack-detail {
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 1.4;
+  color: var(--slate);
+}
+
+/* 「還沒蓋」的訊號放在虛線框上（Dust Taupe，DESIGN.md 的 whisper 色），
+   文字本身用 slate —— dust taupe 在 cream 上對比太低，當邊框可以，
+   當文字會讀不到。 */
+.stack-next {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--slate);
+  border: 1px dashed var(--dust);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.stack-next-icon {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  color: var(--dust);
+}
+
+/* ── 右欄：deploy pipeline ──────────────────────────────────── */
+.pipe-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.pipe-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pipe-stage {
+  position: relative;
+  padding-bottom: 18px;
+}
+
+.pipe-stage:last-child {
+  padding-bottom: 0;
+}
+
+/* 站與站之間的縱向連接線 */
+.pipe-stage::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 16px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--dust);
+}
+
+.pipe-stage:last-child::before {
+  display: none;
+}
+
+.pipe-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.pipe-mark {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.5px solid var(--dust);
+  background: var(--canvas-lifted);
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease,
+    transform 0.3s ease;
+}
+
+.pipe-stage.is-active .pipe-mark {
+  border-color: var(--signal-orange);
+  background: var(--signal-orange);
+  transform: scale(1.35);
+}
+
+.pipe-label {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--slate);
+  transition: color 0.3s ease;
+}
+
+.pipe-stage.is-active .pipe-label {
+  color: var(--ink);
+}
+
+.pipe-btn:focus-visible {
+  outline: 2px solid var(--signal-orange);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.pipe-detail {
+  margin: 24px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--charcoal);
+  min-height: 88px;
+  animation: caption-in 0.45s ease;
+}
+
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── The route（01–06） ───────────────────────────────────────── */
+.route {
+  position: relative;
+  margin-top: 96px;
+}
+
+/* Ghost watermark（DESIGN.md §4）：cream-on-cream，只給節奏不搶讀 */
+.route-watermark {
+  position: absolute;
+  top: -46px;
+  left: -6px;
+  font-size: clamp(72px, 12vw, 128px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--watermark);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.route-eyebrow {
+  position: relative;
+  z-index: 1;
+}
+
+.route-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.route-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--white);
+  border-radius: 40px;
+  padding: 28px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.route-card:hover {
+  transform: translateY(-3px);
   box-shadow: var(--shadow);
-  transition: transform 0.15s ease;
 }
 
-.section-card:hover {
-  transform: translateY(-2px);
+/* 巨大編號同樣走 watermark 手法：把 01–06 的順序做成視覺，而不是靠讀者記 */
+.route-card-index {
+  position: absolute;
+  top: 8px;
+  right: 20px;
+  font-size: 88px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--watermark);
+  pointer-events: none;
+  transition: color 0.2s ease;
 }
 
-.section-card p:not(.eyebrow) {
-  margin-top: 8px;
+.route-card:hover .route-card-index {
+  color: var(--light-orange);
+}
+
+.route-card h3 {
+  position: relative;
+  margin-top: 4px;
+}
+
+.route-card-body {
+  position: relative;
+  margin-top: 10px;
   color: var(--slate);
   font-size: 15px;
+  line-height: 1.45;
+}
+
+/* Satellite CTA（DESIGN.md §4）：卡片版的衛星鈕 */
+.route-card-satellite {
+  margin-top: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 18px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.route-card:hover .route-card-satellite {
+  background: var(--ink);
+  color: var(--canvas);
+  transform: translateX(4px);
+}
+
+/* 兩欄併成一欄時，pipeline 走到堆疊下面 —— 對應關係改由點亮傳達，
+   在窄螢幕上仍然成立，因為兩者都還在同一個視野內。 */
+@media (max-width: 860px) {
+  .stackfig {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .pipe-detail {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero-frame {
+    padding: 24px 22px 26px;
+    border-radius: 32px;
+  }
+
+  .route-card-index {
+    font-size: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pipe-detail,
+  .pipe-mark,
+  .stack-layer,
+  .route-card,
+  .route-card-satellite {
+    animation: none;
+    transition: none;
+  }
 }
 
 /* Placeholder pages */
@@ -2090,4 +2496,72 @@ a {
 .scl-speedup strong {
   color: var(--signal-orange);
   font-size: 18px;
+}
+
+/* ── Site footer（DESIGN.md §4 Footer） ───────────────────────── */
+.site-footer {
+  background: var(--footer-black);
+  color: var(--white);
+  margin-top: 64px;
+}
+
+.site-footer-inner {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 80px 24px 64px;
+}
+
+.site-footer-headline {
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1.2;
+  color: var(--white);
+  max-width: 520px;
+}
+
+.site-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+  margin-top: 56px;
+}
+
+.site-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.site-footer-head {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 4px;
+}
+
+.site-footer-link {
+  font-size: 14px;
+  font-weight: 450;
+  color: rgba(255, 255, 255, 0.85);
+  transition: color 0.15s ease;
+}
+
+.site-footer-link:hover {
+  color: var(--light-orange);
+}
+
+.site-footer-note {
+  font-size: 14px;
+  font-weight: 450;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.site-footer-bottom {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
 }

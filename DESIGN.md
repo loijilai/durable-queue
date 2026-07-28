@@ -46,7 +46,21 @@ Typography is rendered entirely in **MarkForMC**, Mastercard's proprietary geome
 ### Semantic & Accent
 - **Link Blue** (`#3860BE`): A deep, slightly dusty blue used for inline links and informational callouts. Saturated enough to read as a link without being neon.
 - **Signal Green** (`#2F7A3D`): Confirmation / success / "correct" state color — logged-in status, completed steps, passed checks. A muted forest green (not a neon success green) to stay in the same low-saturation register as the rest of the palette. Reserved for states that are actually done/verified, not for in-progress or neutral states.
+- **Error Red** (`#A3232B`): Failure / error state color. A deep, desaturated brick red — deliberately dulled so it never reads as the brand's Priceless Red (`#EB001B`), which is logo-only. Reserved for genuinely failed states (a job that exhausted its retries, a rejected request, a validation error). Never use it for warnings, in-progress states, or destructive-action buttons.
 - **Priceless Red + Yellow**: The full-color Mastercard logo mark is the only place the brand's red and yellow appear together; they lock the identity to the page without acting as a UI palette.
+
+### Job Status Colors
+
+This product surfaces a four-state job lifecycle everywhere (status pills, live grids, the landing-page lifecycle figure). The mapping is fixed so a color means the same thing on every page:
+
+| Status | Color | Rationale |
+|--------|-------|-----------|
+| `pending` | Dust Taupe (`#D1CDC7`) | Queued but untouched — the "whisper" tone reads as not-yet-real |
+| `running` | Link Blue (`#3860BE`) | The informational color; in-progress is information, not confirmation |
+| `succeeded` | Signal Green (`#2F7A3D`) | The documented done/verified color |
+| `failed` | Error Red (`#A3232B`) | The only place error red appears |
+
+Signal Orange (`#CF4500`) is **not** part of this scale — it stays reserved for consent/legal actions and eyebrow dots, so a status pill can never be confused with a compliance control.
 
 ### Gradient System
 Mastercard uses no programmatic gradients in the core UI. The visual impression of "gradient" comes from two places:
@@ -339,6 +353,9 @@ Circular portraits scale proportionally (maintaining the perfect circle at every
 - Muted text: "Slate Gray (`#696969`)"
 - Signal / Consent: "Signal Orange (`#CF4500`) — reserve for cookie consent and legal actions"
 - Success / Confirmed: "Signal Green (`#2F7A3D`) — reserve for completed/verified states (logged-in, done steps, passed checks), never for in-progress"
+- In progress / Info: "Link Blue (`#3860BE`) — running jobs, inline links, informational callouts"
+- Failed / Error: "Error Red (`#A3232B`) — dulled brick red for failed states only; never the logo's `#EB001B`"
+- Queued / Whisper: "Dust Taupe (`#D1CDC7`) — pending jobs, disabled and placeholder text"
 - Accent arc: "Light Signal Orange (`#F37338`) — orbital decorative lines only"
 - Border / Outline: "Ink Black at 1.5px for pill buttons; 1px at low opacity elsewhere"
 - Footer: "Ink Black (`#141413`) with White text"
