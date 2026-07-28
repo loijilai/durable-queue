@@ -11,6 +11,7 @@ import {
 } from "../lib/api.ts";
 import AuditTrail from "../components/AuditTrail.tsx";
 import DiagramLightbox from "../components/DiagramLightbox.tsx";
+import Foldout from "../components/Foldout.tsx";
 
 const DIAGRAM_LABEL = "AWS infrastructure diagram";
 const POLL_INTERVAL_MS = 2000;
@@ -293,55 +294,57 @@ function HighAvailabilityPage() {
           </div>
         )}
 
-        <div className="ha-columns">
-          <div className="ha-col">
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              HOW TO RUN
-            </p>
-            <ol className="ha-steps">
-              <li>
-                Boot the backend with demo knobs —{" "}
-                <code>docker compose up --build --scale worker=2</code>.
-              </li>
-              <li>
-                Click <strong>Start scenario A</strong>. A worker claims the job
-                — the first audit entry shows <em>running here</em>.
-              </li>
-              <li>
-                While it is RUNNING, find the busy worker (
-                <code>docker ps</code>) and <code>docker kill &lt;id&gt;</code>.
-              </li>
-              <li>
-                After ~30s (the visibility timeout) another worker re-claims it,
-                and the job still reaches SUCCEEDED.
-              </li>
-            </ol>
-          </div>
+        <Foldout title="HOW TO RUN · WHY IT SURVIVES">
+          <div className="ha-columns">
+            <div className="ha-col">
+              <p className="eyebrow">
+                <span className="eyebrow-dot" />
+                HOW TO RUN
+              </p>
+              <ol className="ha-steps">
+                <li>
+                  Boot the backend with demo knobs —{" "}
+                  <code>docker compose up --build --scale worker=2</code>.
+                </li>
+                <li>
+                  Click <strong>Start scenario A</strong>. A worker claims the job
+                  — the first audit entry shows <em>running here</em>.
+                </li>
+                <li>
+                  While it is RUNNING, find the busy worker (
+                  <code>docker ps</code>) and <code>docker kill &lt;id&gt;</code>.
+                </li>
+                <li>
+                  After ~30s (the visibility timeout) another worker re-claims it,
+                  and the job still reaches SUCCEEDED.
+                </li>
+              </ol>
+            </div>
 
-          <div className="ha-col">
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              WHY IT SURVIVES
-            </p>
-            <ul className="ha-mechanism">
-              <li>
-                <strong>acks_late</strong> — the message is acknowledged only
-                after the task completes, so a crash mid-run leaves it un-ACKed
-                and Redis redelivers it.
-              </li>
-              <li>
-                <strong>visibility timeout</strong> — how long an un-ACKed task
-                waits before redelivery (set to 30s here so the demo is snappy).
-              </li>
-              <li>
-                <strong>idempotency guard</strong> — skips jobs already in a
-                terminal state, so redelivery can never double-write a finished
-                job.
-              </li>
-            </ul>
+            <div className="ha-col">
+              <p className="eyebrow">
+                <span className="eyebrow-dot" />
+                WHY IT SURVIVES
+              </p>
+              <ul className="ha-mechanism">
+                <li>
+                  <strong>acks_late</strong> — the message is acknowledged only
+                  after the task completes, so a crash mid-run leaves it un-ACKed
+                  and Redis redelivers it.
+                </li>
+                <li>
+                  <strong>visibility timeout</strong> — how long an un-ACKed task
+                  waits before redelivery (set to 30s here so the demo is snappy).
+                </li>
+                <li>
+                  <strong>idempotency guard</strong> — skips jobs already in a
+                  terminal state, so redelivery can never double-write a finished
+                  job.
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
+        </Foldout>
       </div>
 
       {/* ── Scenario B ─────────────────────────────────────────── */}
@@ -402,84 +405,59 @@ function HighAvailabilityPage() {
           )}
         </figure>
 
-        <div className="ha-columns">
-          <div className="ha-col">
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              HOW TO RUN
-            </p>
-            <ol className="ha-steps">
-              <li>
-                {" "}
-                <strong>Start probe</strong> hits <code>/health/</code> once a
-                second.
-              </li>
-              <li>
-                In the EC2 console, <strong>terminate</strong> the API instance
-                currently serving traffic.
-              </li>
-              <li>
-                Watch the probe: the ALB drains the dead target within a couple
-                of health-check intervals, so the strip stays green (or flashes
-                one red then recovers).
-              </li>
-              <li>
-                Minutes later the ASG launches a replacement to restore{" "}
-                <code>desired=2</code> — no manual step.
-              </li>
-            </ol>
-          </div>
+        <Foldout title="HOW TO RUN · WHY IT SURVIVES">
+          <div className="ha-columns">
+            <div className="ha-col">
+              <p className="eyebrow">
+                <span className="eyebrow-dot" />
+                HOW TO RUN
+              </p>
+              <ol className="ha-steps">
+                <li>
+                  {" "}
+                  <strong>Start probe</strong> hits <code>/health/</code> once a
+                  second.
+                </li>
+                <li>
+                  In the EC2 console, <strong>terminate</strong> the API instance
+                  currently serving traffic.
+                </li>
+                <li>
+                  Watch the probe: the ALB drains the dead target within a couple
+                  of health-check intervals, so the strip stays green (or flashes
+                  one red then recovers).
+                </li>
+                <li>
+                  Minutes later the ASG launches a replacement to restore{" "}
+                  <code>desired=2</code> — no manual step.
+                </li>
+              </ol>
+            </div>
 
-          <div className="ha-col">
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              WHY IT SURVIVES
-            </p>
-            <ul className="ha-mechanism">
-              <li>
-                <strong>ALB health check</strong> — probes <code>/health/</code>{" "}
-                and stops routing to a target the moment it fails, so requests
-                only reach live instances.
-              </li>
-              <li>
-                <strong>stateless API</strong> — JWT auth means any instance can
-                serve any request; losing one drops no session state.
-              </li>
-              <li>
-                <strong>ASG self-healing</strong> — spread across two AZs with{" "}
-                <code>desired=2</code>, it relaunches to the target count on its
-                own.
-              </li>
-            </ul>
+            <div className="ha-col">
+              <p className="eyebrow">
+                <span className="eyebrow-dot" />
+                WHY IT SURVIVES
+              </p>
+              <ul className="ha-mechanism">
+                <li>
+                  <strong>ALB health check</strong> — probes <code>/health/</code>{" "}
+                  and stops routing to a target the moment it fails, so requests
+                  only reach live instances.
+                </li>
+                <li>
+                  <strong>stateless API</strong> — JWT auth means any instance can
+                  serve any request; losing one drops no session state.
+                </li>
+                <li>
+                  <strong>ASG self-healing</strong> — spread across two AZs with{" "}
+                  <code>desired=2</code>, it relaunches to the target count on its
+                  own.
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* ── Deliberate SPOFs（答辯武器：主動講取捨） ─────────────── */}
-      <div className="ha-spof">
-        <p className="eyebrow">
-          <span className="eyebrow-dot" />
-          DELIBERATE SINGLE POINTS OF FAILURE
-        </p>
-        <p className="placeholder-body">
-          The stateless tier is HA; the stateful edges are single points of
-          failure on purpose, to keep this a cost-scoped demo. Called out here
-          rather than hidden:
-        </p>
-        <ul className="ha-mechanism">
-          <li>
-            <strong>RDS</strong> <code>multi_az=false</code> — production would
-            run a Multi-AZ standby with automatic failover.
-          </li>
-          <li>
-            <strong>Redis</strong> single node — production would use an
-            ElastiCache replication group with AOF persistence.
-          </li>
-          <li>
-            <strong>NAT</strong> single gateway — production would run one NAT
-            per AZ.
-          </li>
-        </ul>
+        </Foldout>
       </div>
 
       {zoomed && (

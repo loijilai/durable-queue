@@ -9,6 +9,7 @@ import {
   type TranscriptionJob,
 } from "../lib/api.ts";
 import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";
+import Foldout from "../components/Foldout.tsx";
 import { scaleOutScene } from "../lib/diagramScenes.ts";
 
 const DIAGRAM_LABEL = "worker pool scale-out diagram";
@@ -315,52 +316,54 @@ function ScalabilityPage() {
       </div>
 
       {/* ── How to run / why it scales ───────────────────────────── */}
-      <div className="ha-columns">
-        <div className="ha-col">
-          <p className="eyebrow">
-            <span className="eyebrow-dot" />
-            HOW TO RUN
-          </p>
-          <ol className="ha-steps">
-            <li>
-              Boot the backend with two workers —{" "}
-              <code>docker compose up --build --scale worker=2</code>.
-            </li>
-            <li>
-              Click <strong>Run batch of {BATCH_SIZE}</strong> and let the grid
-              drain to all SUCCEEDED. The first result row appears.
-            </li>
-            <li>
-              Rescale the pool to four —{" "}
-              <code>docker compose up -d --scale worker=4</code> — then run the
-              same batch again.
-            </li>
-            <li>
-              Compare the two rows: double the workers, roughly half the drain
-              time.
-            </li>
-          </ol>
-        </div>
+      <Foldout title="HOW TO RUN · WHY IT SCALES">
+        <div className="ha-columns">
+          <div className="ha-col">
+            <p className="eyebrow">
+              <span className="eyebrow-dot" />
+              HOW TO RUN
+            </p>
+            <ol className="ha-steps">
+              <li>
+                Boot the backend with two workers —{" "}
+                <code>docker compose up --build --scale worker=2</code>.
+              </li>
+              <li>
+                Click <strong>Run batch of {BATCH_SIZE}</strong> and let the grid
+                drain to all SUCCEEDED. The first result row appears.
+              </li>
+              <li>
+                Rescale the pool to four —{" "}
+                <code>docker compose up -d --scale worker=4</code> — then run the
+                same batch again.
+              </li>
+              <li>
+                Compare the two rows: double the workers, roughly half the drain
+                time.
+              </li>
+            </ol>
+          </div>
 
-        <div className="ha-col">
-          <p className="eyebrow">
-            <span className="eyebrow-dot" />
-            WHY IT SCALES
-          </p>
-          <ul className="ha-mechanism">
-            <li>
-              <strong>queue decoupling</strong> — producers just enqueue; any
-              number of consumers pull independently, so adding workers adds
-              throughput.
-            </li>
-            <li>
-              <strong>stateless workers</strong> — each worker needs nothing
-              from its peers, so the pool scales horizontally with no
-              coordination.
-            </li>
-          </ul>
+          <div className="ha-col">
+            <p className="eyebrow">
+              <span className="eyebrow-dot" />
+              WHY IT SCALES
+            </p>
+            <ul className="ha-mechanism">
+              <li>
+                <strong>queue decoupling</strong> — producers just enqueue; any
+                number of consumers pull independently, so adding workers adds
+                throughput.
+              </li>
+              <li>
+                <strong>stateless workers</strong> — each worker needs nothing
+                from its peers, so the pool scales horizontally with no
+                coordination.
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
+      </Foldout>
 
       {/* ── Architecture diagram ─────────────────────────────────── */}
       <figure className="ha-diagram">

@@ -670,6 +670,46 @@ a {
   margin-top: 40px;
 }
 
+/* 收合區（Foldout）。「怎麼跑」和「為什麼撐得住」是同一個問題的兩半——想動手
+   的人兩個都要看——所以它們一起收在一個開關底下，收起時整節只剩一行標題。
+   裡面的兩欄維持 .ha-columns 的並排，展開後的版面跟收合前完全一樣。 */
+.foldout {
+  margin-top: 40px;
+}
+
+/* grid 自己的上緣留白由 .foldout 接手了，這裡收掉，標題和內容才不會拉開一段
+   讀不出關聯的空白。 */
+.foldout .ha-columns {
+  margin-top: 16px;
+}
+
+.foldout-summary {
+  cursor: pointer;
+  margin-bottom: 0;
+  list-style: none; /* Firefox */
+  user-select: none;
+}
+
+.foldout-summary::-webkit-details-marker {
+  display: none; /* Safari 的預設三角形，換成下面自己的 chevron */
+}
+
+.foldout-summary:hover {
+  color: var(--ink);
+}
+
+/* chevron 放在標題末端而不是開頭：開頭已經有 eyebrow-dot，兩個記號並排會
+   互相打架，而且會讓收合欄的標題跟頁面其他 eyebrow 對不齊。 */
+.foldout-chevron {
+  font-size: 10px;
+  color: var(--slate);
+  transition: transform 0.15s ease;
+}
+
+.foldout[open] .foldout-chevron {
+  transform: rotate(90deg);
+}
+
 .ha-steps,
 .ha-mechanism {
   margin: 12px 0 0;
@@ -708,13 +748,6 @@ a {
   margin: 8px 0 12px;
 }
 
-.ha-spof {
-  margin-top: 56px;
-  padding: 32px;
-  border-radius: 16px;
-  background: var(--canvas-lifted);
-  border: 1.5px solid var(--dust);
-}
 
 .ha-caveat {
   margin-top: 20px;
