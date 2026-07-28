@@ -724,6 +724,426 @@ a {
   max-width: 640px;
 }
 
+/* =====================================================================
+   Security page — defense in depth
+   ===================================================================== */
+
+.sec-thesis em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ── Spine：三張導覽 tile，也是全頁目錄 ───────────────────────────── */
+.sec-spine {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.sec-spine-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  border: 1.5px solid transparent;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.sec-spine-tile:hover,
+.sec-spine-tile:focus-visible {
+  border-color: var(--signal-orange);
+  transform: translateY(-2px);
+}
+
+.sec-spine-index {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--dust);
+}
+
+.sec-spine-tier {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--signal-orange);
+}
+
+.sec-spine-title {
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+/* 術語清單：可掃視的關鍵字，不是句子 */
+.sec-spine-terms {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--slate);
+  line-height: 1.35;
+}
+
+.sec-spine-terms li {
+  padding-left: 14px;
+  position: relative;
+}
+
+.sec-spine-terms li::before {
+  content: "·";
+  position: absolute;
+  left: 3px;
+  color: var(--dust);
+  font-weight: 700;
+}
+
+/* ── 三個層級大節 ─────────────────────────────────────────────────── */
+.sec-section {
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1.5px solid var(--dust);
+  /* 錨點跳轉時不要被 sticky topbar 蓋住標題 */
+  scroll-margin-top: 96px;
+}
+
+.sec-section-head {
+  margin-bottom: 24px;
+}
+
+.sec-section-tag {
+  color: var(--signal-orange);
+}
+
+.sec-section-title {
+  margin-top: 8px;
+  font-size: 30px;
+  line-height: 1.15;
+  max-width: 720px;
+}
+
+.sec-subsection-tag {
+  margin-bottom: 12px;
+}
+
+.sec-body {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--charcoal);
+  line-height: 1.6;
+  max-width: 520px;
+}
+
+/* ── ① 拓撲圖：一張圖、三個鏡頭 ───────────────────────────────────── */
+.sec-lens-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sec-lens-tab {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--dust);
+  background: transparent;
+  color: var(--slate);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sec-lens-tab:hover {
+  color: var(--ink);
+  border-color: var(--slate);
+}
+
+.sec-lens-tab.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--canvas);
+}
+
+.sec-lens-frame {
+  margin: 16px 0 0;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--canvas-lifted);
+  border: 1.5px solid var(--dust);
+}
+
+.sec-lens-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sec-lens-frame figcaption {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--charcoal);
+  line-height: 1.6;
+  max-width: 720px;
+}
+
+/* 佔位框：圖還沒畫時撐出版面，並直說它是暫時的 */
+.sec-mock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 280px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--dust);
+  background: var(--canvas);
+}
+
+.sec-mock-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--signal-orange);
+}
+
+.sec-mock-name {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.sec-mock-hint {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--slate);
+}
+
+/* ── ② 明文的生命週期 ─────────────────────────────────────────────── */
+.sec-secrets {
+  margin-top: 40px;
+}
+
+.sec-table-scroll {
+  overflow-x: auto;
+}
+
+.sec-secret-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.sec-secret-table th {
+  padding: 0 16px 10px 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+  border-bottom: 1.5px solid var(--dust);
+}
+
+.sec-secret-table td {
+  padding: 16px 16px 16px 0;
+  border-bottom: 1px solid var(--dust);
+  vertical-align: top;
+  color: var(--charcoal);
+  line-height: 1.5;
+}
+
+.sec-secret-stage {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.sec-secret-produced {
+  max-width: 340px;
+}
+
+/* verdict chip：整欄都是 never，要一眼看得出來 */
+.sec-verdict {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(47, 122, 61, 0.12);
+  color: var(--signal-green);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sec-secret-detail {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--slate);
+  line-height: 1.45;
+}
+
+/* ── ③ Live prober ────────────────────────────────────────────────── */
+.sec-prober {
+  margin-top: 8px;
+}
+
+.sec-probe-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sec-probe {
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.sec-probe-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sec-probe-what {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sec-probe-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.sec-probe-request {
+  font-family: ui-monospace, monospace;
+  font-size: 12.5px;
+  color: var(--slate);
+}
+
+.sec-probe-action {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sec-status {
+  min-width: 52px;
+  text-align: center;
+  font-family: ui-monospace, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.sec-status-idle {
+  color: var(--dust);
+}
+
+.sec-status-2xx {
+  background: rgba(47, 122, 61, 0.12);
+  color: var(--signal-green);
+}
+
+.sec-status-4xx {
+  background: rgba(207, 69, 0, 0.1);
+  color: var(--signal-orange);
+}
+
+.sec-probe-reads {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--dust);
+  font-size: 13px;
+  color: var(--charcoal);
+  line-height: 1.6;
+}
+
+/* authentication 的鏡頭組跟上面的 prober 之間要有呼吸 */
+.sec-authn-tag {
+  margin-top: 40px;
+}
+
+.sec-closing {
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1.5px solid var(--dust);
+}
+
+/* ── Threats defended ─────────────────────────────────────────────── */
+.sec-threats {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sec-threat-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.sec-threat {
+  color: var(--charcoal);
+}
+
+.sec-threat-arrow {
+  color: var(--signal-orange);
+  font-weight: 700;
+}
+
+.sec-threat-control {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.sec-gaps li {
+  list-style: disc;
+}
+
+@media (max-width: 620px) {
+  .sec-section-title {
+    font-size: 24px;
+  }
+  .sec-probe-head {
+    align-items: flex-start;
+  }
+  .sec-threat-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .sec-threat-arrow {
+    display: none;
+  }
+}
+
 /* Scenario B — architecture diagram */
 .ha-diagram {
   margin: 24px 0 0;

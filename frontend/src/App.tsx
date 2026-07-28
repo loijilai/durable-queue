@@ -7,6 +7,7 @@ import QueuePage from './pages/QueuePage.tsx'
 import DurabilityWalkthroughPage from './pages/DurabilityWalkthroughPage.tsx'
 import ScalabilityPage from './pages/ScalabilityPage.tsx'
 import HighAvailabilityPage from './pages/HighAvailabilityPage.tsx'
+import SecurityPage from './pages/SecurityPage.tsx'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/durability" element={<DurabilityWalkthroughPage />} />
         <Route path="/scalability" element={<ScalabilityPage />} />
         <Route path="/high-availability" element={<HighAvailabilityPage />} />
+        <Route path="/security" element={<SecurityPage />} />
       </Route>
     </Routes>
   )

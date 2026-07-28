@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/durability', label: 'Durability' },
   { to: '/high-availability', label: 'High Availability' },
   { to: '/scalability', label: 'Scalability' },
+  { to: '/security', label: 'Security' },
 ]
 
 function Layout() {
