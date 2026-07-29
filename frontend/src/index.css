@@ -339,13 +339,6 @@ a {
   color: var(--ink);
 }
 
-.stack-detail {
-  font-size: 13px;
-  font-weight: 450;
-  line-height: 1.4;
-  color: var(--slate);
-}
-
 /* 「還沒蓋」的訊號放在虛線框上（Dust Taupe，DESIGN.md 的 whisper 色），
    文字本身用 slate —— dust taupe 在 cream 上對比太低，當邊框可以，
    當文字會讀不到。 */
@@ -476,6 +469,256 @@ a {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* ── Job lifecycle 圖（首頁第二張 hero figure） ───────────────────
+   一張圖只講一件事：job 的狀態存在 DB，所以 worker 死掉不等於工作消失。
+   顏色全部走 DESIGN.md §2 的 Job Status Colors，SVG 不自帶調色盤。 */
+.jl-frame {
+  margin-top: 28px;
+}
+
+.jl-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 12px;
+  overflow: visible;
+}
+
+/* 沒被點亮的一切都退到 dust／slate：這張圖同一時間只想讓人看一件事，
+   其餘結構留著當地圖，但不搶視線。 */
+.jl-svg text {
+  font-family: var(--sans);
+  font-weight: 500;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* ── 節點 ─────────────────────────────────────────────────── */
+.jl-node ellipse,
+.jl-node rect {
+  fill: var(--white);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  transition:
+    fill 0.4s ease,
+    stroke 0.4s ease,
+    stroke-width 0.4s ease;
+}
+
+.jl-node text {
+  font-size: 19px;
+  fill: var(--slate);
+  transition: fill 0.4s ease;
+}
+
+.jl-node.is-lit text {
+  fill: var(--ink);
+}
+
+.jl-node.is-lit ellipse,
+.jl-node.is-lit rect {
+  stroke-width: 2.5;
+}
+
+/* pending 的品牌色是 Dust Taupe —— 它同時是本圖的「未點亮」色，
+   所以 pending 被點亮時改用填色 + charcoal 邊框來表示，而不是換色。 */
+.jl-node--pending.is-lit ellipse {
+  fill: var(--dust);
+  stroke: var(--charcoal);
+}
+
+.jl-node--running.is-lit rect {
+  fill: rgba(56, 96, 190, 0.1);
+  stroke: var(--status-running);
+}
+
+.jl-node--succeeded.is-lit ellipse {
+  fill: rgba(47, 122, 61, 0.1);
+  stroke: var(--status-succeeded);
+}
+
+.jl-node--failed.is-lit ellipse {
+  fill: rgba(163, 35, 43, 0.1);
+  stroke: var(--status-failed);
+}
+
+/* attempt #2 的那顆：同色（同一個 status）、虛線（同一列 row 的另一次執行） */
+.jl-node--ghost rect {
+  stroke-dasharray: 7 5;
+}
+
+.jl-tag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--slate);
+}
+
+/* ── 邊 ───────────────────────────────────────────────────── */
+.jl-edge {
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  marker-end: url(#jl-mk-dust);
+  transition:
+    stroke 0.4s ease,
+    stroke-width 0.4s ease;
+}
+
+.jl-edge.is-lit {
+  stroke-width: 2.5;
+}
+
+.jl-edge--ink.is-lit {
+  stroke: var(--charcoal);
+  marker-end: url(#jl-mk-ink);
+}
+
+.jl-edge--blue.is-lit {
+  stroke: var(--status-running);
+  marker-end: url(#jl-mk-blue);
+}
+
+.jl-edge--green.is-lit {
+  stroke: var(--status-succeeded);
+  marker-end: url(#jl-mk-green);
+}
+
+.jl-edge--red.is-lit {
+  stroke: var(--status-failed);
+  marker-end: url(#jl-mk-red);
+}
+
+.jl-edge-label {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--slate);
+}
+
+/* 沿著當前邊移動的點 = 那個 job 現在的位置。它是唯一會動的東西，
+   所以不需要顏色 —— 用 ink 就足夠被看見。 */
+.jl-token {
+  fill: var(--ink);
+}
+
+/* Terminal state 圍籬：虛線 + 極淡底，讀起來是註記不是元件 */
+.jl-terminal {
+  fill: rgba(20, 20, 19, 0.02);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 6;
+}
+
+.jl-terminal-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  fill: var(--slate);
+}
+
+/* ── 左上角的狀態標頭 ─────────────────────────────────────
+   圖底下原本有一排文字步驟，和方塊是同一組東西的兩種畫法；方塊比較好點，
+   所以清單拿掉，只留「現在在哪一格」的名字和說明。min-height 固定，
+   換格時文字長短不同也不會把下面的圖推上推下。 */
+.jl-head {
+  max-width: 680px;
+}
+
+/* 六格的說明長度不一，固定高度讓換格時圖不會上下跳；抓最長那格的高度即可 */
+.jl-live {
+  min-height: 96px;
+}
+
+.jl-current {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+  animation: caption-in 0.45s ease;
+}
+
+/* 標頭的顏色跟著該格的狀態走 —— 左上角的字和圖上被點亮的那顆同色，
+   是這兩塊唯一的連結。pending / 使用者操作維持 ink。 */
+.jl-current--blue {
+  color: var(--status-running);
+}
+
+.jl-current--green {
+  color: var(--status-succeeded);
+}
+
+.jl-current--red {
+  color: var(--status-failed);
+}
+
+.jl-detail {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--charcoal);
+  animation: caption-in 0.45s ease;
+}
+
+.jl-note {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--slate);
+  max-width: 720px;
+}
+
+/* ── 圖形即控制項 ─────────────────────────────────────────
+   方塊本身就是按鈕，所以要給出可點的訊號（游標 + hover 的邊框），
+   並且自己補上鍵盤焦點框 —— SVG 的 <g> 沒有內建 focus ring。 */
+.jl-control {
+  cursor: pointer;
+  outline: none;
+}
+
+.jl-control:hover ellipse,
+.jl-control:hover rect {
+  stroke: var(--slate);
+}
+
+.jl-control:focus-visible ellipse,
+.jl-control:focus-visible rect {
+  stroke: var(--signal-orange);
+  stroke-width: 2.5;
+}
+
+/* manual retry 沒有自己的狀態方塊，用一顆畫在邊上的 chip 當開關 */
+.jl-chip rect {
+  fill: var(--white);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  transition:
+    fill 0.4s ease,
+    stroke 0.4s ease;
+}
+
+.jl-chip text {
+  font-size: 14px;
+  font-weight: 500;
+  fill: var(--slate);
+  transition: fill 0.4s ease;
+}
+
+.jl-chip.is-lit rect {
+  stroke: var(--charcoal);
+}
+
+.jl-chip.is-lit text {
+  fill: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .jl-live {
+    min-height: 0;
   }
 }
 
@@ -614,6 +857,14 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .pipe-detail,
   .pipe-mark,
+  .jl-detail,
+  .jl-current,
+  .jl-node ellipse,
+  .jl-node rect,
+  .jl-node text,
+  .jl-edge,
+  .jl-chip rect,
+  .jl-chip text,
   .stack-layer,
   .route-card,
   .route-card-satellite {

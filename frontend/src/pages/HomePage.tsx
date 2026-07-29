@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BRAND_ICONS, type BrandIconKey } from "../components/BrandIcons.tsx";
+import JobLifecycle from "../components/JobLifecycle.tsx";
 
 /* Hero 圖：左邊是垂直的技術堆疊（結構，靜止），右邊是 deploy pipeline
    （流程，自動跑）。兩者不是兩張圖 —— pipeline 每一站都作用在堆疊的某一層，
@@ -8,13 +9,13 @@ import { BRAND_ICONS, type BrandIconKey } from "../components/BrandIcons.tsx";
    不是裝飾。資料來源：.github/workflows/ci-cd.yml。 */
 
 /* 有品牌圖示的用圖示，沒有的（AWS 自家服務）用字母牌 —— 不自行仿畫商標。
-   primary/detail 分兩層是為了可讀性：一整串以 · 串起來的字是讀不進去的。 */
+   每層只留 tier + primary：解釋的工作交給右邊的 pipeline detail，
+   左欄保持成一根乾淨的結構骨架。 */
 type Layer = {
   tier: string;
   icons?: BrandIconKey[];
   marks?: string[];
   primary: string;
-  detail: string;
   next?: { label: string; icon: BrandIconKey };
 };
 
@@ -23,20 +24,16 @@ const STACK: Layer[] = [
     tier: "APPLICATION",
     icons: ["django", "celery", "postgresql", "redis"],
     primary: "Django REST Framework · Celery",
-    detail:
-      "DRF serves the API; Celery workers transcribe. Job state in Postgres, broker in Redis.",
   },
   {
     tier: "CONTAINER",
     icons: ["docker"],
     primary: "Docker",
-    detail: "One image runs both API and worker, pushed to Amazon ECR.",
   },
   {
     tier: "ORCHESTRATION",
     marks: ["ASG"],
     primary: "EC2 Auto Scaling · ALB",
-    detail: "Separate api and worker groups, spread across two availability zones.",
     // 這一格不是空的，是「還沒升級」。用 whisper 色標，視覺上就分得出來。
     next: { label: "Kubernetes", icon: "kubernetes" },
   },
@@ -44,15 +41,11 @@ const STACK: Layer[] = [
     tier: "INFRASTRUCTURE AS CODE",
     icons: ["terraform"],
     primary: "Terraform",
-    detail: "S3 remote state, applied from CI under an assumed role.",
   },
   {
     tier: "CLOUD",
     marks: ["AWS"],
     primary: "AWS",
-    // Postgres/Redis 的引擎移到 application 層了，但「它們是託管服務」這件事
-    // 不能跟著消失 —— 留在這裡用 RDS / ElastiCache 的名字承接。
-    detail: "VPC · RDS · ElastiCache · Secrets Manager · Route 53 · ACM",
   },
 ];
 
@@ -121,7 +114,9 @@ function StackFigure() {
             <li
               key={layer.tier}
               className={
-                active.targets.includes(i) ? "stack-layer is-lit" : "stack-layer"
+                active.targets.includes(i)
+                  ? "stack-layer is-lit"
+                  : "stack-layer"
               }
             >
               <div className="stack-glyphs" aria-hidden="true">
@@ -139,7 +134,6 @@ function StackFigure() {
               <div className="stack-text">
                 <span className="stack-tier">{layer.tier}</span>
                 <span className="stack-primary">{layer.primary}</span>
-                <span className="stack-detail">{layer.detail}</span>
                 {layer.next && (
                   <span className="stack-next">
                     {(() => {
@@ -188,7 +182,9 @@ function StackFigure() {
   );
 }
 
-/* 每張卡的文案直接對應該頁實際內容 —— 這裡是全站的目錄，寫錯就是說謊。 */
+/* 每張卡的文案直接對應該頁實際內容 —— 這裡是全站的目錄，寫錯就是說謊。
+   description 一律壓成一句：卡片是目錄不是內文，讀者在這裡要做的決定
+   只有「進不進去」，多一句都是負擔。 */
 const ROUTE = [
   {
     to: "/auth",
@@ -196,7 +192,7 @@ const ROUTE = [
     eyebrow: "AUTHENTICATION",
     title: "Two ways in, one token",
     description:
-      "Register with a password, or sign in through Google’s OIDC authorization-code flow. Either path ends at the same JWT — decode it live in the browser.",
+      "Password or Google OIDC — both end at the same JWT, decoded live in the browser.",
   },
   {
     to: "/queue",
@@ -204,7 +200,7 @@ const ROUTE = [
     eyebrow: "DISTRIBUTED QUEUE",
     title: "Submit a job, poll it to done",
     description:
-      "The async request/poll pattern end to end: POST returns an id immediately, then real status transitions arrive from the backend.",
+      "POST returns an id immediately, then real status transitions arrive from the backend.",
   },
   {
     to: "/durability",
@@ -212,7 +208,7 @@ const ROUTE = [
     eyebrow: "DURABILITY",
     title: "Why every piece of this queue exists",
     description:
-      "The causal chain from “a worker can die mid-task” down to visibility timeout, row locking, idempotency, and retry. This is the spine of the project.",
+      "The causal chain from “a worker can die mid-task” down to visibility timeout, locking, and retry.",
   },
   {
     to: "/high-availability",
@@ -220,7 +216,7 @@ const ROUTE = [
     eyebrow: "HIGH AVAILABILITY",
     title: "Surviving instance loss",
     description:
-      "API and workers sit on ASGs across two AZs. Two runnable scenarios: kill a worker mid-job, and lose an API instance — neither breaks the run.",
+      "Kill a worker mid-job, or lose an API instance — neither breaks the run.",
   },
   {
     to: "/scalability",
@@ -228,7 +224,7 @@ const ROUTE = [
     eyebrow: "SCALABILITY",
     title: "Throughput scales with the worker pool",
     description:
-      "Fire a batch and watch it spread across the pool in a live grid. The queue decouples producers from consumers, so workers scale out on their own.",
+      "Fire a batch and watch it spread across the pool in a live grid.",
   },
   {
     to: "/security",
@@ -236,7 +232,7 @@ const ROUTE = [
     eyebrow: "SECURITY",
     title: "Three routes in, three kinds of control",
     description:
-      "The public internet, the deploy pipeline, and a legitimate user account — each closed by a different control, each drawn from a different lens.",
+      "The public internet, the deploy pipeline, and a user account — each closed differently.",
   },
 ];
 
@@ -256,6 +252,8 @@ function HomePage() {
           run against the real backend.
         </p>
       </div>
+
+      <JobLifecycle />
 
       <StackFigure />
 
