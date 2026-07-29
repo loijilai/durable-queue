@@ -1,3 +1,4 @@
+import socket
 from .models import TranscriptionJob
 from django.db import transaction
 from django.utils import timezone
@@ -14,7 +15,9 @@ def mark_running(job_id):
             return
 
         job.status = TranscriptionJob.RUNNING
-
+        job.worker_attempts.append(
+            {"host": socket.gethostname(), "at": timezone.now().isoformat()}
+        )
         job.save()
     return job
 

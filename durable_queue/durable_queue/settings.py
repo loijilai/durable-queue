@@ -34,10 +34,20 @@ ALLOWED_HOSTS = [
     "*"
 ]  # Host header 攻擊的前提是能直連 EC2; SG-api 只放行 SG-alb → 前提不成立
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+] + [
+    origin.strip()
+    for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 
 # Application definition
 
 INSTALLED_APPS = [
+    "corsheaders",
     "rest_framework",
     "drf_spectacular",
     "jobs",
@@ -51,6 +61,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -143,10 +154,9 @@ CELERY_RESULT_BACKEND = os.environ["CELERY_RESULT_BACKEND"]
 
 CELERY_TIMEZONE = TIME_ZONE
 
-# Worker crash 保護：task 執行超過此時間未 ACK，Redis 會重新派發
-# 設定需比預期最長的 task 執行時間還長，避免誤判 worker 死亡而重送
+# 不變式：visibility_timeout 必須 > task 最長執行時間，否則正常 job 被誤判死亡而重送
 CELERY_BROKER_TRANSPORT_OPTIONS = {
-    "visibility_timeout": 3600,  # 1 小時
+    "visibility_timeout": int(os.environ["CELERY_VISIBILITY_TIMEOUT"]),
 }
 
 
@@ -186,3 +196,6 @@ AUTH_USER_MODEL = "jobs.CustomUser"
 GOOGLE_CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
 GOOGLE_REDIRECT_URI = os.environ["GOOGLE_REDIRECT_URI"]
+
+# Google callback 完成後，要把 access/refresh token 導回的前端網址（React SPA）
+FRONTEND_URL = os.environ["FRONTEND_URL"]

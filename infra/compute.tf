@@ -1,3 +1,10 @@
+locals {
+  # 前端部署在 Vercel, api 和 worker 兩個 launch template 都要用到
+  frontend_url = "https://durable-queue.vercel.app"
+  google_redirect_uri = "https://durable-queue.loijilai.site/api/auth/google/callback/"
+}
+
+
 # ── Trust policy: 信任 EC2 service 來扮演 role ───────────────────────────────────
 resource "aws_iam_role" "ec2" {
   name = "durable-queue-ec2"
@@ -100,7 +107,8 @@ resource "aws_launch_template" "api" {
     db_port               = aws_db_instance.postgres.port
     celery_broker_url     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
     celery_result_backend = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
-    google_redirect_uri   = "https://durable-queue.loijilai.site/api/auth/google/callback/"
+    google_redirect_uri   = local.google_redirect_uri
+    frontend_url          = local.frontend_url
     run_command           = "sh -c \"python manage.py migrate && gunicorn durable_queue.wsgi:application --bind 0.0.0.0:8000 --access-logfile -\""
   }))
 
@@ -137,7 +145,8 @@ resource "aws_launch_template" "worker" {
     db_port               = aws_db_instance.postgres.port
     celery_broker_url     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
     celery_result_backend = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
-    google_redirect_uri   = "https://durable-queue.loijilai.site/api/auth/google/callback/"
+    google_redirect_uri   = local.google_redirect_uri
+    frontend_url          = local.frontend_url
     run_command           = "celery -A durable_queue worker -l info"
   }))
 

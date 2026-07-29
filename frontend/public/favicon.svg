@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <rect width="48" height="48" rx="11" fill="#141413"/>
+  <!-- 缺口朝上的環 = retry loop；缺口右端那顆橘點是「當前這一輪」的頭。
+       16px 下只剩「環 + 一個亮點」，這是刻意的：小尺寸只講一件事。 -->
+  <circle cx="24" cy="24" r="11" fill="none" stroke="#f3f0ee" stroke-width="5"
+          stroke-linecap="round" stroke-dasharray="55.3 13.8"
+          transform="rotate(-54 24 24)"/>
+  <circle cx="30.5" cy="15.1" r="3.4" fill="#cf4500"/>
+</svg>

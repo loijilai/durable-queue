@@ -37,6 +37,8 @@ docker run -d --restart always \
   -e GOOGLE_CLIENT_ID=$${GOOGLE_CLIENT_ID} \
   -e GOOGLE_CLIENT_SECRET=$${GOOGLE_CLIENT_SECRET} \
   -e GOOGLE_REDIRECT_URI=${google_redirect_uri} \
+  -e FRONTEND_URL=${frontend_url} \
+  -e CORS_ALLOWED_ORIGINS=${frontend_url} \
   -e SECRET_KEY=$${SECRET_KEY} \
   -e DEBUG="False" \
   -p 8000:8000 \

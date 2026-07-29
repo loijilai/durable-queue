@@ -1,0 +1,2862 @@
+:root {
+  --canvas: #f3f0ee;
+  --canvas-lifted: #fcfbfa;
+  --ink: #141413;
+  --charcoal: #262627;
+  --slate: #696969;
+  --dust: #d1cdc7;
+  --white: #ffffff;
+  --signal-orange: #cf4500;
+  --light-orange: #f37338;
+  --signal-green: #2f7a3d;
+  --link-blue: #3860be;
+  --clay: #9a3a0a;
+  --error-red: #a3232b;
+  --watermark: #e8e2da;
+  --footer-black: #141413;
+  --shadow: rgba(0, 0, 0, 0.08) 0px 24px 48px;
+  --shadow-soft: rgba(0, 0, 0, 0.04) 0px 4px 24px;
+
+  /* DESIGN.md §2 Job Status Colors —— 一個顏色在全站只代表一件事 */
+  --status-pending: var(--dust);
+  --status-running: var(--link-blue);
+  --status-succeeded: var(--signal-green);
+  --status-failed: var(--error-red);
+
+  --sans: 'Sofia Sans', Inter, Arial, sans-serif;
+
+  font: 16px/1.4 var(--sans);
+  font-weight: 450;
+  color-scheme: light;
+  color: var(--ink);
+  background: var(--canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--sans);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0;
+}
+
+h1 {
+  font-size: 44px;
+  line-height: 1.05;
+}
+
+h3 {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Layout */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+.topbar {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.nav-pill {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--white);
+  border-radius: 999px;
+  padding: 12px 20px;
+  box-shadow: var(--shadow);
+  flex-wrap: wrap;
+}
+
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.03em;
+}
+
+.nav-brand-mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--slate);
+  padding: 8px 14px;
+  border-radius: 999px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-link:hover {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.nav-link-active {
+  background: var(--ink);
+  color: var(--canvas);
+}
+
+.auth-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--slate);
+}
+
+.auth-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dust);
+}
+
+.auth-status-in {
+  color: var(--signal-green);
+}
+
+.auth-status-in .auth-status-dot {
+  background: var(--signal-green);
+}
+
+/* 後端休息中的提示條：clay 是「注意但不是錯誤」的色階，error-red 留給
+   真正的失敗（DESIGN.md §2：一個顏色在全站只代表一件事）。
+   寬度收成 fit-content 的膠囊，跟 nav-pill 同一套語言，且一定比它窄——
+   它是附註，不該是頁面上最寬的東西。 */
+.backend-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: min(100% - 32px, 620px);
+  margin: 0 auto;
+  padding: 10px 18px;
+  border: 1px solid var(--dust);
+  border-radius: 999px;
+  background: var(--canvas-lifted);
+  box-shadow: var(--shadow-soft);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--slate);
+}
+
+.backend-banner strong {
+  font-weight: 600;
+  color: var(--clay);
+}
+
+.backend-banner-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--clay);
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 24px 24px 96px;
+}
+
+/* Eyebrow */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin-bottom: 12px;
+}
+
+.eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal-orange);
+  display: inline-block;
+}
+
+/* ── Home ─────────────────────────────────────────────────────── */
+.home {
+  padding-top: 32px;
+}
+
+.hero {
+  max-width: 780px;
+}
+
+.hero h1 {
+  font-size: clamp(38px, 5.4vw, 64px);
+  line-height: 1;
+}
+
+.home-lede {
+  font-size: 18px;
+  color: var(--charcoal);
+  max-width: 640px;
+  margin-top: 20px;
+}
+
+/* Hero figure frame：DESIGN.md §2 的 Lifted Cream —— 「紙疊在紙上」。
+   深色 ink 在這套系統裡是保留給 footer 和 CTA 的（§7 Do：canvas cream →
+   lifted cream → ink footer），中段再放一塊 ink 會跟 footer 互相打架。
+   §4 的 hero media frame 之所以深色是因為它裝影片／攝影，不是裝文字圖表。 */
+.hero-frame {
+  margin: 56px 0 0;
+  padding: 28px 32px 32px;
+  background: var(--canvas-lifted);
+  border-radius: 40px;
+  box-shadow: var(--shadow);
+}
+
+.hero-frame-eyebrow {
+  margin-bottom: 0;
+}
+
+/* Hero 圖：左堆疊 + 右 pipeline */
+.stackfig {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 40px;
+  margin-top: 28px;
+}
+
+/* ── 左欄：技術堆疊 ─────────────────────────────────────────── */
+.stack-col {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stack-layer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  border: 1px solid var(--dust);
+  border-radius: 14px;
+  padding: 12px 16px;
+  transition:
+    border-color 0.35s ease,
+    background 0.35s ease;
+}
+
+/* pipeline 目前這一站打到的層 —— 兩欄之間的對應關係就靠這個點亮傳達。
+   淺底上用 Signal Orange 而非 Light Signal Orange：後者是裝飾弧線用的，
+   在 cream 上做邊框對比不夠。 */
+.stack-layer.is-lit {
+  border-color: var(--signal-orange);
+  background: rgba(207, 69, 0, 0.05);
+}
+
+/* 兩欄網格：1 個 glyph 佔一格、2 個排成一列、4 個自然疊成 2×2 正方形，
+   不會拉出一條長 row。固定 46px（20px × 2 + 6px gap）讓每一層的文字欄
+   都從同一個 x 起算 —— 否則 glyph 數量不同會讓左邊界參差。 */
+.stack-glyphs {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  justify-items: start;
+  align-items: center;
+  gap: 6px;
+  width: 46px;
+  padding-top: 2px;
+}
+
+.stack-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--slate);
+  transition: color 0.35s ease;
+}
+
+.stack-layer.is-lit .stack-icon {
+  color: var(--ink);
+}
+
+/* AWS 自家服務沒有可用的品牌圖示，用字母牌代替，尺寸對齊 icon 讓兩者同排 */
+.stack-mark {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 5px;
+  border: 1px solid var(--dust);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--slate);
+  transition:
+    color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.stack-layer.is-lit .stack-mark {
+  color: var(--ink);
+  border-color: var(--slate);
+}
+
+.stack-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stack-tier {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+  transition: color 0.35s ease;
+}
+
+.stack-layer.is-lit .stack-tier {
+  color: var(--signal-orange);
+}
+
+.stack-primary {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+/* 「還沒蓋」的訊號放在虛線框上（Dust Taupe，DESIGN.md 的 whisper 色），
+   文字本身用 slate —— dust taupe 在 cream 上對比太低，當邊框可以，
+   當文字會讀不到。 */
+.stack-next {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--slate);
+  border: 1px dashed var(--dust);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.stack-next-icon {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  color: var(--dust);
+}
+
+/* ── 右欄：deploy pipeline ──────────────────────────────────── */
+.pipe-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.pipe-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pipe-stage {
+  position: relative;
+  padding-bottom: 18px;
+}
+
+.pipe-stage:last-child {
+  padding-bottom: 0;
+}
+
+/* 站與站之間的縱向連接線 */
+.pipe-stage::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 16px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--dust);
+}
+
+.pipe-stage:last-child::before {
+  display: none;
+}
+
+.pipe-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.pipe-mark {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.5px solid var(--dust);
+  background: var(--canvas-lifted);
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease,
+    transform 0.3s ease;
+}
+
+.pipe-stage.is-active .pipe-mark {
+  border-color: var(--signal-orange);
+  background: var(--signal-orange);
+  transform: scale(1.35);
+}
+
+.pipe-label {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--slate);
+  transition: color 0.3s ease;
+}
+
+.pipe-stage.is-active .pipe-label {
+  color: var(--ink);
+}
+
+.pipe-btn:focus-visible {
+  outline: 2px solid var(--signal-orange);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.pipe-detail {
+  margin: 24px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--charcoal);
+  min-height: 88px;
+  animation: caption-in 0.45s ease;
+}
+
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Job lifecycle 圖（首頁第二張 hero figure） ───────────────────
+   一張圖只講一件事：job 的狀態存在 DB，所以 worker 死掉不等於工作消失。
+   顏色全部走 DESIGN.md §2 的 Job Status Colors，SVG 不自帶調色盤。 */
+.jl-frame {
+  margin-top: 28px;
+}
+
+.jl-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 12px;
+  overflow: visible;
+}
+
+/* 沒被點亮的一切都退到 dust／slate：這張圖同一時間只想讓人看一件事，
+   其餘結構留著當地圖，但不搶視線。 */
+.jl-svg text {
+  font-family: var(--sans);
+  font-weight: 500;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* ── 節點 ─────────────────────────────────────────────────── */
+.jl-node ellipse,
+.jl-node rect {
+  fill: var(--white);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  transition:
+    fill 0.4s ease,
+    stroke 0.4s ease,
+    stroke-width 0.4s ease;
+}
+
+.jl-node text {
+  font-size: 19px;
+  fill: var(--slate);
+  transition: fill 0.4s ease;
+}
+
+.jl-node.is-lit text {
+  fill: var(--ink);
+}
+
+.jl-node.is-lit ellipse,
+.jl-node.is-lit rect {
+  stroke-width: 2.5;
+}
+
+/* pending 的品牌色是 Dust Taupe —— 它同時是本圖的「未點亮」色，
+   所以 pending 被點亮時改用填色 + charcoal 邊框來表示，而不是換色。 */
+.jl-node--pending.is-lit ellipse {
+  fill: var(--dust);
+  stroke: var(--charcoal);
+}
+
+.jl-node--running.is-lit rect {
+  fill: rgba(56, 96, 190, 0.1);
+  stroke: var(--status-running);
+}
+
+.jl-node--succeeded.is-lit ellipse {
+  fill: rgba(47, 122, 61, 0.1);
+  stroke: var(--status-succeeded);
+}
+
+.jl-node--failed.is-lit ellipse {
+  fill: rgba(163, 35, 43, 0.1);
+  stroke: var(--status-failed);
+}
+
+/* attempt #2 的那顆：同色（同一個 status）、虛線（同一列 row 的另一次執行） */
+.jl-node--ghost rect {
+  stroke-dasharray: 7 5;
+}
+
+.jl-tag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--slate);
+}
+
+/* ── 邊 ───────────────────────────────────────────────────── */
+.jl-edge {
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  marker-end: url(#jl-mk-dust);
+  transition:
+    stroke 0.4s ease,
+    stroke-width 0.4s ease;
+}
+
+.jl-edge.is-lit {
+  stroke-width: 2.5;
+}
+
+.jl-edge--ink.is-lit {
+  stroke: var(--charcoal);
+  marker-end: url(#jl-mk-ink);
+}
+
+.jl-edge--blue.is-lit {
+  stroke: var(--status-running);
+  marker-end: url(#jl-mk-blue);
+}
+
+.jl-edge--green.is-lit {
+  stroke: var(--status-succeeded);
+  marker-end: url(#jl-mk-green);
+}
+
+.jl-edge--red.is-lit {
+  stroke: var(--status-failed);
+  marker-end: url(#jl-mk-red);
+}
+
+.jl-edge-label {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--slate);
+}
+
+/* 沿著當前邊移動的點 = 那個 job 現在的位置。它是唯一會動的東西，
+   所以不需要顏色 —— 用 ink 就足夠被看見。 */
+.jl-token {
+  fill: var(--ink);
+}
+
+/* Terminal state 圍籬：虛線 + 極淡底，讀起來是註記不是元件 */
+.jl-terminal {
+  fill: rgba(20, 20, 19, 0.02);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 6;
+}
+
+.jl-terminal-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  fill: var(--slate);
+}
+
+/* ── 左上角的狀態標頭 ─────────────────────────────────────
+   圖底下原本有一排文字步驟，和方塊是同一組東西的兩種畫法；方塊比較好點，
+   所以清單拿掉，只留「現在在哪一格」的名字和說明。min-height 固定，
+   換格時文字長短不同也不會把下面的圖推上推下。 */
+.jl-head {
+  max-width: 680px;
+}
+
+/* 六格的說明長度不一，固定高度讓換格時圖不會上下跳；抓最長那格的高度即可 */
+.jl-live {
+  min-height: 96px;
+}
+
+.jl-current {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+  animation: caption-in 0.45s ease;
+}
+
+/* 標頭的顏色跟著該格的狀態走 —— 左上角的字和圖上被點亮的那顆同色，
+   是這兩塊唯一的連結。pending / 使用者操作維持 ink。 */
+.jl-current--blue {
+  color: var(--status-running);
+}
+
+.jl-current--green {
+  color: var(--status-succeeded);
+}
+
+.jl-current--red {
+  color: var(--status-failed);
+}
+
+.jl-detail {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--charcoal);
+  animation: caption-in 0.45s ease;
+}
+
+.jl-note {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--slate);
+  max-width: 720px;
+}
+
+/* ── 圖形即控制項 ─────────────────────────────────────────
+   方塊本身就是按鈕，所以要給出可點的訊號（游標 + hover 的邊框），
+   並且自己補上鍵盤焦點框 —— SVG 的 <g> 沒有內建 focus ring。 */
+.jl-control {
+  cursor: pointer;
+  outline: none;
+}
+
+.jl-control:hover ellipse,
+.jl-control:hover rect {
+  stroke: var(--slate);
+}
+
+.jl-control:focus-visible ellipse,
+.jl-control:focus-visible rect {
+  stroke: var(--signal-orange);
+  stroke-width: 2.5;
+}
+
+/* manual retry 沒有自己的狀態方塊，用一顆畫在邊上的 chip 當開關 */
+.jl-chip rect {
+  fill: var(--white);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  transition:
+    fill 0.4s ease,
+    stroke 0.4s ease;
+}
+
+.jl-chip text {
+  font-size: 14px;
+  font-weight: 500;
+  fill: var(--slate);
+  transition: fill 0.4s ease;
+}
+
+.jl-chip.is-lit rect {
+  stroke: var(--charcoal);
+}
+
+.jl-chip.is-lit text {
+  fill: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .jl-live {
+    min-height: 0;
+  }
+}
+
+/* ── The route（01–06） ───────────────────────────────────────── */
+.route {
+  position: relative;
+  margin-top: 96px;
+}
+
+/* Ghost watermark（DESIGN.md §4）：cream-on-cream，只給節奏不搶讀 */
+.route-watermark {
+  position: absolute;
+  top: -46px;
+  left: -6px;
+  font-size: clamp(72px, 12vw, 128px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--watermark);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.route-eyebrow {
+  position: relative;
+  z-index: 1;
+}
+
+.route-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.route-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--white);
+  border-radius: 40px;
+  padding: 28px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.route-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+
+/* 巨大編號同樣走 watermark 手法：把 01–06 的順序做成視覺，而不是靠讀者記 */
+.route-card-index {
+  position: absolute;
+  top: 8px;
+  right: 20px;
+  font-size: 88px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--watermark);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.route-card:hover .route-card-index {
+  color: var(--light-orange);
+}
+
+.route-card h3 {
+  position: relative;
+  margin-top: 4px;
+}
+
+.route-card-body {
+  position: relative;
+  margin-top: 10px;
+  color: var(--slate);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* Satellite CTA（DESIGN.md §4）：卡片版的衛星鈕 */
+.route-card-satellite {
+  margin-top: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 18px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.route-card:hover .route-card-satellite {
+  background: var(--ink);
+  color: var(--canvas);
+  transform: translateX(4px);
+}
+
+/* 兩欄併成一欄時，pipeline 走到堆疊下面 —— 對應關係改由點亮傳達，
+   在窄螢幕上仍然成立，因為兩者都還在同一個視野內。 */
+@media (max-width: 860px) {
+  .stackfig {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .pipe-detail {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero-frame {
+    padding: 24px 22px 26px;
+    border-radius: 32px;
+  }
+
+  .route-card-index {
+    font-size: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pipe-detail,
+  .pipe-mark,
+  .jl-detail,
+  .jl-current,
+  .jl-node ellipse,
+  .jl-node rect,
+  .jl-node text,
+  .jl-edge,
+  .jl-chip rect,
+  .jl-chip text,
+  .stack-layer,
+  .route-card,
+  .route-card-satellite {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Placeholder pages */
+.placeholder-page {
+  padding-top: 32px;
+}
+
+.placeholder-body {
+  font-size: 17px;
+  color: var(--charcoal);
+  max-width: 640px;
+  margin-top: 16px;
+}
+
+.placeholder-card {
+  margin-top: 32px;
+  background: var(--canvas-lifted);
+  border: 1.5px dashed var(--dust);
+  border-radius: 24px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--slate);
+  font-weight: 500;
+}
+
+/* Buttons (shared) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  color: var(--canvas);
+  border: 1.5px solid var(--ink);
+  border-radius: 20px;
+  padding: 6px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--canvas);
+  color: var(--ink);
+  border: 1.5px solid var(--dust);
+  border-radius: 20px;
+  padding: 6px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  text-decoration: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-google {
+  gap: 10px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--signal-orange);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Auth page */
+.auth-page {
+  padding-top: 32px;
+}
+
+.auth-card {
+  margin-top: 32px;
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+  max-width: 420px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--charcoal);
+}
+
+.auth-form input {
+  font: inherit;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--dust);
+  background: var(--canvas-lifted);
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.auth-error {
+  color: var(--signal-orange);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auth-divider {
+  text-align: center;
+  color: var(--slate);
+  font-size: 13px;
+  margin: 20px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.auth-switch {
+  font-size: 14px;
+  color: var(--slate);
+}
+
+/* Queue page */
+.queue-page {
+  padding-top: 32px;
+}
+
+.queue-card {
+  margin-top: 32px;
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+  max-width: 560px;
+}
+
+.queue-card .auth-form input {
+  width: 100%;
+}
+
+.job-board-eyebrow {
+  margin-top: 48px;
+}
+
+.job-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.job-card {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+
+.job-meta {
+  font-size: 14px;
+  color: var(--slate);
+  margin-bottom: 4px;
+}
+
+.job-timestamp {
+  font-size: 13px;
+  color: var(--dust);
+  margin-bottom: 16px;
+}
+
+/* 縱向 stepper：每個 step 是一列，左邊一條連接線貫穿所有 dot，由上到下代表進度。 */
+.job-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.job-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dust);
+}
+
+.job-step:last-child {
+  padding-bottom: 0;
+}
+
+.job-step-rail {
+  position: relative;
+  width: 10px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.job-step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--canvas-lifted);
+  border: 1.5px solid var(--dust);
+  margin-top: 4px;
+}
+
+.job-step-label {
+  line-height: 18px;
+}
+
+/* 連接線掛在 dot 自己的 rail 上，跟文字高度無關，每一列的線都從同一個相對座標系出發，
+   由 dot 底部一路延伸到下一個 dot——最後一個 step 不需要。 */
+.job-step:not(:last-child) .job-step-rail::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.5px;
+  background: var(--dust);
+}
+
+.job-step-done {
+  color: var(--signal-green);
+}
+
+.job-step-done .job-step-dot {
+  background: var(--signal-green);
+  border-color: var(--signal-green);
+}
+
+.job-step-active {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.job-step-active .job-step-dot {
+  background: var(--light-orange);
+  border-color: var(--light-orange);
+}
+
+.job-step-failed {
+  color: var(--signal-orange);
+}
+
+.job-step-failed .job-step-dot {
+  background: var(--signal-orange);
+  border-color: var(--signal-orange);
+}
+
+.btn-retry {
+  width: auto;
+  margin-top: 12px;
+  padding: 4px 18px;
+  font-size: 14px;
+}
+
+.job-transcript {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--charcoal);
+  background: var(--canvas-lifted);
+  border-radius: 12px;
+  padding: 16px;
+  white-space: pre-wrap;
+}
+
+.btn-inspect {
+  align-self: flex-start;
+  margin-top: 16px;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate);
+  cursor: pointer;
+}
+
+.btn-inspect:hover {
+  color: var(--ink);
+}
+
+.job-inspect {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--canvas-lifted);
+  border-radius: 12px;
+}
+
+.audit-eyebrow {
+  margin-bottom: 12px;
+}
+
+.audit-trail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.audit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.audit-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dust);
+  flex-shrink: 0;
+}
+
+.audit-host {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--charcoal);
+}
+
+.audit-state {
+  font-weight: 600;
+}
+
+.audit-time {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--dust);
+  font-variant-numeric: tabular-nums;
+}
+
+.audit-empty {
+  font-size: 13px;
+  color: var(--slate);
+}
+
+/* 死掉/被接手：灰掉 + 狀態刪除線，一眼看出「這台沒完成」 */
+.attempt-dead .audit-host,
+.attempt-dead .audit-state {
+  color: var(--slate);
+}
+
+.attempt-dead .audit-state {
+  text-decoration: line-through;
+}
+
+.attempt-active .audit-dot {
+  background: var(--light-orange);
+}
+
+.attempt-active .audit-state {
+  color: var(--light-orange);
+}
+
+.attempt-done .audit-dot {
+  background: var(--signal-green);
+}
+
+.attempt-done .audit-state {
+  color: var(--signal-green);
+}
+
+.attempt-failed .audit-dot {
+  background: var(--signal-orange);
+}
+
+.attempt-failed .audit-state {
+  color: var(--signal-orange);
+}
+
+/* High Availability page — scenario A */
+.ha-page {
+  padding-top: 32px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.ha-demo {
+  display: flex;
+  flex-direction: column;
+}
+
+.ha-demo-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ha-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  background: var(--canvas-lifted);
+  color: var(--slate);
+}
+
+.ha-badge-running {
+  background: rgba(243, 115, 56, 0.15);
+  color: var(--light-orange);
+}
+
+.ha-badge-succeeded {
+  background: rgba(47, 122, 61, 0.15);
+  color: var(--signal-green);
+}
+
+.ha-badge-failed {
+  background: rgba(207, 69, 0, 0.15);
+  color: var(--signal-orange);
+}
+
+.ha-audit {
+  margin-top: 20px;
+}
+
+.ha-hint {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+.ha-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+
+/* 收合區（Foldout）。「怎麼跑」和「為什麼撐得住」是同一個問題的兩半——想動手
+   的人兩個都要看——所以它們一起收在一個開關底下，收起時整節只剩一行標題。
+   裡面的兩欄維持 .ha-columns 的並排，展開後的版面跟收合前完全一樣。 */
+.foldout {
+  margin-top: 40px;
+}
+
+/* grid 自己的上緣留白由 .foldout 接手了，這裡收掉，標題和內容才不會拉開一段
+   讀不出關聯的空白。 */
+.foldout .ha-columns {
+  margin-top: 16px;
+}
+
+.foldout-summary {
+  cursor: pointer;
+  margin-bottom: 0;
+  list-style: none; /* Firefox */
+  user-select: none;
+}
+
+.foldout-summary::-webkit-details-marker {
+  display: none; /* Safari 的預設三角形，換成下面自己的 chevron */
+}
+
+.foldout-summary:hover {
+  color: var(--ink);
+}
+
+/* chevron 放在標題末端而不是開頭：開頭已經有 eyebrow-dot，兩個記號並排會
+   互相打架，而且會讓收合欄的標題跟頁面其他 eyebrow 對不齊。 */
+.foldout-chevron {
+  font-size: 10px;
+  color: var(--slate);
+  transition: transform 0.15s ease;
+}
+
+.foldout[open] .foldout-chevron {
+  transform: rotate(90deg);
+}
+
+.ha-steps,
+.ha-mechanism {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--charcoal);
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+.ha-steps code,
+.ha-mechanism code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: var(--canvas-lifted);
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--ink);
+}
+
+/* HA scenario sections + SPOF footer */
+.ha-scenario {
+  margin-top: 56px;
+  padding-top: 40px;
+  border-top: 1.5px solid var(--dust);
+}
+
+.ha-scenario-tag {
+  color: var(--signal-orange);
+}
+
+.ha-scenario-title {
+  margin: 8px 0 12px;
+}
+
+
+.ha-caveat {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+/* =====================================================================
+   Security page — defense in depth
+   ===================================================================== */
+
+.sec-thesis em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ── Spine：三張導覽 tile，也是全頁目錄 ───────────────────────────── */
+.sec-spine {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.sec-spine-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  border: 1.5px solid transparent;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.sec-spine-tile:hover,
+.sec-spine-tile:focus-visible {
+  border-color: var(--signal-orange);
+  transform: translateY(-2px);
+}
+
+.sec-spine-index {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--dust);
+}
+
+.sec-spine-tier {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--signal-orange);
+}
+
+.sec-spine-title {
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+/* 術語清單：可掃視的關鍵字，不是句子 */
+.sec-spine-terms {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--slate);
+  line-height: 1.35;
+}
+
+.sec-spine-terms li {
+  padding-left: 14px;
+  position: relative;
+}
+
+.sec-spine-terms li::before {
+  content: "·";
+  position: absolute;
+  left: 3px;
+  color: var(--dust);
+  font-weight: 700;
+}
+
+/* ── 三個層級大節 ─────────────────────────────────────────────────── */
+.sec-section {
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1.5px solid var(--dust);
+  /* 錨點跳轉時不要被 sticky topbar 蓋住標題 */
+  scroll-margin-top: 96px;
+}
+
+.sec-section-head {
+  margin-bottom: 24px;
+}
+
+.sec-section-tag {
+  color: var(--signal-orange);
+}
+
+.sec-section-title {
+  margin-top: 8px;
+  font-size: 30px;
+  line-height: 1.15;
+  max-width: 720px;
+}
+
+.sec-subsection-tag {
+  margin-bottom: 12px;
+}
+
+.sec-body {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--charcoal);
+  line-height: 1.6;
+  max-width: 520px;
+}
+
+/* ── ① 拓撲圖：一張圖、三個鏡頭 ───────────────────────────────────── */
+.sec-lens-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+/* 有組名時 tab 條變兩層：組名在上、編號在下。組名不可點，它只負責讓
+   「五步分成三段」這件事在一眼裡成立。組與組之間拉開，段落界線才看得見。 */
+.sec-lens-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sec-lens-group + .sec-lens-group {
+  margin-left: 20px;
+}
+
+.sec-lens-group-name {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.sec-lens-group-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+/* 編號 tab 是圓的、等寬的——它讀作「第幾步」，不是一個標籤。只有帶組名的
+   那種才套用；沒有組名時 tab 仍是文字，要保留原本的左右內距。 */
+.sec-lens-tab.is-step {
+  min-width: 38px;
+  padding: 8px 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.sec-lens-tab {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--dust);
+  background: transparent;
+  color: var(--slate);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sec-lens-tab:hover {
+  color: var(--ink);
+  border-color: var(--slate);
+}
+
+.sec-lens-tab.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--canvas);
+}
+
+.sec-lens-frame {
+  margin: 16px 0 0;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--canvas-lifted);
+  border: 1.5px solid var(--dust);
+}
+
+.sec-lens-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sec-lens-frame figcaption {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--charcoal);
+  line-height: 1.6;
+  max-width: 720px;
+}
+
+/* 攻擊鏡頭的圖說分兩段：先「沒有這道檢查會怎樣」，再「擋它的是什麼」。
+   前者是獨立段落而不是同段的第一句——排版必須讓代價先被看見，不然讀者
+   會直接跳到機制，安全圖就退化成流程圖的註解。 */
+.sec-lens-stakes {
+  display: block;
+  margin-bottom: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--signal-orange);
+  color: var(--ink);
+}
+
+/* 佔位框：圖還沒畫時撐出版面，並直說它是暫時的 */
+.sec-mock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 280px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--dust);
+  background: var(--canvas);
+}
+
+.sec-mock-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--signal-orange);
+}
+
+.sec-mock-name {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.sec-mock-hint {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--slate);
+}
+
+/* ── ② 明文的生命週期 ─────────────────────────────────────────────── */
+.sec-secrets {
+  margin-top: 40px;
+}
+
+.sec-table-scroll {
+  overflow-x: auto;
+}
+
+.sec-secret-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.sec-secret-table th {
+  padding: 0 16px 10px 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--slate);
+  border-bottom: 1.5px solid var(--dust);
+}
+
+.sec-secret-table td {
+  padding: 16px 16px 16px 0;
+  border-bottom: 1px solid var(--dust);
+  vertical-align: top;
+  color: var(--charcoal);
+  line-height: 1.5;
+}
+
+.sec-secret-stage {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.sec-secret-produced {
+  max-width: 280px;
+}
+
+.sec-secret-table code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+/* 補充說明：誠實標註但不搶正文的重量 */
+.sec-secret-note {
+  display: block;
+  margin-top: 8px;
+  padding-left: 10px;
+  border-left: 2px solid var(--dust);
+  font-size: 12px;
+  color: var(--slate);
+  line-height: 1.45;
+}
+
+.sec-secret-detail {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--slate);
+  line-height: 1.45;
+}
+
+/* ── ③ Live prober ────────────────────────────────────────────────── */
+.sec-prober {
+  margin-top: 8px;
+}
+
+.sec-probe-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sec-probe {
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.sec-probe-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sec-probe-what {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sec-probe-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.sec-probe-request {
+  font-family: ui-monospace, monospace;
+  font-size: 12.5px;
+  color: var(--slate);
+}
+
+.sec-probe-action {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sec-status {
+  min-width: 52px;
+  text-align: center;
+  font-family: ui-monospace, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.sec-status-idle {
+  color: var(--dust);
+}
+
+.sec-status-2xx {
+  background: rgba(47, 122, 61, 0.12);
+  color: var(--signal-green);
+}
+
+.sec-status-4xx {
+  background: rgba(207, 69, 0, 0.1);
+  color: var(--signal-orange);
+}
+
+.sec-probe-reads {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--dust);
+  font-size: 13px;
+  color: var(--charcoal);
+  line-height: 1.6;
+}
+
+/* ③ APP 底下兩個子節之間要有呼吸。掛在「排第二的那一段」上，不綁定
+   authn / authz 哪一個——順序是會換的。 */
+.sec-subsection-gap {
+  margin-top: 40px;
+}
+
+/* 圖不再自己解釋流程，改由這行把讀者指去 Auth 頁——所以它必須貼著圖，
+   不能讀成一般段落。 */
+.sec-authn-note {
+  margin: 12px 0 20px;
+  max-width: 68ch;
+}
+
+/* 對照全圖的入口，推到 tab 條的另一端：它跟 tab 同一列，但不是第四個鏡頭，
+   靠這段距離把「切鏡頭」和「打開全圖」分成兩種動作。窄螢幕 tab 條會 wrap，
+   auto margin 自然失效，按鈕就落到下一行。 */
+.sec-lens-action {
+  margin-left: auto;
+}
+
+.sec-lens-compare {
+  font-size: 12px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .sec-section-title {
+    font-size: 24px;
+  }
+  .sec-probe-head {
+    align-items: flex-start;
+  }
+}
+
+/* Scenario B — architecture diagram */
+.ha-diagram {
+  margin: 24px 0 0;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--canvas-lifted);
+  border: 1.5px solid var(--dust);
+}
+
+.ha-diagram .diagram-zoom-trigger img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ha-diagram figcaption {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Scenario B — recorded evidence slot */
+.ha-recording {
+  margin: 24px 0 0;
+}
+
+.ha-recording-slot {
+  margin-top: 12px;
+  padding: 20px;
+  border: 1.5px dashed var(--dust);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.5;
+}
+
+.ha-recording-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--signal-orange);
+}
+
+/* Scenario C — live health probe */
+.hp-card {
+  display: flex;
+  flex-direction: column;
+  margin-top: 24px;
+}
+
+.hp-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.hp-target {
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.hp-target code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: var(--canvas);
+  padding: 2px 6px;
+  border-radius: 6px;
+  word-break: break-all;
+}
+
+.hp-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  gap: 3px;
+  min-height: 24px;
+  align-items: center;
+  margin: 8px 0 20px;
+}
+
+.hp-strip-empty {
+  font-size: 13px;
+  color: var(--slate);
+}
+
+/* 固定寬度，一格一格往右長；不折行，超出就在自己容器裡橫向捲。 */
+.hp-tick {
+  flex: none;
+  width: 8px;
+  height: 20px;
+  border-radius: 2px;
+  background: var(--dust);
+}
+
+.hp-tick-ok {
+  background: var(--signal-green);
+}
+
+.hp-tick-fail {
+  background: var(--signal-orange);
+}
+
+.hp-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.hp-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hp-stats dt {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.hp-stats dd {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.hp-bad {
+  color: var(--signal-orange);
+}
+
+/* JWT inspector */
+.jwt-inspector {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1.5px solid var(--dust);
+}
+
+.jwt-note {
+  font-size: 14px;
+  color: var(--slate);
+  margin-bottom: 16px;
+}
+
+.jwt-raw {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  word-break: break-all;
+  background: var(--canvas-lifted);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--charcoal);
+  margin-bottom: 16px;
+}
+
+.jwt-fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.jwt-fields dt {
+  color: var(--slate);
+  font-weight: 500;
+}
+
+.jwt-fields dd {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  color: var(--ink);
+}
+
+.jwt-expired {
+  color: var(--signal-orange);
+  font-weight: 700;
+}
+
+/* Manual refresh demo */
+.refresh-demo {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1.5px solid var(--dust);
+}
+
+.refresh-demo .jwt-note code {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  background: var(--canvas-lifted);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.refresh-success {
+  color: var(--signal-green);
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+/* Durability walkthrough page */
+.durability-walkthrough {
+  padding-top: 32px;
+}
+
+.story-nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.story-node {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.story-node-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Steps 1–3 stepper — one card, fixed diagram frame, swap active step in place */
+.stepper-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.stepper-tab {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--dust);
+  background: var(--white);
+  color: var(--slate);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.stepper-tab:hover {
+  border-color: var(--signal-orange);
+}
+
+.stepper-tab.is-active {
+  background: var(--signal-orange);
+  border-color: var(--signal-orange);
+  color: var(--white);
+}
+
+.stepper-frame {
+  position: relative;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1.5px solid var(--dust);
+  aspect-ratio: 1210 / 375;
+}
+
+/* Inactive slides are lifted out of flow so the active one sets the frame's
+   real height (all three share the same aspect, so switching never shifts). */
+.stepper-slide {
+  position: absolute;
+  inset: 24px 0 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease;
+}
+
+.stepper-slide.is-active {
+  position: relative;
+  inset: auto;
+  opacity: 1;
+  visibility: visible;
+}
+
+.stepper-timeline {
+  margin-top: 20px;
+}
+
+.stepper-timeline-toggle {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--signal-orange);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.stepper-timeline-toggle:hover {
+  text-decoration: underline;
+}
+
+.stepper-timeline .excalidraw-diagram {
+  margin-top: 16px;
+}
+
+.story-node-term {
+  margin: 16px 0 0;
+  display: inline-block;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--charcoal);
+  border-left: 3px solid var(--signal-orange);
+  padding-left: 12px;
+}
+
+.story-node-desc {
+  margin: 16px 0 0;
+  max-width: 68ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.story-node-diagram {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1.5px solid var(--dust);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Excalidraw scenes rendered inline from the .excalidraw source files */
+.excalidraw-diagram {
+  width: 100%;
+}
+
+/* Sequence/timeline diagrams are tall and wide — cap their width so they don't
+   dominate the card. Tune the max-width value to taste. */
+.excalidraw-diagram-compact {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.excalidraw-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.excalidraw-diagram-error {
+  font-size: 14px;
+  color: var(--signal-orange);
+}
+
+/* Auth page — Google OIDC explainer section (full-width, below the login card) */
+.auth-explainer {
+  margin-top: 56px;
+  max-width: 1040px;
+}
+
+.auth-explainer h2 {
+  margin: 4px 0 0;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+}
+
+.auth-explainer-caption {
+  margin: 12px 0 24px;
+  max-width: 68ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.auth-explainer-caption code {
+  font-size: 0.92em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--canvas);
+  border: 1px solid var(--dust);
+}
+
+/* Clickable diagram preview — renders fit-to-width, opens the lightbox on click */
+.diagram-zoom-trigger {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 20px;
+  border: 1.5px solid var(--dust);
+  border-radius: 20px;
+  background: var(--white);
+  cursor: zoom-in;
+  font: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.diagram-zoom-trigger:hover,
+.diagram-zoom-trigger:focus-visible {
+  border-color: var(--ink);
+  box-shadow: var(--shadow);
+  outline: none;
+}
+
+.diagram-zoom-hint {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--white);
+  background: rgba(20, 20, 19, 0.82);
+  pointer-events: none;
+}
+
+/* Full-screen zoomable overlay */
+.lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  background: rgba(20, 20, 19, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.lightbox-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  color: var(--white);
+}
+
+.lightbox-title {
+  font-size: 14px;
+  font-weight: 550;
+  opacity: 0.9;
+}
+
+.lightbox-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lightbox-controls button {
+  min-width: 40px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lightbox-controls button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.lightbox-controls .lightbox-close {
+  margin-left: 8px;
+}
+
+.lightbox-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 0 24px 24px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.lightbox-scroll:active {
+  cursor: grabbing;
+}
+
+.lightbox-canvas {
+  margin: 0 auto;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--white);
+}
+
+.lightbox-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Story diagrams — small CSS-box illustrations, one per node */
+.diagram {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.diagram-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--canvas-lifted);
+  border: 1.5px solid var(--dust);
+  border-radius: 16px;
+  padding: 12px 16px;
+  min-width: 120px;
+}
+
+.diagram-box-wide {
+  min-width: 200px;
+  align-items: center;
+}
+
+.diagram-box-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.diagram-box-sub {
+  font-size: 12px;
+  color: var(--slate);
+}
+
+.diagram-box-dying {
+  border-style: dashed;
+  border-color: var(--signal-orange);
+  opacity: 0.7;
+}
+
+.diagram-box-broker {
+  border-color: var(--light-orange);
+}
+
+.diagram-box-db {
+  border-color: var(--signal-green);
+  background: #eef6ef;
+}
+
+.diagram-box-guard {
+  border-color: var(--signal-green);
+  background: #eef6ef;
+}
+
+.diagram-arrow {
+  font-size: 20px;
+  color: var(--slate);
+}
+
+.diagram-arrow-broken {
+  color: var(--signal-orange);
+  font-weight: 700;
+}
+
+/* Node 2: visibility timeout ring */
+.timeout-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: conic-gradient(var(--light-orange) 0deg 270deg, var(--dust) 270deg 360deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeout-ring-label {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Node 3: timeout trade-off */
+.diagram-tradeoff {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.tradeoff-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tradeoff-tag {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--white);
+  flex-shrink: 0;
+  width: 84px;
+  text-align: center;
+}
+
+.tradeoff-tag-short {
+  background: var(--signal-orange);
+}
+
+.tradeoff-tag-long {
+  background: var(--slate);
+}
+
+.tradeoff-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--dust);
+}
+
+.tradeoff-bar-short {
+  width: 30%;
+}
+
+.tradeoff-bar-long {
+  width: 85%;
+}
+
+/* Node 5: locking lanes */
+.diagram-locking {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.lock-lane {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lock-lane-label {
+  width: 72px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.lock-bar {
+  flex: 1;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.lock-bar-active {
+  background: #eef6ef;
+  border: 1.5px solid var(--signal-green);
+  color: var(--signal-green);
+}
+
+.lock-bar-waiting {
+  background: var(--canvas-lifted);
+  border: 1.5px dashed var(--dust);
+  color: var(--slate);
+}
+
+/* Node 6: retry backoff bars */
+.diagram-retry {
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.retry-bar-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.retry-bar {
+  width: 20px;
+  background: var(--light-orange);
+  border-radius: 6px 6px 0 0;
+}
+
+/* Node 7: synthesis */
+.diagram-synthesis {
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.synthesis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .story-node {
+    padding: 24px;
+  }
+}
+
+/* ── Scalability (scale-out) ──────────────────────────────────── */
+.scl-demo {
+  display: flex;
+  flex-direction: column;
+}
+
+.scl-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.scl-progress {
+  font-size: 13px;
+  color: var(--slate);
+  font-variant-numeric: tabular-nums;
+}
+
+.scl-clock {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--light-orange);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+
+.scl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.scl-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1.5px solid var(--dust);
+  background: var(--canvas-lifted);
+  font-variant-numeric: tabular-nums;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.scl-cell-id {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.scl-cell-status {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--slate);
+}
+
+.scl-cell-host {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--slate);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scl-cell-running {
+  border-color: var(--light-orange);
+  background: rgba(243, 115, 56, 0.1);
+}
+
+.scl-cell-succeeded {
+  border-color: var(--signal-green);
+  background: rgba(47, 122, 61, 0.12);
+}
+
+.scl-cell-succeeded .scl-cell-status {
+  color: var(--signal-green);
+}
+
+.scl-cell-failed {
+  border-color: var(--signal-orange);
+  background: rgba(207, 69, 0, 0.12);
+}
+
+.scl-cell-failed .scl-cell-status {
+  color: var(--signal-orange);
+}
+
+.scl-results {
+  margin-top: 40px;
+  padding: 28px 32px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.scl-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.scl-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--slate);
+  cursor: pointer;
+}
+
+.scl-reset:hover {
+  color: var(--signal-orange);
+}
+
+.scl-run-table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.scl-run-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--canvas-lifted);
+  font-variant-numeric: tabular-nums;
+}
+
+.scl-run-workers {
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 90px;
+}
+
+.scl-run-detail {
+  font-size: 14px;
+  color: var(--slate);
+  flex: 1;
+}
+
+.scl-run-time {
+  font-family: ui-monospace, monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--signal-green);
+}
+
+.scl-speedup {
+  margin-top: 16px;
+  font-size: 15px;
+  color: var(--charcoal);
+}
+
+.scl-speedup strong {
+  color: var(--signal-orange);
+  font-size: 18px;
+}
+
+/* ── Site footer（DESIGN.md §4 Footer） ───────────────────────── */
+.site-footer {
+  background: var(--footer-black);
+  color: var(--white);
+  margin-top: 64px;
+}
+
+.site-footer-inner {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 80px 24px 64px;
+}
+
+.site-footer-headline {
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1.2;
+  color: var(--white);
+  max-width: 520px;
+}
+
+.site-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+  margin-top: 56px;
+}
+
+.site-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.site-footer-head {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 4px;
+}
+
+.site-footer-link {
+  font-size: 14px;
+  font-weight: 450;
+  color: rgba(255, 255, 255, 0.85);
+  transition: color 0.15s ease;
+}
+
+.site-footer-link:hover {
+  color: var(--light-orange);
+}
+
+.site-footer-note {
+  font-size: 14px;
+  font-weight: 450;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.site-footer-bottom {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}

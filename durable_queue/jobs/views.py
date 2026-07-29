@@ -1,5 +1,4 @@
 from rest_framework import generics
-from rest_framework import serializers
 from jobs.serializers import TranscriptionJobSerializer, UserRegisterSerializer
 from jobs.models import TranscriptionJob
 from jobs.tasks import execute_job
@@ -11,7 +10,6 @@ from django.http import Http404
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
-    inline_serializer,
     OpenApiResponse,
 )
 from rest_framework.permissions import AllowAny
@@ -127,45 +125,25 @@ class GoogleCallbackView(APIView):
 
     @extend_schema(
         responses={
-            200: inline_serializer(
-                name="GoogleTokenResponse",
-                fields={
-                    "access": serializers.CharField(),
-                    "refresh": serializers.CharField(),
-                },
-            ),
-            400: OpenApiResponse(
-                description="缺少 code/state，或 state 與 session 不符（CSRF）"
-            ),
-            403: OpenApiResponse(
-                description="Google email 未驗證，不允許以 Google 登入"
-            ),
-            409: OpenApiResponse(
-                description="此 email 已有本地帳號，請先登入再連結 Google"
+            302: OpenApiResponse(
+                description="重導向回前端 SPA，成功時網址 fragment 帶 access/refresh，失敗時帶 error"
             ),
         },
-        description="Google OAuth callback：驗證 code/state → 換 token → 發本站 JWT",
+        description="Google OAuth callback：驗證 code/state → 換 token → 發本站 JWT → 導回前端",
     )
     def get(self, request):
         code = request.query_params.get("code")
         state = request.query_params.get("state")
         if code is None or state is None:
-            return Response(
-                {"detail": "authorization code or state is None"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return self._redirect_error("authorization code or state is None")
 
         # === 1:state / CSRF 驗證 ===
         # middleware 已用 cookie 的 sessionid 從 backend 載好 session;從載好的 dict 讀出 /login 存的 state
         saved_state = request.session.get(GOOGLE_AUTH_STATE)
         if saved_state is None:
-            return Response(
-                {"detail": "invalid oauth state"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return self._redirect_error("invalid oauth state")
         elif state != saved_state:
-            return Response(
-                {"detail": "state is not valid"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return self._redirect_error("state is not valid")
 
         #   - 比對通過後,把它從 session 移除(one-time,防重放)
         request.session.pop(GOOGLE_AUTH_STATE, None)
@@ -186,10 +164,7 @@ class GoogleCallbackView(APIView):
             token_resp.raise_for_status()
         except http_requests.exceptions.HTTPError:
             if token_resp.json().get("error") == "invalid_grant":
-                return Response(
-                    {"detail": "invalid grant, please login again"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                return self._redirect_error("invalid grant, please login again")
             raise
 
         # === 3. 驗證和解碼 id_token===
@@ -214,18 +189,14 @@ class GoogleCallbackView(APIView):
             # === Case 2:email 已經有 local 帳號 → 擋下,不自動綁 ===
             # TODO: 2a: 若已存在同 email 的 User → 回一個「請先用密碼登入再連結」的錯誤
             if User.objects.filter(email=email).exists():
-                return Response(
-                    {
-                        "detail": "Email already registered, please login first to link with Google account",
-                    },
-                    status=status.HTTP_409_CONFLICT,
+                return self._redirect_error(
+                    "Email already registered, please login first to link with Google account"
                 )
 
             # === Case 3:全新的人 → 必須 email_verified 才建 ===
             if not email_verified:
-                return Response(
-                    {"detail": "Gmail not verified, cannot login with Google"},
-                    status=status.HTTP_403_FORBIDDEN,
+                return self._redirect_error(
+                    "Gmail not verified, cannot login with Google"
                 )
 
             # 3b: 建 User + SocialIdentity
@@ -245,7 +216,14 @@ class GoogleCallbackView(APIView):
 
         # === 三種情況匯流:發你自己的 JWT===
         refresh = RefreshToken.for_user(user)
-        return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
+        fragment = urlencode(
+            {"access": str(refresh.access_token), "refresh": str(refresh)}
+        )
+        return redirect(f"{settings.FRONTEND_URL}/auth/google/callback#{fragment}")
+
+    def _redirect_error(self, message):
+        fragment = urlencode({"error": message})
+        return redirect(f"{settings.FRONTEND_URL}/auth/google/callback#{fragment}")
 
 
 class ShallowHealthCheckView(APIView):
