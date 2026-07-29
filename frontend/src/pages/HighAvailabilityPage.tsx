@@ -6,6 +6,7 @@ import {
   API_BASE_URL,
   createJob,
   getJob,
+  pingHealth,
   type JobStatus,
   type TranscriptionJob,
 } from "../lib/api.ts";
@@ -74,18 +75,8 @@ function HealthProbe() {
     async function tick() {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
-      let ok = false;
-      try {
-        const res = await fetch(`${API_BASE_URL}/health/`, {
-          signal: controller.signal,
-        });
-        ok = res.ok;
-      } catch {
-        // 網路錯 / CORS 擋 / timeout 都算一次失敗——真實中斷時這裡會變紅
-        ok = false;
-      } finally {
-        clearTimeout(timer);
-      }
+      const ok = await pingHealth(controller.signal);
+      clearTimeout(timer);
       if (cancelled) return;
       setStrip((prev) => [...prev, { ok }].slice(-PROBE_WINDOW));
       setStats((prev) => ({
@@ -307,16 +298,17 @@ function HighAvailabilityPage() {
                   <code>docker compose up --build --scale worker=2</code>.
                 </li>
                 <li>
-                  Click <strong>Start scenario A</strong>. A worker claims the job
-                  — the first audit entry shows <em>running here</em>.
+                  Click <strong>Start scenario A</strong>. A worker claims the
+                  job — the first audit entry shows <em>running here</em>.
                 </li>
                 <li>
                   While it is RUNNING, find the busy worker (
-                  <code>docker ps</code>) and <code>docker kill &lt;id&gt;</code>.
+                  <code>docker ps</code>) and{" "}
+                  <code>docker kill &lt;id&gt;</code>.
                 </li>
                 <li>
-                  After ~30s (the visibility timeout) another worker re-claims it,
-                  and the job still reaches SUCCEEDED.
+                  After ~30s (the visibility timeout) another worker re-claims
+                  it, and the job still reaches SUCCEEDED.
                 </li>
               </ol>
             </div>
@@ -329,17 +321,18 @@ function HighAvailabilityPage() {
               <ul className="ha-mechanism">
                 <li>
                   <strong>acks_late</strong> — the message is acknowledged only
-                  after the task completes, so a crash mid-run leaves it un-ACKed
-                  and Redis redelivers it.
+                  after the task completes, so a crash mid-run leaves it
+                  un-ACKed and Redis redelivers it.
                 </li>
                 <li>
-                  <strong>visibility timeout</strong> — how long an un-ACKed task
-                  waits before redelivery (set to 30s here so the demo is snappy).
+                  <strong>visibility timeout</strong> — how long an un-ACKed
+                  task waits before redelivery (set to 30s here so the demo is
+                  snappy).
                 </li>
                 <li>
                   <strong>idempotency guard</strong> — skips jobs already in a
-                  terminal state, so redelivery can never double-write a finished
-                  job.
+                  terminal state, so redelivery can never double-write a
+                  finished job.
                 </li>
               </ul>
             </div>
@@ -419,13 +412,13 @@ function HighAvailabilityPage() {
                   second.
                 </li>
                 <li>
-                  In the EC2 console, <strong>terminate</strong> the API instance
-                  currently serving traffic.
+                  In the EC2 console, <strong>terminate</strong> the API
+                  instance currently serving traffic.
                 </li>
                 <li>
-                  Watch the probe: the ALB drains the dead target within a couple
-                  of health-check intervals, so the strip stays green (or flashes
-                  one red then recovers).
+                  Watch the probe: the ALB drains the dead target within a
+                  couple of health-check intervals, so the strip stays green (or
+                  flashes one red then recovers).
                 </li>
                 <li>
                   Minutes later the ASG launches a replacement to restore{" "}
@@ -441,18 +434,18 @@ function HighAvailabilityPage() {
               </p>
               <ul className="ha-mechanism">
                 <li>
-                  <strong>ALB health check</strong> — probes <code>/health/</code>{" "}
-                  and stops routing to a target the moment it fails, so requests
-                  only reach live instances.
+                  <strong>ALB health check</strong> — probes{" "}
+                  <code>/health/</code> and stops routing to a target the moment
+                  it fails, so requests only reach live instances.
                 </li>
                 <li>
-                  <strong>stateless API</strong> — JWT auth means any instance can
-                  serve any request; losing one drops no session state.
+                  <strong>stateless API</strong> — JWT auth means any instance
+                  can serve any request; losing one drops no session state.
                 </li>
                 <li>
                   <strong>ASG self-healing</strong> — spread across two AZs with{" "}
-                  <code>desired=2</code>, it relaunches to the target count on its
-                  own.
+                  <code>desired=2</code>, it relaunches to the target count on
+                  its own.
                 </li>
               </ul>
             </div>

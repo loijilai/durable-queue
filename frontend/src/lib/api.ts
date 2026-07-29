@@ -1,4 +1,16 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? "";
+
+export async function pingHealth(signal?: AbortSignal): Promise<boolean> {
+  if (!API_BASE_URL) return false; // 沒設 base URL：當作後端不可用，不要瞎打
+  try {
+    const res = await fetch(`${API_BASE_URL}/health/`, { signal });
+    if (!res.ok) return false;
+    return !(res.headers.get("content-type") ?? "").includes("text/html");
+  } catch {
+    // 網路錯 / CORS 擋 / timeout 都算一次失敗
+    return false;
+  }
+}
 
 export interface TokenPair {
   access: string;

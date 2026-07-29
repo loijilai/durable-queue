@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_BASE_URL } from "../lib/api.ts";
+import { pingHealth } from "../lib/api.ts";
 
 const TIMEOUT_MS = 5000;
 const RETRY_MS = 30000;
@@ -21,18 +21,8 @@ function BackendStatus() {
     async function check() {
       const controller = new AbortController();
       const abort = setTimeout(() => controller.abort(), TIMEOUT_MS);
-      let ok = false;
-      try {
-        const res = await fetch(`${API_BASE_URL}/health/`, {
-          signal: controller.signal,
-        });
-        ok = res.ok;
-      } catch {
-        // 網路錯 / CORS 擋 / timeout 一律當作後端沒開
-        ok = false;
-      } finally {
-        clearTimeout(abort);
-      }
+      const ok = await pingHealth(controller.signal);
+      clearTimeout(abort);
       if (cancelled) return;
       setOffline(!ok);
       // 活著就不再探；掛著才排下一次重試，等使用者等到後端開機。
