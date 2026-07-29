@@ -64,3 +64,10 @@ resource "aws_secretsmanager_secret" "app" {
   name                    = "durable-queue-app"
   recovery_window_in_days = 0 # 學習環境；bootstrap destroy 時可即刻刪
 }
+
+# ECR ——同理長存
+resource "aws_ecr_repository" "registry" {
+  name         = "durable-queue"
+  force_delete = true # 學習環境：bootstrap destroy 時連 image 一起刪
+  tags         = { Name = "durable-queue-ecr" }
+}
