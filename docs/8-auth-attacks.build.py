@@ -5,8 +5,13 @@
 
 Same contract as 6-security-topology.build.py / 7-deploy-pipeline.build.py:
 
-    docs/auth-sequence-google-oidc.excalidraw   owns the GEOMETRY
+    frontend/src/assets/diagrams/auth-sequence-google-oidc.excalidraw
+                                                owns the GEOMETRY
     this script                                 owns the LIGHTING
+
+Unlike those two, the base scene here is not a .drawio master that gets exported
+— the frontend imports the .excalidraw JSON directly. So base and outputs both
+live under frontend/src/assets/diagrams/, and this script reads and writes there.
 
 That file is also what the Auth page renders as-is ("how login works"). The
 security page needs the same stage playing a different script ("what is being
@@ -36,7 +41,9 @@ import json
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BASE = os.path.join(HERE, "auth-sequence-google-oidc.excalidraw")
+ROOT = os.path.dirname(HERE)
+SCENE_DIR = os.path.join(ROOT, "frontend", "src", "assets", "diagrams")
+BASE = os.path.join(SCENE_DIR, "auth-sequence-google-oidc.excalidraw")
 
 # ── palette ──────────────────────────────────────────────────────────
 # No new colours: attack red is the red the base scene already uses, and the
@@ -366,7 +373,7 @@ def build():
 
         reindex(scene["elements"])
 
-        out = os.path.join(HERE, lens["out"])
+        out = os.path.join(SCENE_DIR, lens["out"])
         with open(out, "w", encoding="utf-8") as f:
             json.dump(scene, f, indent=2, ensure_ascii=False)
         print(f"wrote {lens['out']}  window=({wx},{wy}) {WIN_W}x{WIN_H}  "

@@ -1,18 +1,19 @@
-// Raw .excalidraw scenes imported straight from ../../docs — those files are the
-// single source of truth for the durability diagrams. This module is their one
-// home; components import the maps below rather than re-importing the raw files.
+// Raw .excalidraw scenes. The files in ../assets/diagrams are the single source
+// of truth for the durability diagrams and ship with the frontend, so the build
+// never reaches outside the frontend/ root. This module is their one home;
+// components import the maps below rather than re-importing the raw files.
 
-import queueArch from '../../../docs/1-queue-arch.excalidraw?raw'
-import workerFailure from '../../../docs/2-worker-failure.excalidraw?raw'
-import visibilityTimeout from '../../../docs/2-1-visibility-timeout.excalidraw?raw'
-import workerStuckDuplicate from '../../../docs/3-worker-stuck-duplicate.excalidraw?raw'
-import raceCondition from '../../../docs/3-1-race-condition.excalidraw?raw'
-import sequenceConcurrency from '../../../docs/4-sequence-concurrency.excalidraw?raw'
-import authSequenceGoogleOidc from '../../../docs/auth-sequence-google-oidc.excalidraw?raw'
-import authAttackState from '../../../docs/8-auth-attack-1-state.excalidraw?raw'
-import authAttackToken from '../../../docs/8-auth-attack-2-token.excalidraw?raw'
-import authAttackLinking from '../../../docs/8-auth-attack-3-linking.excalidraw?raw'
-import scaleOut from '../../../docs/5-scale-out.excalidraw?raw'
+import queueArch from '../assets/diagrams/1-queue-arch.excalidraw?raw'
+import workerFailure from '../assets/diagrams/2-worker-failure.excalidraw?raw'
+import visibilityTimeout from '../assets/diagrams/2-1-visibility-timeout.excalidraw?raw'
+import workerStuckDuplicate from '../assets/diagrams/3-worker-stuck-duplicate.excalidraw?raw'
+import raceCondition from '../assets/diagrams/3-1-race-condition.excalidraw?raw'
+import sequenceConcurrency from '../assets/diagrams/4-sequence-concurrency.excalidraw?raw'
+import authSequenceGoogleOidc from '../assets/diagrams/auth-sequence-google-oidc.excalidraw?raw'
+import authAttackState from '../assets/diagrams/8-auth-attack-1-state.excalidraw?raw'
+import authAttackToken from '../assets/diagrams/8-auth-attack-2-token.excalidraw?raw'
+import authAttackLinking from '../assets/diagrams/8-auth-attack-3-linking.excalidraw?raw'
+import scaleOut from '../assets/diagrams/5-scale-out.excalidraw?raw'
 
 export interface StepScenes {
   // The architecture diagram — steps 1–3 all share this same layout, only the

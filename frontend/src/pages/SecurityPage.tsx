@@ -193,7 +193,7 @@ const CONFIG_SOURCES: ConfigSource[] = [
 // 既有訊息「被冒名頂替」的樣子，靠紅色講清楚它是敵人。
 // 三個鏡頭的排序是「越後面越像設計判斷」：state 是 table stakes，aud 檢查
 // 是中段，account linking 是唯一一個沒有標準答案、要自己想威脅模型的。
-// 圖源 docs/auth-sequence-google-oidc.excalidraw（Auth 頁用的同一張）。
+// 圖源 src/assets/diagrams/auth-sequence-google-oidc.excalidraw（Auth 頁用的同一張）。
 // 改圖：編輯那張 → python3 docs/8-auth-attacks.build.py。
 // 三張圖都是同一張場景上的 760×600 取景框，只是框的位置不同：全圖 1520 寬、
 // 欄位只有 760，整張放進來等於 0.5×，13px 的字到螢幕上剩 6px，而且畫面九成
