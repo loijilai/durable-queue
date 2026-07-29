@@ -104,9 +104,19 @@ a {
 }
 
 .nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   font-size: 14px;
   letter-spacing: -0.03em;
+}
+
+.nav-brand-mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .nav-links {
@@ -157,6 +167,40 @@ a {
 
 .auth-status-in .auth-status-dot {
   background: var(--signal-green);
+}
+
+/* 後端休息中的提示條：clay 是「注意但不是錯誤」的色階，error-red 留給
+   真正的失敗（DESIGN.md §2：一個顏色在全站只代表一件事）。
+   寬度收成 fit-content 的膠囊，跟 nav-pill 同一套語言，且一定比它窄——
+   它是附註，不該是頁面上最寬的東西。 */
+.backend-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: min(100% - 32px, 620px);
+  margin: 0 auto;
+  padding: 10px 18px;
+  border: 1px solid var(--dust);
+  border-radius: 999px;
+  background: var(--canvas-lifted);
+  box-shadow: var(--shadow-soft);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--slate);
+}
+
+.backend-banner strong {
+  font-weight: 600;
+  color: var(--clay);
+}
+
+.backend-banner-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--clay);
 }
 
 .content {

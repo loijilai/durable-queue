@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.tsx";
+import BackendStatus from "./BackendStatus.tsx";
+import BrandMark from "./BrandMark.tsx";
 import { API_BASE_URL } from "../lib/api.ts";
 
 const REPO_URL = "https://github.com/loijilai/durable-queue";
@@ -25,6 +27,7 @@ function Layout() {
       <header className="topbar">
         <nav className="nav-pill">
           <NavLink to="/" end className="nav-brand">
+            <BrandMark className="nav-brand-mark" />
             durable-queue
           </NavLink>
           <div className="nav-links">
@@ -48,6 +51,8 @@ function Layout() {
           </span>
         </nav>
       </header>
+
+      <BackendStatus />
 
       <main className="content">
         <Outlet />
