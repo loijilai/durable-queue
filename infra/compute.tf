@@ -47,7 +47,7 @@ resource "aws_iam_role_policy" "read_db_secret" {
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchGetImage"
         ]
-        Resource = aws_ecr_repository.registry.arn
+        Resource = data.aws_ecr_repository.registry.arn
       }
     ]
   })
@@ -95,8 +95,8 @@ resource "aws_launch_template" "api" {
   # user_data：共用模板，用 templatefile 傳入 api 專屬參數。
   user_data = base64encode(templatefile("${path.module}/user_data.sh.tftpl", {
     region        = "ap-northeast-1"
-    registry      = split("/", aws_ecr_repository.registry.repository_url)[0]
-    image         = "${aws_ecr_repository.registry.repository_url}:${var.image_tag}"
+    registry      = split("/", data.aws_ecr_repository.registry.repository_url)[0]
+    image         = "${data.aws_ecr_repository.registry.repository_url}:${var.image_tag}"
     db_secret_id  = aws_db_instance.postgres.master_user_secret[0].secret_arn
     app_secret_id = data.aws_secretsmanager_secret.app.arn
 
@@ -133,8 +133,8 @@ resource "aws_launch_template" "worker" {
   # user_data：同一份模板，只有 run_command 換成 celery。
   user_data = base64encode(templatefile("${path.module}/user_data.sh.tftpl", {
     region        = "ap-northeast-1"
-    registry      = split("/", aws_ecr_repository.registry.repository_url)[0]
-    image         = "${aws_ecr_repository.registry.repository_url}:${var.image_tag}"
+    registry      = split("/", data.aws_ecr_repository.registry.repository_url)[0]
+    image         = "${data.aws_ecr_repository.registry.repository_url}:${var.image_tag}"
     db_secret_id  = aws_db_instance.postgres.master_user_secret[0].secret_arn
     app_secret_id = data.aws_secretsmanager_secret.app.arn
 
@@ -217,10 +217,10 @@ resource "aws_autoscaling_group" "worker" {
 # =====================================================================
 # Amazon Elastic Container Registry
 # ---------------------------------------------------------------------
-resource "aws_ecr_repository" "registry" {
-  name         = "durable-queue"
-  force_delete = true # build-and-destroy 學習環境
-  tags         = { Name = "durable-queue-ecr" }
+# data 而非 resource：repo 裡放的是所有已部署過的 image（tag = commit sha），
+# 必須活得比這一層久
+data "aws_ecr_repository" "registry" {
+  name = "durable-queue"
 }
 
 # =====================================================================
