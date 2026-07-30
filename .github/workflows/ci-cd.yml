@@ -42,6 +42,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r durable_queue/requirements.txt
 
+      - name: Check env var parity
+        run: python3 scripts/check_env_parity.py
+
       - name: Run tests
         working-directory: durable_queue
         env:
@@ -129,9 +132,12 @@ jobs:
 
       - name: Roll ASGs
         run: |
-          for asg in durable-queue-api durable-queue-worker; do
+          roll() {
             aws autoscaling start-instance-refresh \
               --region "$AWS_REGION" \
-              --auto-scaling-group-name "$asg" \
-              --preferences '{"MinHealthyPercentage":50}'
-          done
+              --auto-scaling-group-name "$1" \
+              --preferences "$2"
+          }
+
+          roll durable-queue-api '{"MinHealthyPercentage":50,"InstanceWarmup":15}'
+          roll durable-queue-worker '{"MinHealthyPercentage":0,"InstanceWarmup":0}'
