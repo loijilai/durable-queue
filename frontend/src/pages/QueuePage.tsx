@@ -174,10 +174,8 @@ function QueuePage() {
       </p>
       <h1>Distributed Queue & Async Pattern</h1>
       <p className="placeholder-body">
-        Submit a YouTube URL to create a job. The API responds immediately with
-        a job id — the transcription itself runs asynchronously in a background
-        worker. This page polls the real job status endpoint to show that state
-        machine as it happens.
+        Submit a YouTube URL, get a job ID immediately, and watch its
+        asynchronous state machine progress.
       </p>
 
       {!accessToken && (

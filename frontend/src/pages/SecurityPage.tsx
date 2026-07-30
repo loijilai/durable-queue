@@ -185,21 +185,7 @@ const CONFIG_SOURCES: ConfigSource[] = [
 ];
 
 // ── ③ APP（authentication）：三種變成別人的方式 ────────────────────
-// Auth 頁已經完整畫過 authorization code flow 了，這裡不重畫流程——重畫
-// 就只是炒冷飯。security 圖要回答的不是「登入怎麼運作」而是「不做這個檢查
-// 會怎樣」，所以主角換成攻擊者：舞台（lane 幾何）跟 Auth 頁那張是同一個，
-// 但正常流程壓灰，亮起來的是攻擊箭頭和擋下它的那一格。
-// 攻擊者沒有自己的 lane——多一條會讓圖變寬、也對不上原圖的幾何；攻擊改成
-// 既有訊息「被冒名頂替」的樣子，靠紅色講清楚它是敵人。
-// 三個鏡頭的排序是「越後面越像設計判斷」：state 是 table stakes，aud 檢查
-// 是中段，account linking 是唯一一個沒有標準答案、要自己想威脅模型的。
-// 圖源 src/assets/diagrams/auth-sequence-google-oidc.excalidraw（Auth 頁用的同一張）。
-// 改圖：編輯那張 → python3 docs/8-auth-attacks.build.py。
-// 三張圖都是同一張場景上的 760×600 取景框，只是框的位置不同：全圖 1520 寬、
-// 欄位只有 760，整張放進來等於 0.5×，13px 的字到螢幕上剩 6px，而且畫面九成
-// 是這個鏡頭不談的步驟。框固定大小所以切 tab 不會跳，框往下移所以 tab 條順
-// 便變成一條登入時序的 scrub。散文留在這裡而不是畫進圖裡——畫進去就會被取景
-// 倍率一起縮放，而且框馬上被撐開。
+
 const LOGIN_LENSES: Lens[] = [
   {
     id: "state",
@@ -400,9 +386,8 @@ function SecurityPage() {
       </p>
       <h1>Security Control</h1>
       <p className="placeholder-body sec-thesis">
-        Three routes into this system — the <em>public internet</em>, the{" "}
-        <em>deploy pipeline</em>, and a <em>legitimate user account</em> — each
-        closed by a different kind of control.
+        Network isolation, short-lived deploy credentials, and default-deny
+        authorization protect the system from infrastructure to individual jobs.
       </p>
 
       {/* ── SPINE：三張導覽 tile，也是全頁目錄 ──────────────────── */}
@@ -550,9 +535,7 @@ function SecurityPage() {
             })}
           </ul>
         </div>
-
       </section>
-
     </section>
   );
 }

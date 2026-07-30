@@ -331,9 +331,8 @@ function HighAvailabilityPage() {
       </p>
       <h1>Surviving Instance Loss</h1>
       <p className="placeholder-body">
-        API and workers run across two AZs with <code>desired=2</code>. These
-        demos show how work survives a worker crash and traffic survives an API
-        instance loss.
+        Across two AZs, worker crashes lose no work and API instance loss
+        recovers automatically.
       </p>
 
       <nav className="sec-spine" aria-label="high availability chapters">

@@ -246,10 +246,8 @@ function HomePage() {
         </p>
         <h1>Building a durable job processing system</h1>
         <p className="home-lede">
-          Job state lives in Postgres, not in a worker’s memory — so workers can
-          crash and restart without losing work. Six sections walk from the
-          login screen down to the network boundary, each with a demo you can
-          run against the real backend.
+          Job state lives in Postgres, so work survives worker crashes and
+          restarts.
         </p>
       </div>
 
