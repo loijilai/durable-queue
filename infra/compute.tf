@@ -1,7 +1,10 @@
 locals {
   # 前端部署在 Vercel, api 和 worker 兩個 launch template 都要用到
-  frontend_url = "https://durable-queue.vercel.app"
-  google_redirect_uri = "https://durable-queue.loijilai.site/api/auth/google/callback/"
+  frontend_url              = "https://durable-queue.vercel.app"
+  google_redirect_uri       = "https://durable-queue.loijilai.site/api/auth/google/callback/"
+  transcriber               = "fake"
+  transcribe_seconds        = 1
+  celery_visibility_timeout = 3600
 }
 
 
@@ -101,15 +104,18 @@ resource "aws_launch_template" "api" {
     app_secret_id = data.aws_secretsmanager_secret.app.arn
 
     # ── 非機密、Terraform 注入的 endpoint / config ──
-    db_name               = aws_db_instance.postgres.db_name
-    db_user               = aws_db_instance.postgres.username
-    db_host               = aws_db_instance.postgres.address
-    db_port               = aws_db_instance.postgres.port
-    celery_broker_url     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
-    celery_result_backend = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
-    google_redirect_uri   = local.google_redirect_uri
-    frontend_url          = local.frontend_url
-    run_command           = "sh -c \"python manage.py migrate && gunicorn durable_queue.wsgi:application --bind 0.0.0.0:8000 --access-logfile -\""
+    db_name                   = aws_db_instance.postgres.db_name
+    db_user                   = aws_db_instance.postgres.username
+    db_host                   = aws_db_instance.postgres.address
+    db_port                   = aws_db_instance.postgres.port
+    celery_broker_url         = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
+    celery_result_backend     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
+    celery_visibility_timeout = local.celery_visibility_timeout
+    transcriber               = local.transcriber
+    transcribe_seconds        = local.transcribe_seconds
+    google_redirect_uri       = local.google_redirect_uri
+    frontend_url              = local.frontend_url
+    run_command               = "sh -c \"python manage.py migrate && gunicorn durable_queue.wsgi:application --bind 0.0.0.0:8000 --access-logfile -\""
   }))
 
   tag_specifications {
@@ -139,15 +145,18 @@ resource "aws_launch_template" "worker" {
     app_secret_id = data.aws_secretsmanager_secret.app.arn
 
     # ── 非機密、Terraform 注入的 endpoint / config ──
-    db_name               = aws_db_instance.postgres.db_name
-    db_user               = aws_db_instance.postgres.username
-    db_host               = aws_db_instance.postgres.address
-    db_port               = aws_db_instance.postgres.port
-    celery_broker_url     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
-    celery_result_backend = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
-    google_redirect_uri   = local.google_redirect_uri
-    frontend_url          = local.frontend_url
-    run_command           = "celery -A durable_queue worker -l info"
+    db_name                   = aws_db_instance.postgres.db_name
+    db_user                   = aws_db_instance.postgres.username
+    db_host                   = aws_db_instance.postgres.address
+    db_port                   = aws_db_instance.postgres.port
+    celery_broker_url         = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
+    celery_result_backend     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
+    celery_visibility_timeout = local.celery_visibility_timeout
+    transcriber               = local.transcriber
+    transcribe_seconds        = local.transcribe_seconds
+    google_redirect_uri       = local.google_redirect_uri
+    frontend_url              = local.frontend_url
+    run_command               = "celery -A durable_queue worker -l info"
   }))
 
   tag_specifications {
@@ -181,6 +190,9 @@ resource "aws_autoscaling_group" "api" {
   }
 
   target_group_arns = [aws_lb_target_group.api.arn]
+
+  health_check_type         = "ELB"
+  health_check_grace_period = 300
 
   tag {
     key                 = "Name"

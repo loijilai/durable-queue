@@ -19,8 +19,12 @@ resource "aws_lb_target_group" "api" {
   target_type = "instance"
 
   health_check {
-    path    = "/health/"
-    matcher = 200
+    path                = "/health/"
+    matcher             = 200
+    interval            = 10
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
   }
 
   tags = { Name = "durable-queue-api" }
