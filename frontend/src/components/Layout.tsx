@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.tsx";
 import BackendStatus from "./BackendStatus.tsx";
 import BrandMark from "./BrandMark.tsx";
@@ -21,6 +22,24 @@ const NAV_ITEMS = [
 
 function Layout() {
   const { user } = useAuth();
+  const { pathname } = useLocation();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // 換頁後收起 mobile menu；導覽不該遮住使用者剛選到的內容。
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileNavOpen(false);
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileNavOpen]);
 
   return (
     <div className="page">
@@ -30,25 +49,42 @@ function Layout() {
             <BrandMark className="nav-brand-mark" />
             durable-queue
           </NavLink>
-          <div className="nav-links">
-            {NAV_ITEMS.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  isActive ? "nav-link nav-link-active" : "nav-link"
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+          <button
+            type="button"
+            className="nav-menu-toggle"
+            aria-expanded={mobileNavOpen}
+            aria-controls="primary-navigation"
+            onClick={() => setMobileNavOpen((open) => !open)}
+          >
+            {mobileNavOpen ? "Close" : "Menu"}
+            <span aria-hidden="true">{mobileNavOpen ? "×" : "☰"}</span>
+          </button>
+          <div
+            id="primary-navigation"
+            className={mobileNavOpen ? "nav-menu nav-menu-open" : "nav-menu"}
+          >
+            <div className="nav-links">
+              {NAV_ITEMS.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    isActive ? "nav-link nav-link-active" : "nav-link"
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+            <span
+              className={user ? "auth-status auth-status-in" : "auth-status"}
+            >
+              <span className="auth-status-dot" />
+              {user
+                ? (user.username ?? `user #${user.user_id}`)
+                : "Not signed in"}
+            </span>
           </div>
-          <span className={user ? "auth-status auth-status-in" : "auth-status"}>
-            <span className="auth-status-dot" />
-            {user
-              ? (user.username ?? `user #${user.user_id}`)
-              : "Not signed in"}
-          </span>
         </nav>
       </header>
 
