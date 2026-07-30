@@ -23,7 +23,7 @@
   --status-succeeded: var(--signal-green);
   --status-failed: var(--error-red);
 
-  --sans: 'Sofia Sans', Inter, Arial, sans-serif;
+  --sans: "Sofia Sans", Inter, Arial, sans-serif;
 
   font: 16px/1.4 var(--sans);
   font-weight: 450;
@@ -131,7 +131,9 @@ a {
   color: var(--slate);
   padding: 8px 14px;
   border-radius: 999px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .nav-link:hover {
@@ -432,7 +434,7 @@ a {
 
 /* 站與站之間的縱向連接線 */
 .pipe-stage::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 6px;
   top: 16px;
@@ -1439,6 +1441,7 @@ a {
   margin-top: 56px;
   padding-top: 40px;
   border-top: 1.5px solid var(--dust);
+  scroll-margin-top: 96px;
 }
 
 .ha-scenario-tag {
@@ -1449,6 +1452,114 @@ a {
   margin: 8px 0 12px;
 }
 
+/* Scenario B 底下的兩條路徑（graceful / ungraceful）。它們共用 probe 和架構圖，
+   所以是同一個 scenario 內的子區塊，不是各自獨立的 scenario——用左側細線把兩者
+   收在一起，視覺上就讀得出「同一套基礎設施的兩種走法」。 */
+.ha-block {
+  margin-top: 44px;
+  padding-left: 20px;
+  border-left: 2px solid var(--dust);
+  scroll-margin-top: 96px;
+}
+
+.ha-block-tag {
+  color: var(--slate);
+}
+
+.ha-block-title {
+  font-size: 20px;
+  margin: 8px 0 10px;
+}
+
+/* 各區塊最上面那排數字。標題只能定調，數字才是證據，所以擺在標題正下方、
+   讀者還沒開始讀內文就先看到量到的結果。 */
+.ha-claim {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.ha-claim li {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--dust);
+  background: var(--canvas-lifted);
+  color: var(--slate);
+  font-variant-numeric: tabular-nums;
+}
+
+.ha-claim-good {
+  color: var(--signal-green);
+  border-color: rgba(47, 122, 61, 0.35);
+}
+
+/* 有代價但有界——用 orange 而不是 error red，紅色全站只留給真正的錯誤 */
+.ha-claim-warn {
+  color: var(--signal-orange);
+  border-color: rgba(207, 69, 0, 0.35);
+}
+
+.ha-block .foldout {
+  margin-top: 28px;
+}
+
+/* 收束對照表：整節的技術重點就是 draining / unhealthy 這一個字的差別，
+   兩段各自的文字講不出這種並排的力道，所以最後用一張表收。 */
+.ha-contrast {
+  margin-top: 52px;
+}
+
+.ha-contrast-scroll {
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+.ha-contrast table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ha-contrast th,
+.ha-contrast td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1.5px solid var(--dust);
+}
+
+.ha-contrast thead th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.ha-contrast tbody th {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.ha-contrast td {
+  color: var(--charcoal);
+}
+
+.ha-contrast code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: var(--canvas-lifted);
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--ink);
+}
 
 .ha-caveat {
   margin-top: 20px;
@@ -1485,7 +1596,9 @@ a {
   background: var(--white);
   box-shadow: var(--shadow);
   border: 1.5px solid transparent;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .sec-spine-tile:hover,
@@ -1939,15 +2052,116 @@ a {
   line-height: 1.5;
 }
 
-.ha-recording-link {
-  display: inline-block;
+.ha-recording-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 38%) 1fr;
   margin-top: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--signal-orange);
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
-/* Scenario C — live health probe */
+.ha-recording-card:hover,
+.ha-recording-card:focus-visible {
+  border-color: var(--signal-orange);
+  transform: translateY(-2px);
+}
+
+.ha-recording-thumbnail {
+  position: relative;
+  display: grid;
+  min-height: 180px;
+  overflow: hidden;
+  background: var(--ink);
+  place-items: center;
+}
+
+.ha-recording-thumbnail img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ha-recording-thumbnail-fallback {
+  color: rgb(255 255 255 / 45%);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.ha-recording-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  padding-left: 3px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(15 23 42 / 82%);
+  color: var(--white);
+  font-size: 18px;
+  transform: translate(-50%, -50%);
+}
+
+.ha-recording-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+}
+
+.ha-recording-platform {
+  margin-bottom: 8px;
+  color: var(--signal-orange);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ha-recording-body strong {
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.ha-recording-description {
+  margin-top: 8px;
+  color: var(--slate);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ha-recording-cta {
+  margin-top: 16px;
+  color: var(--signal-orange);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 620px) {
+  .ha-recording-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ha-recording-thumbnail {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* Scenario B — live health probe (shared by both shutdown paths) */
 .hp-card {
   display: flex;
   flex-direction: column;
@@ -2129,7 +2343,9 @@ a {
   box-shadow: var(--shadow);
   opacity: 0;
   transform: translateY(24px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
 }
 
 .story-node-visible {
@@ -2154,7 +2370,10 @@ a {
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .stepper-tab:hover {
@@ -2305,7 +2524,9 @@ a {
   background: var(--white);
   cursor: zoom-in;
   font: inherit;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .diagram-zoom-trigger:hover,
@@ -2477,7 +2698,10 @@ a {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: conic-gradient(var(--light-orange) 0deg 270deg, var(--dust) 270deg 360deg);
+  background: conic-gradient(
+    var(--light-orange) 0deg 270deg,
+    var(--dust) 270deg 360deg
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2667,7 +2891,9 @@ a {
   border: 1.5px solid var(--dust);
   background: var(--canvas-lifted);
   font-variant-numeric: tabular-nums;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .scl-cell-id {

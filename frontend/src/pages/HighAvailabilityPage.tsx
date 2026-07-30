@@ -21,14 +21,47 @@ const DEMO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 // 記住這次 demo 的 job id，切頁 unmount 後回來能重抓還原（後端是真相來源）。
 const DEMO_JOB_KEY = "ha-scenario-a-job-id";
 
-// 場景 B 是對真實 AWS、預錄的。放上錄影連結就會取代下方的 placeholder。
-const RECORDING_URL = "";
+// 場景 B 的兩條路徑都是對真實 AWS、預錄的。放上連結就會取代下方的 placeholder。
+const GRACEFUL_RECORDING_URL = "https://youtu.be/1IOtkj5hIEo";
+const UNGRACEFUL_RECORDING_URL = "https://youtu.be/s9L_QNKJyRQ";
 
 const PROBE_INTERVAL_MS = 1000;
 const PROBE_WINDOW = 39;
 const PROBE_TIMEOUT_MS = 3000;
 // 切頁 unmount 會清掉 probe 狀態，存一份到 sessionStorage，回來還原並自動續跑。
 const PROBE_KEY = "ha-scenario-b-probe";
+
+const HA_CHAPTERS = [
+  {
+    id: "worker-crash",
+    index: "01",
+    tier: "WORKER",
+    title: "Crash Recovery",
+    terms: ["No lost work", "Task redelivery", "Idempotent completion"],
+  },
+  {
+    id: "graceful-shutdown",
+    index: "02",
+    tier: "API · PLANNED",
+    title: "Zero-Downtime Replace",
+    terms: [
+      "Drain before shutdown",
+      "0 failed requests",
+      "Health-gated rollout",
+    ],
+  },
+  {
+    id: "unexpected-crash",
+    index: "03",
+    tier: "API · UNPLANNED",
+    title: "Bounded Failure",
+    terms: [
+      "≈20s detection window",
+      "~1 in 2 requests fail",
+      "Automatic recovery",
+    ],
+  },
+] as const;
 
 interface Sample {
   ok: boolean;
@@ -162,6 +195,87 @@ function HealthProbe() {
   );
 }
 
+function getYouTubeVideoId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    let id: string | null = null;
+
+    if (host === "youtu.be") {
+      id = parsed.pathname.split("/").filter(Boolean)[0] ?? null;
+    } else if (host === "youtube.com" || host === "m.youtube.com") {
+      id =
+        parsed.searchParams.get("v") ??
+        parsed.pathname.match(/^\/(?:embed|shorts)\/([^/?]+)/)?.[1] ??
+        null;
+    }
+
+    return id && /^[\w-]{11}$/.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+// 預覽只抓靜態縮圖，不載入 YouTube iframe；第三方播放器要等使用者點擊後才開啟。
+function RecordingSlot({
+  url,
+  title,
+  description,
+  slotHint,
+}: {
+  url: string;
+  title: string;
+  description: string;
+  slotHint: string;
+}) {
+  const videoId = getYouTubeVideoId(url);
+
+  return (
+    <figure className="ha-recording">
+      <figcaption className="eyebrow audit-eyebrow">
+        <span className="eyebrow-dot" />
+        RECORDED EVIDENCE · REAL AWS
+      </figcaption>
+      {url ? (
+        <a
+          className="ha-recording-card"
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Watch ${title} on YouTube`}
+        >
+          {videoId && (
+            <span className="ha-recording-thumbnail">
+              <span className="ha-recording-thumbnail-fallback">
+                REAL AWS DEMO
+              </span>
+              <img
+                src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+                alt=""
+                loading="lazy"
+                onError={(event) => {
+                  event.currentTarget.hidden = true;
+                }}
+              />
+              <span className="ha-recording-play" aria-hidden="true">
+                ▶
+              </span>
+            </span>
+          )}
+          <span className="ha-recording-body">
+            <span className="ha-recording-platform">YouTube demo</span>
+            <strong>{title}</strong>
+            <span className="ha-recording-description">{description}</span>
+            <span className="ha-recording-cta">Watch recording ↗</span>
+          </span>
+        </a>
+      ) : (
+        <p className="ha-recording-slot">Recording slot — {slotHint}</p>
+      )}
+    </figure>
+  );
+}
+
 function HighAvailabilityPage() {
   const { accessToken, authedFetch } = useAuth();
   const [job, setJob] = useState<TranscriptionJob | null>(null);
@@ -217,23 +331,40 @@ function HighAvailabilityPage() {
       </p>
       <h1>Surviving Instance Loss</h1>
       <p className="placeholder-body">
-        The stateless tier — API and workers — runs on ASGs spread across two
-        AZs with <code>desired=2</code>, so it is already HA. Two failure
-        scenarios make that concrete: a worker crash that loses no work, and an
-        API instance loss that never breaks the frontend.
+        API and workers run across two AZs with <code>desired=2</code>. These
+        demos show how work survives a worker crash and traffic survives an API
+        instance loss.
       </p>
 
+      <nav className="sec-spine" aria-label="high availability chapters">
+        {HA_CHAPTERS.map((chapter) => (
+          <a
+            key={chapter.id}
+            href={`#${chapter.id}`}
+            className="sec-spine-tile"
+          >
+            <span className="sec-spine-index">{chapter.index}</span>
+            <span className="sec-spine-tier">{chapter.tier}</span>
+            <span className="sec-spine-title">{chapter.title}</span>
+            <ul className="sec-spine-terms">
+              {chapter.terms.map((term) => (
+                <li key={term}>{term}</li>
+              ))}
+            </ul>
+          </a>
+        ))}
+      </nav>
+
       {/* ── Scenario A ─────────────────────────────────────────── */}
-      <div className="ha-scenario">
+      <div id="worker-crash" className="ha-scenario">
         <p className="eyebrow ha-scenario-tag">
           <span className="eyebrow-dot" />
           SCENARIO A · WORKER CRASH
         </p>
         <h2 className="ha-scenario-title">Worker Crash Without Losing Work</h2>
         <p className="placeholder-body">
-          Kill a worker mid-transcription and watch the job survive: the task is
-          redelivered, a different worker picks it up, and it still reaches
-          SUCCEEDED.
+          Kill a worker mid-task. Redis redelivers the job and another worker
+          completes it.
         </p>
 
         {!accessToken && (
@@ -278,8 +409,8 @@ function HighAvailabilityPage() {
               </div>
             ) : (
               <p className="placeholder-body ha-hint">
-                Start the scenario, then kill the busy worker from your terminal
-                (steps below) to see a second attempt appear.
+                Start the demo, then kill the busy worker to see the job
+                reassigned.
               </p>
             )}
           </div>
@@ -294,21 +425,16 @@ function HighAvailabilityPage() {
               </p>
               <ol className="ha-steps">
                 <li>
-                  Boot the backend with demo knobs —{" "}
                   <code>docker compose up --build --scale worker=2</code>.
                 </li>
                 <li>
-                  Click <strong>Start scenario A</strong>. A worker claims the
-                  job — the first audit entry shows <em>running here</em>.
-                </li>
-                <li>
-                  While it is RUNNING, find the busy worker (
-                  <code>docker ps</code>) and{" "}
+                  Start scenario A. While the job is RUNNING, find its worker
+                  with <code>docker ps</code>, then run{" "}
                   <code>docker kill &lt;id&gt;</code>.
                 </li>
                 <li>
-                  After ~30s (the visibility timeout) another worker re-claims
-                  it, and the job still reaches SUCCEEDED.
+                  After ~30s, verify a second attempt appears and the job
+                  succeeds.
                 </li>
               </ol>
             </div>
@@ -320,19 +446,15 @@ function HighAvailabilityPage() {
               </p>
               <ul className="ha-mechanism">
                 <li>
-                  <strong>acks_late</strong> — the message is acknowledged only
-                  after the task completes, so a crash mid-run leaves it
-                  un-ACKed and Redis redelivers it.
+                  <strong>Late ACK</strong> — incomplete work is redelivered.
                 </li>
                 <li>
-                  <strong>visibility timeout</strong> — how long an un-ACKed
-                  task waits before redelivery (set to 30s here so the demo is
-                  snappy).
+                  <strong>Visibility timeout</strong> — redelivery starts after
+                  30 seconds.
                 </li>
                 <li>
-                  <strong>idempotency guard</strong> — skips jobs already in a
-                  terminal state, so redelivery can never double-write a
-                  finished job.
+                  <strong>Idempotency guard</strong> — finished jobs are not
+                  written twice.
                 </li>
               </ul>
             </div>
@@ -344,13 +466,12 @@ function HighAvailabilityPage() {
       <div className="ha-scenario">
         <p className="eyebrow ha-scenario-tag">
           <span className="eyebrow-dot" />
-          SCENARIO B · API INSTANCE LOSS
+          SCENARIO B · API INSTANCE LIFECYCLE
         </p>
-        <h2 className="ha-scenario-title">API Instance Loss, Zero Downtime</h2>
+        <h2 className="ha-scenario-title">Two Ways to Lose an API Instance</h2>
         <p className="placeholder-body">
-          Terminate one API EC2 in the AWS console. The ALB health check marks
-          it unhealthy and drains traffic to the surviving instance; the ASG
-          replaces it minutes later.
+          A planned shutdown drains traffic first. An unexpected crash leaves a
+          short failure window until the ALB detects it.
         </p>
 
         <HealthProbe />
@@ -370,87 +491,201 @@ function HighAvailabilityPage() {
             <span className="diagram-zoom-hint">⤢ Click to zoom</span>
           </button>
           <figcaption>
-            The stateless API ASG spans two AZs behind the ALB — losing one
-            instance leaves the other serving traffic.
+            The ALB routes across stateless API instances in two AZs.
           </figcaption>
         </figure>
 
-        <figure className="ha-recording">
-          <figcaption className="eyebrow audit-eyebrow">
+        {/* ── B1 · graceful ──────────────────────────────────── */}
+        <div id="graceful-shutdown" className="ha-block">
+          <p className="eyebrow ha-block-tag">
             <span className="eyebrow-dot" />
-            RECORDED EVIDENCE · REAL AWS
-          </figcaption>
-          {RECORDING_URL ? (
-            <a
-              className="ha-recording-link"
-              href={RECORDING_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              ▶ Watch the AWS console terminate + self-heal recording
-            </a>
-          ) : (
-            <p className="ha-recording-slot">
-              Recording slot — drop the AWS console clip (EC2 terminate → ALB
-              draining → ASG replacement) here. During the interview this plays
-              alongside the live probe above.
-            </p>
-          )}
-        </figure>
+            B1 · GRACEFUL SHUTDOWN
+          </p>
+          <h3 className="ha-block-title">Zero Downtime Deploy</h3>
+          <ul className="ha-claim">
+            <li className="ha-claim-good">failed · 0</li>
+            <li className="ha-claim-good">uptime · 100%</li>
+            <li>whole fleet replaced</li>
+          </ul>
+          <p className="placeholder-body">
+            CI/CD replaces instances one at a time, draining each old target
+            before shutdown.
+          </p>
 
-        <Foldout title="HOW TO RUN · WHY IT SURVIVES">
-          <div className="ha-columns">
-            <div className="ha-col">
-              <p className="eyebrow">
-                <span className="eyebrow-dot" />
-                HOW TO RUN
-              </p>
-              <ol className="ha-steps">
-                <li>
-                  {" "}
-                  <strong>Start probe</strong> hits <code>/health/</code> once a
-                  second.
-                </li>
-                <li>
-                  In the EC2 console, <strong>terminate</strong> the API
-                  instance currently serving traffic.
-                </li>
-                <li>
-                  Watch the probe: the ALB drains the dead target within a
-                  couple of health-check intervals, so the strip stays green (or
-                  flashes one red then recovers).
-                </li>
-                <li>
-                  Minutes later the ASG launches a replacement to restore{" "}
-                  <code>desired=2</code> — no manual step.
-                </li>
-              </ol>
-            </div>
+          <RecordingSlot
+            url={GRACEFUL_RECORDING_URL}
+            title="Zero-Downtime Deployment with ALB Draining"
+            description="Instance refresh drains each target before replacement, keeping failed requests at zero."
+            slotHint="instance refresh → drain → healthy replacement"
+          />
 
-            <div className="ha-col">
-              <p className="eyebrow">
-                <span className="eyebrow-dot" />
-                WHY IT SURVIVES
-              </p>
-              <ul className="ha-mechanism">
-                <li>
-                  <strong>ALB health check</strong> — probes{" "}
-                  <code>/health/</code> and stops routing to a target the moment
-                  it fails, so requests only reach live instances.
-                </li>
-                <li>
-                  <strong>stateless API</strong> — JWT auth means any instance
-                  can serve any request; losing one drops no session state.
-                </li>
-                <li>
-                  <strong>ASG self-healing</strong> — spread across two AZs with{" "}
-                  <code>desired=2</code>, it relaunches to the target count on
-                  its own.
-                </li>
-              </ul>
+          <Foldout title="HOW TO RUN · WHY IT SURVIVES">
+            <div className="ha-columns">
+              <div className="ha-col">
+                <p className="eyebrow">
+                  <span className="eyebrow-dot" />
+                  HOW TO RUN
+                </p>
+                <ol className="ha-steps">
+                  <li>Start the probe.</li>
+                  <li>
+                    Push to <code>master</code> or run the CI/CD workflow.
+                  </li>
+                  <li>
+                    Verify targets drain before replacement and failed requests
+                    remain at 0.
+                  </li>
+                </ol>
+              </div>
+
+              <div className="ha-col">
+                <p className="eyebrow">
+                  <span className="eyebrow-dot" />
+                  WHY IT SURVIVES
+                </p>
+                <ul className="ha-mechanism">
+                  <li>
+                    <strong>Draining</strong> — the ALB stops new traffic before
+                    shutdown.
+                  </li>
+                  <li>
+                    <strong>50% minimum healthy</strong> — at least one target
+                    keeps serving.
+                  </li>
+                  <li>
+                    <strong>Health-gated replacement</strong> — a new stateless
+                    instance must pass <code>/health/</code> before serving.
+                  </li>
+                </ul>
+              </div>
             </div>
+          </Foldout>
+        </div>
+
+        {/* ── B2 · ungraceful ────────────────────────────────── */}
+        <div id="unexpected-crash" className="ha-block">
+          <p className="eyebrow ha-block-tag">
+            <span className="eyebrow-dot" />
+            B2 · UNGRACEFUL SHUTDOWN
+          </p>
+          <h3 className="ha-block-title">Bounded Failure, Self-Healing</h3>
+          <ul className="ha-claim">
+            <li className="ha-claim-warn">≈20s detection window</li>
+            <li className="ha-claim-warn">~1 in 2 requests fail</li>
+            <li className="ha-claim-good">no manual step</li>
+          </ul>
+          <p className="placeholder-body">
+            A hard failure cannot drain first. Requests recover once the ALB
+            marks the dead target unhealthy.
+          </p>
+
+          <RecordingSlot
+            url={UNGRACEFUL_RECORDING_URL}
+            title="Automatic Recovery After an API Instance Crash"
+            description="The ALB detects the dead target and the ASG restores capacity automatically."
+            slotHint="hard kill → unhealthy target → ASG replacement"
+          />
+
+          <Foldout title="HOW TO RUN · WHY IT SURVIVES">
+            <div className="ha-columns">
+              <div className="ha-col">
+                <p className="eyebrow">
+                  <span className="eyebrow-dot" />
+                  HOW TO RUN
+                </p>
+                <ol className="ha-steps">
+                  <li>Start the probe and establish a healthy baseline.</li>
+                  <li>
+                    Terminate one <code>durable-queue-api</code> instance.
+                  </li>
+                  <li>
+                    Observe brief failures, then recovery and automatic
+                    replacement.
+                  </li>
+                </ol>
+              </div>
+
+              <div className="ha-col">
+                <p className="eyebrow">
+                  <span className="eyebrow-dot" />
+                  WHY IT SURVIVES
+                </p>
+                <ul className="ha-mechanism">
+                  <li>
+                    <strong>Bounded detection</strong> —{" "}
+                    <code>interval 10s</code> ×{" "}
+                    <code>unhealthy threshold 2</code> gives a ~20s window.
+                  </li>
+                  <li>
+                    <strong>Round robin</strong> — roughly half of requests hit
+                    the dead target until detection.
+                  </li>
+                  <li>
+                    <strong>ASG self-healing</strong> — <code>desired=2</code>{" "}
+                    is restored automatically.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </Foldout>
+        </div>
+
+        {/* ── 收束：兩條路徑的差別就在一個字 ──────────────────── */}
+        <div className="ha-contrast">
+          <p className="eyebrow audit-eyebrow">
+            <span className="eyebrow-dot" />
+            DRAINING VS UNHEALTHY
+          </p>
+          <div className="ha-contrast-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col" />
+                  <th scope="col">Graceful</th>
+                  <th scope="col">Ungraceful</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Trigger</th>
+                  <td>Code push → CI/CD instance refresh</td>
+                  <td>EC2 terminate, no warning</td>
+                </tr>
+                <tr>
+                  <th scope="row">Target state</th>
+                  <td>
+                    <code>draining</code>
+                  </td>
+                  <td>
+                    <code>unhealthy</code>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Order of events</th>
+                  <td>ALB removes the target, then the instance shuts down</td>
+                  <td>The instance dies, then the ALB detects it</td>
+                </tr>
+                <tr>
+                  <th scope="row">Failed requests</th>
+                  <td>0</td>
+                  <td>~half during detection</td>
+                </tr>
+                <tr>
+                  <th scope="row">Window</th>
+                  <td>none</td>
+                  <td>
+                    <code>interval</code> × <code>unhealthy_threshold</code> ≈
+                    20s
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </Foldout>
+          <p className="ha-caveat">
+            The design goal is to drain routine shutdowns and bound the failures
+            that cannot be drained.
+          </p>
+        </div>
       </div>
 
       {zoomed && (
