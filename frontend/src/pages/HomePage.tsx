@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BRAND_ICONS, type BrandIconKey } from "../components/BrandIcons.tsx";
+import DiagramLightbox from "../components/DiagramLightbox.tsx";
 import JobLifecycle from "../components/JobLifecycle.tsx";
+
+const AWS_DIAGRAM_LABEL = "AWS infrastructure diagram";
+const AWS_DIAGRAM_ALT =
+  "AWS infrastructure: ALB fronting an API ASG spread across two availability zones, with worker ASG, RDS, and Redis";
 
 /* Hero 圖：hover 左邊的技術層，右邊亮起作用到該層的 deploy stages。
    一層可以對應多個 stage；這是 stack 與 pipeline 的多對多關係，不硬畫成
@@ -219,10 +224,12 @@ const ROUTE = [
 ];
 
 function HomePage() {
+  const [architectureOpen, setArchitectureOpen] = useState(false);
+
   return (
     <section className="home">
       <div className="hero">
-        <p className="eyebrow">
+        <p id="home-architecture-title" className="eyebrow">
           <span className="eyebrow-dot" />
           DURABLE QUEUE
         </p>
@@ -232,6 +239,27 @@ function HomePage() {
           restarts.
         </p>
       </div>
+
+      <section
+        className="home-architecture"
+        aria-labelledby="home-architecture-title"
+      >
+        <p className="eyebrow">
+          <span className="eyebrow-dot" />
+          SYSTEM ARCHITECTURE
+        </p>
+        <figure className="home-architecture-figure">
+          <button
+            type="button"
+            className="diagram-zoom-trigger"
+            onClick={() => setArchitectureOpen(true)}
+            aria-label={`Open ${AWS_DIAGRAM_LABEL} full size`}
+          >
+            <img src="/aws-infra.svg" alt={AWS_DIAGRAM_ALT} loading="lazy" />
+            <span className="diagram-zoom-hint">⤢ Click to zoom</span>
+          </button>
+        </figure>
+      </section>
 
       <JobLifecycle />
 
@@ -264,6 +292,14 @@ function HomePage() {
           ))}
         </div>
       </div>
+
+      {architectureOpen && (
+        <DiagramLightbox
+          imageSrc="/aws-infra.svg"
+          label={AWS_DIAGRAM_LABEL}
+          onClose={() => setArchitectureOpen(false)}
+        />
+      )}
     </section>
   );
 }

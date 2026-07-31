@@ -2015,27 +2015,38 @@ a {
   }
 }
 
-/* Scenario B — architecture diagram */
-.ha-diagram {
+/* Home — deployment topology overview */
+.home-architecture {
+  margin-top: 64px;
+}
+
+.home-architecture-figure {
+  width: 100%;
   margin: 24px 0 0;
   padding: 20px;
   border-radius: 16px;
-  background: var(--canvas-lifted);
+  background: var(--white);
   border: 1.5px solid var(--dust);
 }
 
-.ha-diagram .diagram-zoom-trigger img {
+.home-architecture-figure .diagram-zoom-trigger {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.home-architecture-figure .diagram-zoom-trigger img {
   display: block;
   width: 100%;
   height: auto;
 }
 
-.ha-diagram figcaption {
-  margin-top: 12px;
-  font-size: 13px;
-  color: var(--slate);
-  line-height: 1.5;
-  text-align: center;
+/* Scenario B keeps the topology available as reference without repeating it. */
+.ha-architecture-reference {
+  margin-top: 20px;
+}
+
+.ha-architecture-reference .btn-secondary {
+  width: auto;
 }
 
 /* Scenario B — recorded evidence slot */

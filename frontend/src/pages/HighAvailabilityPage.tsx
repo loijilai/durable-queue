@@ -447,24 +447,16 @@ function HighAvailabilityPage() {
 
         <HealthProbe />
 
-        <figure className="ha-diagram">
+        <div className="ha-architecture-reference">
           <button
             type="button"
-            className="diagram-zoom-trigger"
+            className="btn-secondary"
             onClick={() => setZoomed(true)}
             aria-label={`Open ${DIAGRAM_LABEL} full size`}
           >
-            <img
-              src="/aws-infra.svg"
-              alt="AWS infrastructure: ALB fronting an API ASG spread across two availability zones, with worker ASG, RDS, and Redis"
-              loading="lazy"
-            />
-            <span className="diagram-zoom-hint">⤢ Click to zoom</span>
+            ⤢ View AWS architecture diagram
           </button>
-          <figcaption>
-            The ALB routes across stateless API instances in two AZs.
-          </figcaption>
-        </figure>
+        </div>
 
         {/* ── B1 · graceful ──────────────────────────────────── */}
         <div id="graceful-shutdown" className="ha-block">
