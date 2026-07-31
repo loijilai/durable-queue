@@ -36,30 +36,19 @@ const HA_CHAPTERS = [
     id: "worker-crash",
     index: "01",
     tier: "WORKER",
-    title: "Crash Recovery",
-    terms: ["No lost work", "Task redelivery", "Idempotent completion"],
+    title: "Worker Crash",
   },
   {
     id: "graceful-shutdown",
     index: "02",
-    tier: "API · PLANNED",
-    title: "Zero-Downtime Replace",
-    terms: [
-      "Drain before shutdown",
-      "0 failed requests",
-      "Health-gated rollout",
-    ],
+    tier: "API · GRACEFUL",
+    title: "Zero Downtime Deploy",
   },
   {
     id: "unexpected-crash",
     index: "03",
-    tier: "API · UNPLANNED",
-    title: "Bounded Failure",
-    terms: [
-      "≈20s detection window",
-      "~1 in 2 requests fail",
-      "Automatic recovery",
-    ],
+    tier: "API · UNGRACEFUL",
+    title: "API Crash",
   },
 ] as const;
 
@@ -232,10 +221,6 @@ function RecordingSlot({
 
   return (
     <figure className="ha-recording">
-      <figcaption className="eyebrow audit-eyebrow">
-        <span className="eyebrow-dot" />
-        RECORDED EVIDENCE · REAL AWS
-      </figcaption>
       {url ? (
         <a
           className="ha-recording-card"
@@ -345,11 +330,6 @@ function HighAvailabilityPage() {
             <span className="sec-spine-index">{chapter.index}</span>
             <span className="sec-spine-tier">{chapter.tier}</span>
             <span className="sec-spine-title">{chapter.title}</span>
-            <ul className="sec-spine-terms">
-              {chapter.terms.map((term) => (
-                <li key={term}>{term}</li>
-              ))}
-            </ul>
           </a>
         ))}
       </nav>
@@ -358,13 +338,9 @@ function HighAvailabilityPage() {
       <div id="worker-crash" className="ha-scenario">
         <p className="eyebrow ha-scenario-tag">
           <span className="eyebrow-dot" />
-          SCENARIO A · WORKER CRASH
+          SCENARIO A
         </p>
         <h2 className="ha-scenario-title">Worker Crash Without Losing Work</h2>
-        <p className="placeholder-body">
-          Kill a worker mid-task. Redis redelivers the job and another worker
-          completes it.
-        </p>
 
         {!accessToken && (
           <div className="queue-card">
@@ -465,13 +441,9 @@ function HighAvailabilityPage() {
       <div className="ha-scenario">
         <p className="eyebrow ha-scenario-tag">
           <span className="eyebrow-dot" />
-          SCENARIO B · API INSTANCE LIFECYCLE
+          SCENARIO B
         </p>
         <h2 className="ha-scenario-title">Two Ways to Lose an API Instance</h2>
-        <p className="placeholder-body">
-          A planned shutdown drains traffic first. An unexpected crash leaves a
-          short failure window until the ALB detects it.
-        </p>
 
         <HealthProbe />
 
@@ -501,15 +473,6 @@ function HighAvailabilityPage() {
             B1 · GRACEFUL SHUTDOWN
           </p>
           <h3 className="ha-block-title">Zero Downtime Deploy</h3>
-          <ul className="ha-claim">
-            <li className="ha-claim-good">failed · 0</li>
-            <li className="ha-claim-good">uptime · 100%</li>
-            <li>whole fleet replaced</li>
-          </ul>
-          <p className="placeholder-body">
-            CI/CD replaces instances one at a time, draining each old target
-            before shutdown.
-          </p>
 
           <RecordingSlot
             url={GRACEFUL_RECORDING_URL}
@@ -567,16 +530,7 @@ function HighAvailabilityPage() {
             <span className="eyebrow-dot" />
             B2 · UNGRACEFUL SHUTDOWN
           </p>
-          <h3 className="ha-block-title">Bounded Failure, Self-Healing</h3>
-          <ul className="ha-claim">
-            <li className="ha-claim-warn">≈20s detection window</li>
-            <li className="ha-claim-warn">~1 in 2 requests fail</li>
-            <li className="ha-claim-good">no manual step</li>
-          </ul>
-          <p className="placeholder-body">
-            A hard failure cannot drain first. Requests recover once the ALB
-            marks the dead target unhealthy.
-          </p>
+          <h3 className="ha-block-title">API Crash</h3>
 
           <RecordingSlot
             url={UNGRACEFUL_RECORDING_URL}

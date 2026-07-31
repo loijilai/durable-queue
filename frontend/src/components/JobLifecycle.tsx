@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 
 /* Job 生命週期圖 —— docs/0-job-lifecycle.excalidraw 的可動版本。
    這裡刻意「不」走 ExcalidrawDiagram 那條路：exportToSvg 產出的是一坨
@@ -21,8 +21,7 @@ type EdgeId =
   | "fail"
   | "retry";
 
-/* 每條邊只寫一次 path，token 的 animateMotion 直接讀同一個字串 ——
-   線和沿線跑的點永遠不可能對不齊。 */
+/* 每條邊只寫一次 path，讓線條幾何維持單一資料來源。 */
 const EDGES: Record<EdgeId, { d: string; tone: string }> = {
   enqueue: { d: "M 32 300 H 92", tone: "ink" },
   pickup: { d: "M 248 300 H 346", tone: "blue" },
@@ -41,7 +40,6 @@ type Step = {
   tone: string;
   nodes: NodeId[];
   edges: EdgeId[];
-  token: EdgeId;
   detail: string;
 };
 
@@ -54,7 +52,6 @@ const STEPS: Step[] = [
     tone: "ink",
     nodes: ["pending"],
     edges: ["enqueue"],
-    token: "enqueue",
     detail:
       "The row lands in Postgres first, then the task is published to the broker. State lives in the database — the queued message is only a pointer to it.",
   },
@@ -64,7 +61,6 @@ const STEPS: Step[] = [
     tone: "blue",
     nodes: ["running"],
     edges: ["pickup"],
-    token: "pickup",
     detail:
       "A worker takes the task and calls mark_running(), appending {host, at} to worker_attempts — that list is the record of who ran this job, and how many times.",
   },
@@ -74,7 +70,6 @@ const STEPS: Step[] = [
     tone: "blue",
     nodes: ["running", "redelivered"],
     edges: ["crash", "redeliver"],
-    token: "redeliver",
     detail:
       "The worker dies before it acks. Because the task is acks_late, the broker hands the same job to a second worker: the status is still running — only the attempt count moved.",
   },
@@ -84,7 +79,6 @@ const STEPS: Step[] = [
     tone: "green",
     nodes: ["running", "succeeded"],
     edges: ["success"],
-    token: "success",
     detail:
       "The happy branch. mark_succeeded() stores the transcript and stamps finished_at, and the job is done for good.",
   },
@@ -94,7 +88,6 @@ const STEPS: Step[] = [
     tone: "red",
     nodes: ["running", "failed"],
     edges: ["fail"],
-    token: "fail",
     detail:
       "The other branch out of the same state. The task raised and its retries are spent, so Task.on_failure records the error on the row.",
   },
@@ -104,48 +97,22 @@ const STEPS: Step[] = [
     tone: "ink",
     nodes: ["failed", "pending"],
     edges: ["retry"],
-    token: "retry",
     detail:
       "Terminal for the worker is not terminal for the user: retry_job() clears the error and puts the row back to pending. Only a failed job is allowed to take this edge.",
   },
 ];
 
-const STEP_MS = 4200;
-
-/* 會動的圖必須尊重系統的「減少動態」設定：這裡不只是把 CSS transition 關掉，
-   連自動輪播和 SMIL token 都不啟動 —— 對前庭系統敏感的使用者，自己會動的
-   東西才是問題，靜止但可點的版本資訊量完全一樣。 */
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return reduced;
-}
-
 function JobLifecycle() {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState<number | null>(null);
   const [held, setHeld] = useState<number | null>(null);
-  const reduced = usePrefersReducedMotion();
-
-  useEffect(() => {
-    if (held !== null || reduced) return;
-    const id = setInterval(() => setStep((s) => (s + 1) % STEPS.length), STEP_MS);
-    return () => clearInterval(id);
-  }, [held, reduced]);
 
   const current = held ?? step;
-  const active = STEPS[current];
+  const active = current === null ? null : STEPS[current];
 
   const nodeCls = (id: NodeId, tone: string) =>
-    `jl-node jl-node--${tone}${active.nodes.includes(id) ? " is-lit" : ""}`;
+    `jl-node jl-node--${tone}${active?.nodes.includes(id) ? " is-lit" : ""}`;
   const edgeCls = (id: EdgeId) =>
-    `jl-edge jl-edge--${EDGES[id].tone}${active.edges.includes(id) ? " is-lit" : ""}`;
+    `jl-edge jl-edge--${EDGES[id].tone}${active?.edges.includes(id) ? " is-lit" : ""}`;
 
   /* 圖形本身就是控制項：滑過去預覽、點下去釘住、Enter/Space 等同點擊。
      SVG 的 <g> 沒有內建的按鈕語意，所以 role / tabIndex / 鍵盤事件都要自己補
@@ -157,16 +124,16 @@ function JobLifecycle() {
       role: "button",
       tabIndex: 0,
       "aria-label": STEPS[i].label,
-      "aria-pressed": i === current,
+      "aria-pressed": i === step,
       onMouseEnter: () => setHeld(i),
       onMouseLeave: () => setHeld(null),
       onFocus: () => setHeld(i),
       onBlur: () => setHeld(null),
-      onClick: () => setStep(i),
+      onClick: () => setStep((selected) => (selected === i ? null : i)),
       onKeyDown: (e: KeyboardEvent) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          setStep(i);
+          setStep((selected) => (selected === i ? null : i));
         }
       },
     };
@@ -179,16 +146,24 @@ function JobLifecycle() {
       <figcaption className="jl-head">
         <p className="eyebrow hero-frame-eyebrow">
           <span className="eyebrow-dot" />
-          ONE JOB, FOUR STATES — CLICK ANY STATE
+          ONE JOB, FOUR STATES — HOVER OR CLICK ANY STATE
         </p>
         {/* aria-live 掛在不會被 key 重建的外層，否則每次換格都是換一個新的
             live region，螢幕閱讀器不一定會念。 */}
         <div className="jl-live" aria-live="polite">
-          <p className={`jl-current jl-current--${active.tone}`} key={`n${current}`}>
-            {active.label}
+          <p
+            className={
+              active
+                ? `jl-current jl-current--${active.tone}`
+                : "jl-current"
+            }
+            key={`n${current}`}
+          >
+            {active?.label ?? "No state selected"}
           </p>
           <p className="jl-detail" key={`d${current}`}>
-            {active.detail}
+            {active?.detail ??
+              "Hover or focus a state to inspect this job lifecycle."}
           </p>
         </div>
       </figcaption>
@@ -245,19 +220,6 @@ function JobLifecycle() {
         {(Object.keys(EDGES) as EdgeId[]).map((id) => (
           <path key={id} className={edgeCls(id)} d={EDGES[id].d} fill="none" />
         ))}
-
-        {/* 沿著當前這條邊跑的 token：一個 job 的「現在在哪」。
-            key 換掉會重新掛載 animateMotion，等於重播。 */}
-        {!reduced && (
-          <circle className="jl-token" r="5.5">
-            <animateMotion
-              key={current}
-              dur="1.5s"
-              repeatCount="indefinite"
-              path={EDGES[active.token].d}
-            />
-          </circle>
-        )}
 
         {/* ── 節點（同時是控制項） ───────────────────────────── */}
         <g {...controlProps("pending")} className={nodeCls("pending", "pending")}>
@@ -334,7 +296,7 @@ function JobLifecycle() {
             chip；做成跟方塊一樣大的可點區域，不然這一格會比其他五格難點。 */}
         <g
           {...controlProps("retry-chip")}
-          className={`jl-chip${active.control === "retry-chip" ? " is-lit" : ""}`}
+          className={`jl-chip${active?.control === "retry-chip" ? " is-lit" : ""}`}
         >
           <rect x="282" y="450" width="196" height="32" rx="16" />
           <text x="380" y="466">

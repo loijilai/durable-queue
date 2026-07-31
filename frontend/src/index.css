@@ -375,16 +375,32 @@ a {
 }
 
 .stack-layer {
+  border: 1px solid var(--dust);
+  border-radius: 14px;
+  transition:
+    border-color 0.35s ease,
+    background 0.35s ease;
+}
+
+.stack-layer-control {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: 14px;
-  border: 1px solid var(--dust);
-  border-radius: 14px;
+  width: 100%;
   padding: 12px 16px;
-  transition:
-    border-color 0.35s ease,
-    background 0.35s ease;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stack-layer:focus-within {
+  outline: 2px solid var(--signal-orange);
+  outline-offset: 2px;
 }
 
 /* pipeline 目前這一站打到的層 —— 兩欄之間的對應關係就靠這個點亮傳達。
@@ -532,18 +548,11 @@ a {
   display: none;
 }
 
-.pipe-btn {
+.pipe-stage-content {
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  color: inherit;
 }
 
 .pipe-mark {
@@ -577,30 +586,12 @@ a {
   color: var(--ink);
 }
 
-.pipe-btn:focus-visible {
-  outline: 2px solid var(--signal-orange);
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
 .pipe-detail {
   margin: 24px 0 0;
   font-size: 15px;
   line-height: 1.5;
   color: var(--charcoal);
   min-height: 88px;
-  animation: caption-in 0.45s ease;
-}
-
-@keyframes caption-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 /* ── Job lifecycle 圖（首頁第二張 hero figure） ───────────────────
@@ -730,12 +721,6 @@ a {
   fill: var(--slate);
 }
 
-/* 沿著當前邊移動的點 = 那個 job 現在的位置。它是唯一會動的東西，
-   所以不需要顏色 —— 用 ink 就足夠被看見。 */
-.jl-token {
-  fill: var(--ink);
-}
-
 /* Terminal state 圍籬：虛線 + 極淡底，讀起來是註記不是元件 */
 .jl-terminal {
   fill: rgba(20, 20, 19, 0.02);
@@ -770,7 +755,6 @@ a {
   letter-spacing: -0.02em;
   line-height: 1.1;
   color: var(--ink);
-  animation: caption-in 0.45s ease;
 }
 
 /* 標頭的顏色跟著該格的狀態走 —— 左上角的字和圖上被點亮的那顆同色，
@@ -792,7 +776,6 @@ a {
   font-size: 15px;
   line-height: 1.5;
   color: var(--charcoal);
-  animation: caption-in 0.45s ease;
 }
 
 .jl-note {
@@ -928,14 +911,6 @@ a {
 .route-card h3 {
   position: relative;
   margin-top: 4px;
-}
-
-.route-card-body {
-  position: relative;
-  margin-top: 10px;
-  color: var(--slate);
-  font-size: 15px;
-  line-height: 1.45;
 }
 
 /* Satellite CTA（DESIGN.md §4）：卡片版的衛星鈕 */
@@ -1556,39 +1531,6 @@ a {
   margin: 8px 0 10px;
 }
 
-/* 各區塊最上面那排數字。標題只能定調，數字才是證據，所以擺在標題正下方、
-   讀者還沒開始讀內文就先看到量到的結果。 */
-.ha-claim {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 14px;
-  padding: 0;
-  list-style: none;
-}
-
-.ha-claim li {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 1.5px solid var(--dust);
-  background: var(--canvas-lifted);
-  color: var(--slate);
-  font-variant-numeric: tabular-nums;
-}
-
-.ha-claim-good {
-  color: var(--signal-green);
-  border-color: rgba(47, 122, 61, 0.35);
-}
-
-/* 有代價但有界——用 orange 而不是 error red，紅色全站只留給真正的錯誤 */
-.ha-claim-warn {
-  color: var(--signal-orange);
-  border-color: rgba(207, 69, 0, 0.35);
-}
-
 .ha-block .foldout {
   margin-top: 28px;
 }
@@ -1711,32 +1653,6 @@ a {
   letter-spacing: -0.02em;
   line-height: 1.2;
   color: var(--ink);
-}
-
-/* 術語清單：可掃視的關鍵字，不是句子 */
-.sec-spine-terms {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 12.5px;
-  color: var(--slate);
-  line-height: 1.35;
-}
-
-.sec-spine-terms li {
-  padding-left: 14px;
-  position: relative;
-}
-
-.sec-spine-terms li::before {
-  content: "·";
-  position: absolute;
-  left: 3px;
-  color: var(--dust);
-  font-weight: 700;
 }
 
 /* ── 三個層級大節 ─────────────────────────────────────────────────── */

@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";
 import DiagramLightbox from "../components/DiagramLightbox.tsx";
 import { AUTH_ATTACK_SCENES, authSequenceScene } from "../lib/diagramScenes.ts";
@@ -20,7 +19,6 @@ interface Layer {
   index: string;
   tier: string;
   title: string;
-  terms: string[];
 }
 
 const LAYERS: Layer[] = [
@@ -28,34 +26,19 @@ const LAYERS: Layer[] = [
     id: "infra",
     index: "01",
     tier: "INFRA",
-    title: "Network Isolation & Authorization",
-    terms: [
-      "Public / private subnet",
-      "Layered SG authorization topology",
-      "HTTPS (ACM + ALB)",
-    ],
+    title: "Network Isolation & Security Group",
   },
   {
     id: "cicd",
     index: "02",
     tier: "CI/CD",
     title: "Pipeline Identity & Secret Management",
-    terms: [
-      "GitHub OIDC federation",
-      "Secrets Manager",
-      "Encrypted remote tfstate",
-    ],
   },
   {
     id: "app",
     index: "03",
     tier: "APP",
     title: "Authentication & Authorization",
-    terms: [
-      "JWT + Google OAuth 2.0",
-      "Default-deny permissions",
-      "Object-level ownership",
-    ],
   },
 ];
 
@@ -397,11 +380,6 @@ function SecurityPage() {
             <span className="sec-spine-index">{layer.index}</span>
             <span className="sec-spine-tier">{layer.tier}</span>
             <span className="sec-spine-title">{layer.title}</span>
-            <ul className="sec-spine-terms">
-              {layer.terms.map((term) => (
-                <li key={term}>{term}</li>
-              ))}
-            </ul>
           </a>
         ))}
       </nav>
@@ -459,19 +437,6 @@ function SecurityPage() {
       <section id="app" className="sec-section">
         <SectionHead layer={LAYERS[2]} />
 
-        <p className="eyebrow sec-subsection-tag">
-          <span className="eyebrow-dot" />
-          AUTHENTICATION · THREE WAYS TO BECOME SOMEONE ELSE
-        </p>
-        {/* 圖只講被擋下的東西；流程本身在 Auth 頁，這裡明說一次，讀者才不會
-            以為 security 頁欠他一張流程圖。 */}
-        <p className="placeholder-body sec-authn-note">
-          The happy path is greyed out — it is the same sequence the{" "}
-          <Link to="/auth">Auth page</Link> walks through. What is lit here is
-          the attack, and the one check that ends it.
-        </p>
-        {/* 對照鈕掛在 tab 條右端：它服務的是「這一格在全圖的哪裡」這個當下的
-            疑問，跟切鏡頭是同一類動作，離圖越近越好。 */}
         <LensFigure
           lenses={LOGIN_LENSES}
           label="login attack lenses"
