@@ -81,7 +81,7 @@ Notes: 為了降低 MVP 的實作成本，目前由 OAuth callback 使用 URL fr
 
 - [x] **Infrastructure security**：以 network boundary、SG authorization chain、TLS termination 三個視角呈現 public/private subnet、SG-to-SG 最小開放與 HTTPS 邊界。
 - [x] **CI/CD 與 secret flow**：呈現 GitHub OIDC short-lived credential、SHA-tag image、S3 encrypted/versioned remote state，以及 Secrets Manager → EC2 instance profile → container env 的交付路徑。
-- [x] **Application auth attack review**：用 login CSRF/replay、錯誤 audience、email account-linking takeover 三個攻擊情境解釋 OAuth 防線，並提供真 API 的 authorization boundary 驗證。
+- [x] **Application authorization boundary**：以真 API 驗證全域 `IsAuthenticated`、物件 ownership 隔離與不洩漏資源存在性的 401 / 404 / 200 邊界。
 
 ### 6. Frontend delivery
 

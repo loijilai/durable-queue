@@ -1779,17 +1779,6 @@ a {
   max-width: 720px;
 }
 
-/* 攻擊鏡頭的圖說分兩段：先「沒有這道檢查會怎樣」，再「擋它的是什麼」。
-   前者是獨立段落而不是同段的第一句——排版必須讓代價先被看見，不然讀者
-   會直接跳到機制，安全圖就退化成流程圖的註解。 */
-.sec-lens-stakes {
-  display: block;
-  margin-bottom: 10px;
-  padding-left: 12px;
-  border-left: 2px solid var(--signal-orange);
-  color: var(--ink);
-}
-
 /* 佔位框：圖還沒畫時撐出版面，並直說它是暫時的 */
 .sec-mock {
   display: flex;
@@ -1978,32 +1967,6 @@ a {
   font-size: 13px;
   color: var(--charcoal);
   line-height: 1.6;
-}
-
-/* ③ APP 底下兩個子節之間要有呼吸。掛在「排第二的那一段」上，不綁定
-   authn / authz 哪一個——順序是會換的。 */
-.sec-subsection-gap {
-  margin-top: 40px;
-}
-
-/* 圖不再自己解釋流程，改由這行把讀者指去 Auth 頁——所以它必須貼著圖，
-   不能讀成一般段落。 */
-.sec-authn-note {
-  margin: 12px 0 20px;
-  max-width: 68ch;
-}
-
-/* 對照全圖的入口，推到 tab 條的另一端：它跟 tab 同一列，但不是第四個鏡頭，
-   靠這段距離把「切鏡頭」和「打開全圖」分成兩種動作。窄螢幕 tab 條會 wrap，
-   auto margin 自然失效，按鈕就落到下一行。 */
-.sec-lens-action {
-  margin-left: auto;
-}
-
-.sec-lens-compare {
-  font-size: 12px;
-  padding: 6px 12px;
-  white-space: nowrap;
 }
 
 @media (max-width: 620px) {

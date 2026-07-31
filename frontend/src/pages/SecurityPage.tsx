@@ -1,11 +1,4 @@
-import { useState, type ReactNode } from "react";
-import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";
-import DiagramLightbox from "../components/DiagramLightbox.tsx";
-import { AUTH_ATTACK_SCENES, authSequenceScene } from "../lib/diagramScenes.ts";
-
-// 每個攻擊鏡頭都是這張全圖的一個取景框，讀者想確認「這一格在整條流程的哪裡」
-// 時，得能把原圖叫出來對照——不然就得離開這頁去 Auth 頁再找回來。
-const FULL_SEQUENCE_LABEL = "Google OIDC authorization-code login sequence";
+import { useState } from "react";
 
 // =====================================================================
 // 全頁的組織原則：攻擊者進得來的三條路——公開網路、部署管線、一個合法
@@ -38,7 +31,7 @@ const LAYERS: Layer[] = [
     id: "app",
     index: "03",
     tier: "APP",
-    title: "Authentication & Authorization",
+    title: "Authorization",
   },
 ];
 
@@ -55,13 +48,7 @@ interface Lens {
   // 有 group 的鏡頭組會改用「組名 + 編號」的 tab 條：打光要細（每一步一格），
   // 標題要粗（三個階段）。連續同 group 的鏡頭收成一組，不用巢狀結構。
   group?: string;
-  // 拓撲 / 管線是 draw.io 匯出的 SVG（src）；登入檢查是時序圖，走 repo 裡
-  // 既有的 excalidraw 管道（scene = .excalidraw 原始 JSON）。兩者擇一。
   src?: string | null;
-  scene?: string | null;
-  // 攻擊鏡頭專用：沒有這道檢查會發生什麼。刻意跟 caption 分開兩段——
-  // 「代價」和「機制」混在同一段裡，讀者只會記得後者。
-  stakes?: string;
 }
 
 const TOPOLOGY_LENSES: Lens[] = [
@@ -167,35 +154,6 @@ const CONFIG_SOURCES: ConfigSource[] = [
   },
 ];
 
-// ── ③ APP（authentication）：三種變成別人的方式 ────────────────────
-
-const LOGIN_LENSES: Lens[] = [
-  {
-    id: "state",
-    tab: "Login CSRF / replay",
-    scene: AUTH_ATTACK_SCENES.state,
-    stakes:
-      "The attacker starts a login as themselves, then makes the victim's browser deliver the resulting callback — or replays a callback URL captured once. Either way the victim's account ends up bound to the attacker's Google identity, and they can sign in as the victim from then on.",
-    caption: "",
-  },
-  {
-    id: "verify",
-    tab: "Token for another app",
-    scene: AUTH_ATTACK_SCENES.token,
-    stakes:
-      "An id_token is signed by Google no matter which application asked for it, so the signature on its own proves nothing about who the token is for. Decode-and-trust means any developer with a Google client can mint a token for their own app and present it here as one of our users.",
-    caption: "",
-  },
-  {
-    id: "binding",
-    tab: "Account takeover by email",
-    scene: AUTH_ATTACK_SCENES.linking,
-    stakes:
-      "The attacker signs up to Google with an address that already has a local account here. If the callback matched on email, this login would be linked straight into the victim's account — a full takeover, with no password ever entered.",
-    caption: "",
-  },
-];
-
 // ── ③ APP：對真 API 開三槍 ─────────────────────────────────────────
 // 順序有意義：先證明沒 token 什麼都拿不到（401），再打出那個 404——此時
 // 讀者已經登入了，「我明明有 token，系統連它存在都不告訴我」才有衝擊力，
@@ -255,16 +213,12 @@ function groupLenses(lenses: Lens[]) {
   }, []);
 }
 
-// action：跟這組鏡頭有關的一顆按鈕，掛在 tab 條的右端。它是圖的工具列的一
-// 部分，自己佔一行會被讀成內文。
 function LensFigure({
   lenses,
   label,
-  action,
 }: {
   lenses: Lens[];
   label: string;
-  action?: ReactNode;
 }) {
   const [lensId, setLensId] = useState(lenses[0].id);
   const lens = lenses.find((l) => l.id === lensId) ?? lenses[0];
@@ -299,13 +253,10 @@ function LensFigure({
             </div>
           </div>
         ))}
-        {action ? <div className="sec-lens-action">{action}</div> : null}
       </div>
 
       <figure className="sec-lens-frame">
-        {lens.scene ? (
-          <ExcalidrawDiagram scene={lens.scene} label={lens.tab} />
-        ) : lens.src ? (
+        {lens.src ? (
           <img src={lens.src} alt={lens.tab} />
         ) : (
           <div
@@ -320,14 +271,7 @@ function LensFigure({
             </span>
           </div>
         )}
-        <figcaption>
-          {/* stakes 先於 caption：安全圖跟流程圖的差別就在「沒有這個會怎樣」，
-              那句話必須先被讀到，機制才有重量。 */}
-          {lens.stakes ? (
-            <span className="sec-lens-stakes">{lens.stakes}</span>
-          ) : null}
-          {lens.caption}
-        </figcaption>
+        <figcaption>{lens.caption}</figcaption>
       </figure>
     </div>
   );
@@ -352,7 +296,6 @@ function SecurityPage() {
   const [results, setResults] = useState<Record<string, number | "loading">>(
     {},
   );
-  const [fullSequence, setFullSequence] = useState(false);
 
   async function runProbe(probe: Probe) {
     setResults((prev) => ({ ...prev, [probe.id]: "loading" }));
@@ -437,29 +380,8 @@ function SecurityPage() {
       <section id="app" className="sec-section">
         <SectionHead layer={LAYERS[2]} />
 
-        <LensFigure
-          lenses={LOGIN_LENSES}
-          label="login attack lenses"
-          action={
-            <button
-              type="button"
-              className="btn-secondary sec-lens-compare"
-              onClick={() => setFullSequence(true)}
-            >
-              ⤢ Open the full login sequence
-            </button>
-          }
-        />
-        {fullSequence && (
-          <DiagramLightbox
-            scene={authSequenceScene}
-            label={FULL_SEQUENCE_LABEL}
-            onClose={() => setFullSequence(false)}
-          />
-        )}
-
         <div className="sec-prober">
-          <p className="eyebrow sec-subsection-tag sec-subsection-gap">
+          <p className="eyebrow sec-subsection-tag">
             <span className="eyebrow-dot" />
             AUTHORIZATION · TRY IT
           </p>
