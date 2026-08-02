@@ -34,20 +34,22 @@
 
 ## 三、Deployment（部署）
 
+> **v1 AWS backend 已完成並做過 e2e 驗證**；此節保留 `[~]` 是因為 stateful tier 仍刻意保留單點，不代表 v1 尚未交付。
+
 - [x] **Dockerize（容器化與編排）**：多 service（api / worker / redis / postgres）容器化與 compose 編排。
   - [x] `Dockerfile`（python:3.13-slim；layer-cache 順序；刻意移除預設 CMD，逼 api/worker 各自宣告 `command:`）。
   - [x] `docker-compose.yml` 四服務：api / worker 共用同一 image、以 `command:` 區分（build once, run many；拆兩個 container 而非兩個 image，因為 scaling 軸不同：api=HTTP 併發、worker=queue 深度）。stateless（api/worker）vs stateful（postgres/redis → volumes）。postgres/redis 不開 `ports:`，只走 compose 內網 service-name DNS。
   - [x] 設定與啟動順序：settings.py 改為 all-no-default fail-fast（`.env.example` 當單一設定真相來源）；compose `environment:` 把 HOST/BROKER 覆寫成 service name；postgres healthcheck + `depends_on: condition: service_healthy` 處理「start-order ≠ readiness」；`command: sh -c "migrate && gunicorn/celery ..."`。
   - [x] DEBUG / SECRET_KEY 已外置到 env（`SECRET_KEY=os.environ[...]` fail-fast、`DEBUG=os.environ.get("DEBUG","False")=="True"` 避開 `bool("False")` 陷阱）；api+worker 都跑 migrate 的併發問題已知並延後。
-- [x] **CI/CD（DONE, e2e verified 2026-07-22, 已 merge master via PR #5）**：CI 跑測試（`test_concurrency.py` 需真 Postgres，SQLite 的 `select_for_update` 是 no-op）；CD 用 **GitHub OIDC**（無長期 AWS key，`infra/bootstrap/github_oidc.tf` 建 role，刻意移出 app 層 infra）+ **S3 remote state**（`infra/backend.tf`）+ **SHA-tag deploy**（image 以 commit SHA 標記 rollout）。bootstrap（永久）vs app-infra（日常生滅）lifecycle 已拆分；CD deploy 加**手動觸發條件**。
+- [x] **CI/CD（DONE, e2e verified 2026-07-22, 已 merge master via PR #5）**：CI 跑測試（`test_concurrency.py` 需真 Postgres，SQLite 的 `select_for_update` 是 no-op）；CD 用 **GitHub OIDC**（無長期 AWS key，`infra/bootstrap/github_oidc.tf` 建 role，刻意移出 app 層 infra）+ **S3 remote state + native lock**（`infra/backend.tf`）+ **SHA-tag deploy**（image 以 commit SHA 標記 rollout）。bootstrap（永久）vs app-infra（日常生滅）lifecycle 已拆分；push `master` 自動 deploy，也保留 `workflow_dispatch` 手動觸發。
 - [~] **AWS + system design**：把系統攤到雲上，練習畫與講架構。已推導出 **v1 架構**（架構圖見 [docs/arch-design.md](../arch-design.md)）：
   - **public subnet**：ALB（443、SG-alb 對外）、NAT Gateway、IGW。
   - **private subnet**：EC2 api-ASG（SG-api）、EC2 worker-ASG（SG-worker）——皆 stateless、按各自 scaling 軸 auto-scaling；RDS Postgres、ElastiCache Redis。
-  - **static**：S3 + CloudFront（CDN），不經 app server。
+  - **frontend**：React SPA 部署在 Vercel（`app.loijilai.site`），不經 Django；Django production 只提供 JSON API。
   - **授權（准不准）＝ SG**：SG 引用 SG——EC2 來源=SG-alb；RDS/ElastiCache 來源={SG-api, SG-worker}（api 與 worker 都是 DB/Redis 的 client，一個都不能漏）。
   - **可達性（有沒有路）＝ route table，與 SG 是兩件事**：private 出向靠 route `0.0.0.0/0 → NAT`（NAT 在 public subnet）→ 再 `0.0.0.0/0 → IGW` 出 internet（docker pull、之後打 OpenAI）；NAT 只帶「由內發起」連線的回程 → internet 無法主動打進來。public/private 的本質差別＝route table 有無指向 IGW。
   - **health check**：Django 加 `/health`（shallow，只證明 process 活著）給 ALB；DB/Redis 的 deep check 另做給監控——**不讓下游健康決定 ALB 摘不摘機器**（避免 DB 抖一下→全 fleet 同時 unhealthy 的關聯性故障放大）。
-  - **HA（暫緩實作、心智模型先建立）**：subnet 綁單一 AZ，故 v1 是**單 AZ＝單點故障**。HA＝每層攤到 ≥2 AZ：每 AZ 一組 public+private；ALB 天生跨 AZ；EC2 ASG 跨 AZ 分散；RDS Multi-AZ（standby 同步複製＋自動 failover，這是外包給 managed 的報酬）；ElastiCache replica 跨 AZ。
+  - **HA 現況**：network 與 stateless compute 已跨 2 AZ（每 AZ 一組 public/private subnet、ALB 跨 AZ、API/worker ASG 各 `desired=2`）；stateful tier 仍有刻意保留的 SPOF：RDS `multi_az=false`、ElastiCache 單節點、單一 NAT。完整 HA 會把 RDS、Redis 與 NAT 一併跨 AZ。
   - [x] nginx reverse proxy：評估後判定在 AWS 架構下冗餘（static→S3/CloudFront、buffering→ALB 接手），故不採用。
   - **實作方式**：IaC 用 **Terraform**（最終交付物），學習時**先 console 手點看懂每個欄位、再翻成 `.tf`**；code 放 `infra/`（`versions.tf`/`provider.tf`/`network.tf`）。習慣＝學習環境用完 `terraform destroy`、要用再 `apply`（NAT+EIP 會計費）。
   - [x] **Step 1 網路地基（DONE，Terraform）**：VPC(10.0.0.0/16, enable_dns_hostnames) + public/private subnet + IGW + NAT(+EIP) + route table×2 + route×2 + association。**HA：跨 2 AZ**（ap-northeast-1a/1c），用 `for_each` 迴圈長出每 AZ 一份（非 copy-paste。**NAT 決策：只開 1 個**（省一半錢）→ egress 是 SPOF（documented trade-off：egress 在 user 請求旁路、無狀態、可秒建重指，爆炸半徑小）→ 連帶只需 1 張共用 private route table。`plan`=16 resources，`apply`+`destroy` 都驗證過。
@@ -60,7 +62,8 @@
   - [x] **Step 7 Route53 + ACM + 443（DONE）**：子網域 `durable-queue.loijilai.site`——**在 Namecheap 加 NS 記錄委派給 Route53**（委派記錄住父區 Namecheap，子區 Route53 管其下所有記錄）。**架構決策：hosted zone 抽成獨立 state `infra/dns/`（foundation vs app 分離），apply 一次不 destroy**；理由＝NS 綁 zone 身分，destroy 重建 zone 會換 nameserver → 逼你重設 Namecheap，而 zone 內記錄可隨 `infra/` 反覆生滅不影響委派。443 listener(綁憑證) + 80 改 redirect→443(301)。alias A record 指 ALB。**app 收尾：`GOOGLE_REDIRECT_URI` 填 `https://durable-queue.loijilai.site/api/auth/google/callback/`（非機密→Terraform 注入 compute.tf）+ Google Console 註冊同一字串（完全比對）；`ALLOWED_HOSTS` 決定保留 `['*']`（收窄會打壞 health check：ALB health check 用私有 IP 當 Host 且不能自訂 → 要收窄得靠 IMDS 撈動態 IP，成本高於效益，SG 已擋掉攻擊面）。**
   - [x] **Step 6 靜態檔——S3 + CloudFront + collectstatic 評估後砍掉（如 nginx）**：前後端分離的純 JSON API，prod 沒有 static 要 serve。解法＝設 `DEFAULT_RENDERER_CLASSES`，prod 只留 `JSONRenderer`、dev 才掛 `BrowsableAPIRenderer`（用 `DEBUG` 切）。觀念：沒設該 key ≠ 沒行為，DRF 預設暗含 BrowsableAPIRenderer；docs 三頁有各自 view-level renderer，不受全域 default 影響。
   - [x] **ASG instance-level HA**（ASG 跨 AZ 分散、instance 掛掉自動重建）。
-  - [ ] **NEXT：K8s stage（bucket 五）** 或 optional hardening（ASG ELB health check）。**RDS Multi-AZ + Redis HA + scalability + migrate-on-boot fix 統一延後到 K8s 階段**（那裡才會把 broker 換 SQS、重估 HA 拓樸）。
+  - [x] **ASG ELB health check hardening**：API ASG 使用 `health_check_type = "ELB"`，不只看 EC2 VM 是否存活，也會依 target group `/health/` 結果替換失效 instance。
+  - [ ] **NEXT：K8s stage（bucket five）**。**RDS Multi-AZ + Redis HA + scalability + migrate-on-boot fix 統一延後到 K8s 階段**（那裡才會把 broker 換 SQS、重估 HA 拓樸）。
 
 ## 四、yt-dlp + OpenAI transcribe
 
@@ -79,8 +82,8 @@
 - [ ] **Concurrency & Race Condition**：目前有兩個可能的方向
   - [ ] 跨系統的 concurrency：DB 新增或是更改 job 的狀態，與 Broker Dispatch 之間的時間差
   - [ ] select_for_update 避免同時兩個 request執行，但這要討論是否有必要
-- [ ] 資訊安全: public/private subnet, https, .env, iam role, tfstate -> rds managed key...
-- [ ] HA: 2 AZ, multi-az
+- [x] **資訊安全**：public/private subnet、SG-to-SG authorization、HTTPS、GitHub OIDC、least-privilege IAM/instance profile、Secrets Manager、加密且 versioned/locked 的 S3 tfstate；另有 frontend Security 頁把三層控制與攻擊情境串成可講述的案例。
+- [~] **HA**：network、ALB、API ASG、worker ASG 已跨 2 AZ；RDS Multi-AZ、Redis replication group 與 per-AZ NAT 尚未實作，不能宣稱整套系統沒有 SPOF。
 
 > 路線圖隨進度更新。完成一項時把 `[ ]` 改成 `[x]`。
 

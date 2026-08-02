@@ -10,14 +10,23 @@ import ExcalidrawDiagram from './ExcalidrawDiagram.tsx'
 // flicker-free — that A/B comparison is the whole point.
 function DurabilityStepper({ nodes }: { nodes: StoryNode[] }) {
   const [active, setActive] = useState(0)
-  const [showTimeline, setShowTimeline] = useState(false)
+  const [openTimelines, setOpenTimelines] = useState<Set<string>>(() => new Set())
 
   const node = nodes[active]
   const scenes = STEP_DIAGRAMS[node.id as keyof typeof STEP_DIAGRAMS] as StepScenes | undefined
+  const showTimeline = openTimelines.has(node.id)
 
   function goTo(next: number) {
     setActive(next)
-    setShowTimeline(false)
+  }
+
+  function toggleTimeline() {
+    setOpenTimelines((current) => {
+      const next = new Set(current)
+      if (next.has(node.id)) next.delete(node.id)
+      else next.add(node.id)
+      return next
+    })
   }
 
   return (
@@ -61,7 +70,7 @@ function DurabilityStepper({ nodes }: { nodes: StoryNode[] }) {
           <button
             className="stepper-timeline-toggle"
             aria-expanded={showTimeline}
-            onClick={() => setShowTimeline((v) => !v)}
+            onClick={toggleTimeline}
           >
             {showTimeline ? 'Hide timeline' : 'Show timeline'}
           </button>

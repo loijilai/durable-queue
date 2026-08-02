@@ -23,7 +23,7 @@
   --status-succeeded: var(--signal-green);
   --status-failed: var(--error-red);
 
-  --sans: 'Sofia Sans', Inter, Arial, sans-serif;
+  --sans: "Sofia Sans", Inter, Arial, sans-serif;
 
   font: 16px/1.4 var(--sans);
   font-weight: 450;
@@ -119,6 +119,16 @@ a {
   display: block;
 }
 
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav-menu-toggle {
+  display: none;
+}
+
 .nav-links {
   display: flex;
   gap: 4px;
@@ -131,7 +141,9 @@ a {
   color: var(--slate);
   padding: 8px 14px;
   border-radius: 999px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .nav-link:hover {
@@ -167,6 +179,81 @@ a {
 
 .auth-status-in .auth-status-dot {
   background: var(--signal-green);
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    padding: 12px;
+  }
+
+  .nav-pill {
+    width: 100%;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 24px;
+    flex-wrap: wrap;
+  }
+
+  .nav-brand {
+    margin-right: auto;
+  }
+
+  .nav-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .nav-menu-toggle:hover,
+  .nav-menu-toggle:focus-visible {
+    background: var(--canvas);
+  }
+
+  .nav-menu-toggle span {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .nav-menu {
+    display: none;
+    width: 100%;
+    padding-top: 12px;
+    border-top: 1px solid var(--dust);
+  }
+
+  .nav-menu-open {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .nav-links {
+    width: 100%;
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 10px 12px;
+  }
+
+  .auth-status {
+    width: 100%;
+    margin-left: 0;
+    padding: 12px 12px 4px;
+    border-top: 1px solid var(--dust);
+  }
 }
 
 /* 後端休息中的提示條：clay 是「注意但不是錯誤」的色階，error-red 留給
@@ -288,16 +375,32 @@ a {
 }
 
 .stack-layer {
+  border: 1px solid var(--dust);
+  border-radius: 14px;
+  transition:
+    border-color 0.35s ease,
+    background 0.35s ease;
+}
+
+.stack-layer-control {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: 14px;
-  border: 1px solid var(--dust);
-  border-radius: 14px;
+  width: 100%;
   padding: 12px 16px;
-  transition:
-    border-color 0.35s ease,
-    background 0.35s ease;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stack-layer:focus-within {
+  outline: 2px solid var(--signal-orange);
+  outline-offset: 2px;
 }
 
 /* pipeline 目前這一站打到的層 —— 兩欄之間的對應關係就靠這個點亮傳達。
@@ -432,7 +535,7 @@ a {
 
 /* 站與站之間的縱向連接線 */
 .pipe-stage::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 6px;
   top: 16px;
@@ -445,18 +548,11 @@ a {
   display: none;
 }
 
-.pipe-btn {
+.pipe-stage-content {
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  color: inherit;
 }
 
 .pipe-mark {
@@ -490,30 +586,12 @@ a {
   color: var(--ink);
 }
 
-.pipe-btn:focus-visible {
-  outline: 2px solid var(--signal-orange);
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
 .pipe-detail {
   margin: 24px 0 0;
   font-size: 15px;
   line-height: 1.5;
   color: var(--charcoal);
   min-height: 88px;
-  animation: caption-in 0.45s ease;
-}
-
-@keyframes caption-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 /* ── Job lifecycle 圖（首頁第二張 hero figure） ───────────────────
@@ -643,12 +721,6 @@ a {
   fill: var(--slate);
 }
 
-/* 沿著當前邊移動的點 = 那個 job 現在的位置。它是唯一會動的東西，
-   所以不需要顏色 —— 用 ink 就足夠被看見。 */
-.jl-token {
-  fill: var(--ink);
-}
-
 /* Terminal state 圍籬：虛線 + 極淡底，讀起來是註記不是元件 */
 .jl-terminal {
   fill: rgba(20, 20, 19, 0.02);
@@ -683,7 +755,6 @@ a {
   letter-spacing: -0.02em;
   line-height: 1.1;
   color: var(--ink);
-  animation: caption-in 0.45s ease;
 }
 
 /* 標頭的顏色跟著該格的狀態走 —— 左上角的字和圖上被點亮的那顆同色，
@@ -705,7 +776,6 @@ a {
   font-size: 15px;
   line-height: 1.5;
   color: var(--charcoal);
-  animation: caption-in 0.45s ease;
 }
 
 .jl-note {
@@ -841,14 +911,6 @@ a {
 .route-card h3 {
   position: relative;
   margin-top: 4px;
-}
-
-.route-card-body {
-  position: relative;
-  margin-top: 10px;
-  color: var(--slate);
-  font-size: 15px;
-  line-height: 1.45;
 }
 
 /* Satellite CTA（DESIGN.md §4）：卡片版的衛星鈕 */
@@ -1439,6 +1501,7 @@ a {
   margin-top: 56px;
   padding-top: 40px;
   border-top: 1.5px solid var(--dust);
+  scroll-margin-top: 96px;
 }
 
 .ha-scenario-tag {
@@ -1449,6 +1512,81 @@ a {
   margin: 8px 0 12px;
 }
 
+/* Scenario B 底下的兩條路徑（graceful / ungraceful）。它們共用 probe 和架構圖，
+   所以是同一個 scenario 內的子區塊，不是各自獨立的 scenario——用左側細線把兩者
+   收在一起，視覺上就讀得出「同一套基礎設施的兩種走法」。 */
+.ha-block {
+  margin-top: 44px;
+  padding-left: 20px;
+  border-left: 2px solid var(--dust);
+  scroll-margin-top: 96px;
+}
+
+.ha-block-tag {
+  color: var(--slate);
+}
+
+.ha-block-title {
+  font-size: 20px;
+  margin: 8px 0 10px;
+}
+
+.ha-block .foldout {
+  margin-top: 28px;
+}
+
+/* 收束對照表：整節的技術重點就是 draining / unhealthy 這一個字的差別，
+   兩段各自的文字講不出這種並排的力道，所以最後用一張表收。 */
+.ha-contrast {
+  margin-top: 52px;
+}
+
+.ha-contrast-scroll {
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+.ha-contrast table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ha-contrast th,
+.ha-contrast td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1.5px solid var(--dust);
+}
+
+.ha-contrast thead th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.ha-contrast tbody th {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.ha-contrast td {
+  color: var(--charcoal);
+}
+
+.ha-contrast code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: var(--canvas-lifted);
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--ink);
+}
 
 .ha-caveat {
   margin-top: 20px;
@@ -1485,7 +1623,9 @@ a {
   background: var(--white);
   box-shadow: var(--shadow);
   border: 1.5px solid transparent;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .sec-spine-tile:hover,
@@ -1513,32 +1653,6 @@ a {
   letter-spacing: -0.02em;
   line-height: 1.2;
   color: var(--ink);
-}
-
-/* 術語清單：可掃視的關鍵字，不是句子 */
-.sec-spine-terms {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 12.5px;
-  color: var(--slate);
-  line-height: 1.35;
-}
-
-.sec-spine-terms li {
-  padding-left: 14px;
-  position: relative;
-}
-
-.sec-spine-terms li::before {
-  content: "·";
-  position: absolute;
-  left: 3px;
-  color: var(--dust);
-  font-weight: 700;
 }
 
 /* ── 三個層級大節 ─────────────────────────────────────────────────── */
@@ -1585,40 +1699,6 @@ a {
   align-items: flex-end;
 }
 
-/* 有組名時 tab 條變兩層：組名在上、編號在下。組名不可點，它只負責讓
-   「五步分成三段」這件事在一眼裡成立。組與組之間拉開，段落界線才看得見。 */
-.sec-lens-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.sec-lens-group + .sec-lens-group {
-  margin-left: 20px;
-}
-
-.sec-lens-group-name {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--slate);
-}
-
-.sec-lens-group-tabs {
-  display: flex;
-  gap: 8px;
-}
-
-/* 編號 tab 是圓的、等寬的——它讀作「第幾步」，不是一個標籤。只有帶組名的
-   那種才套用；沒有組名時 tab 仍是文字，要保留原本的左右內距。 */
-.sec-lens-tab.is-step {
-  min-width: 38px;
-  padding: 8px 0;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
 .sec-lens-tab {
   font: inherit;
   font-size: 13px;
@@ -1651,10 +1731,77 @@ a {
   border: 1.5px solid var(--dust);
 }
 
+.sec-lens-visual {
+  position: relative;
+}
+
 .sec-lens-frame img {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.sec-lens-nav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  align-items: center;
+  padding: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  border-radius: 50%;
+  background: rgba(20, 20, 19, 0.88);
+  color: var(--white);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition:
+    opacity 0.18s ease,
+    background 0.18s ease;
+}
+
+.sec-lens-prev {
+  left: 12px;
+}
+
+.sec-lens-next {
+  right: 12px;
+}
+
+.sec-lens-visual:hover .sec-lens-nav,
+.sec-lens-visual:focus-within .sec-lens-nav {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sec-lens-nav:hover {
+  background: var(--ink);
+}
+
+.sec-lens-nav:focus-visible {
+  background: var(--ink);
+  outline: 2px solid var(--signal-orange);
+  outline-offset: 3px;
+}
+
+@media (hover: none) {
+  .sec-lens-nav {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-lens-nav {
+    transition: none;
+  }
 }
 
 .sec-lens-frame figcaption {
@@ -1663,17 +1810,6 @@ a {
   color: var(--charcoal);
   line-height: 1.6;
   max-width: 720px;
-}
-
-/* 攻擊鏡頭的圖說分兩段：先「沒有這道檢查會怎樣」，再「擋它的是什麼」。
-   前者是獨立段落而不是同段的第一句——排版必須讓代價先被看見，不然讀者
-   會直接跳到機制，安全圖就退化成流程圖的註解。 */
-.sec-lens-stakes {
-  display: block;
-  margin-bottom: 10px;
-  padding-left: 12px;
-  border-left: 2px solid var(--signal-orange);
-  color: var(--ink);
 }
 
 /* 佔位框：圖還沒畫時撐出版面，並直說它是暫時的 */
@@ -1866,32 +2002,6 @@ a {
   line-height: 1.6;
 }
 
-/* ③ APP 底下兩個子節之間要有呼吸。掛在「排第二的那一段」上，不綁定
-   authn / authz 哪一個——順序是會換的。 */
-.sec-subsection-gap {
-  margin-top: 40px;
-}
-
-/* 圖不再自己解釋流程，改由這行把讀者指去 Auth 頁——所以它必須貼著圖，
-   不能讀成一般段落。 */
-.sec-authn-note {
-  margin: 12px 0 20px;
-  max-width: 68ch;
-}
-
-/* 對照全圖的入口，推到 tab 條的另一端：它跟 tab 同一列，但不是第四個鏡頭，
-   靠這段距離把「切鏡頭」和「打開全圖」分成兩種動作。窄螢幕 tab 條會 wrap，
-   auto margin 自然失效，按鈕就落到下一行。 */
-.sec-lens-action {
-  margin-left: auto;
-}
-
-.sec-lens-compare {
-  font-size: 12px;
-  padding: 6px 12px;
-  white-space: nowrap;
-}
-
 @media (max-width: 620px) {
   .sec-section-title {
     font-size: 24px;
@@ -1901,27 +2011,38 @@ a {
   }
 }
 
-/* Scenario B — architecture diagram */
-.ha-diagram {
+/* Home — deployment topology overview */
+.home-architecture {
+  margin-top: 64px;
+}
+
+.home-architecture-figure {
+  width: 100%;
   margin: 24px 0 0;
   padding: 20px;
   border-radius: 16px;
-  background: var(--canvas-lifted);
+  background: var(--white);
   border: 1.5px solid var(--dust);
 }
 
-.ha-diagram .diagram-zoom-trigger img {
+.home-architecture-figure .diagram-zoom-trigger {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.home-architecture-figure .diagram-zoom-trigger img {
   display: block;
   width: 100%;
   height: auto;
 }
 
-.ha-diagram figcaption {
-  margin-top: 12px;
-  font-size: 13px;
-  color: var(--slate);
-  line-height: 1.5;
-  text-align: center;
+/* Scenario B keeps the topology available as reference without repeating it. */
+.ha-architecture-reference {
+  margin-top: 20px;
+}
+
+.ha-architecture-reference .btn-secondary {
+  width: auto;
 }
 
 /* Scenario B — recorded evidence slot */
@@ -1939,15 +2060,116 @@ a {
   line-height: 1.5;
 }
 
-.ha-recording-link {
-  display: inline-block;
+.ha-recording-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 38%) 1fr;
   margin-top: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--signal-orange);
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
-/* Scenario C — live health probe */
+.ha-recording-card:hover,
+.ha-recording-card:focus-visible {
+  border-color: var(--signal-orange);
+  transform: translateY(-2px);
+}
+
+.ha-recording-thumbnail {
+  position: relative;
+  display: grid;
+  min-height: 180px;
+  overflow: hidden;
+  background: var(--ink);
+  place-items: center;
+}
+
+.ha-recording-thumbnail img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ha-recording-thumbnail-fallback {
+  color: rgb(255 255 255 / 45%);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.ha-recording-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  padding-left: 3px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(15 23 42 / 82%);
+  color: var(--white);
+  font-size: 18px;
+  transform: translate(-50%, -50%);
+}
+
+.ha-recording-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+}
+
+.ha-recording-platform {
+  margin-bottom: 8px;
+  color: var(--signal-orange);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ha-recording-body strong {
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.ha-recording-description {
+  margin-top: 8px;
+  color: var(--slate);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ha-recording-cta {
+  margin-top: 16px;
+  color: var(--signal-orange);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 620px) {
+  .ha-recording-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ha-recording-thumbnail {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* Scenario B — live health probe (shared by both shutdown paths) */
 .hp-card {
   display: flex;
   flex-direction: column;
@@ -2129,7 +2351,9 @@ a {
   box-shadow: var(--shadow);
   opacity: 0;
   transform: translateY(24px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
 }
 
 .story-node-visible {
@@ -2154,7 +2378,10 @@ a {
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .stepper-tab:hover {
@@ -2305,7 +2532,9 @@ a {
   background: var(--white);
   cursor: zoom-in;
   font: inherit;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .diagram-zoom-trigger:hover,
@@ -2477,7 +2706,10 @@ a {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: conic-gradient(var(--light-orange) 0deg 270deg, var(--dust) 270deg 360deg);
+  background: conic-gradient(
+    var(--light-orange) 0deg 270deg,
+    var(--dust) 270deg 360deg
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2667,7 +2899,9 @@ a {
   border: 1.5px solid var(--dust);
   background: var(--canvas-lifted);
   font-variant-numeric: tabular-nums;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .scl-cell-id {

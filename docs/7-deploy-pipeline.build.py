@@ -14,6 +14,7 @@ every time, so never hand-edit them. When you add a cell to master, give it a
 role in ROLES below — a cell with no role is treated as always-lit and the
 script says so on stdout.
 """
+
 import argparse
 import copy
 import os
@@ -40,7 +41,7 @@ CLI_CANDIDATES = [
 # belong to more than one — "secrets" lights in step 1 (stored) and again in
 # step 5 (read back), which is exactly the point being made about it.
 ROLES = {
-    "dev": "actor",             # the human is where both roads start
+    "dev": "actor",  # the human is where both roads start
     "cloud": "boundary",
     # 1 · the secret is seeded by hand, off the pipeline
     "e_put": "seed",
@@ -55,7 +56,7 @@ ROLES = {
     "e_creds": "identity",
     # 3 · the image
     "e_ecrpush": "push",
-    "ecr": "registry",          # its own role: the target of both push and pull
+    "ecr": "registry",  # its own role: the target of both push and pull
     # 4 · the state file, and the argument about it
     "tfstate": "state",
     "e_tf": "state",
@@ -75,35 +76,63 @@ ROLES = {
 # visible and only moves the emphasis. Note boxes are the exception: they are
 # hidden outside their own step, or they argue over the step being read.
 NOTES = {"state_note", "runtime_note"}
-ALL = {"actor", "boundary", "seed", "store", "ci", "identity", "push",
-       "registry", "state", "rollout", "compute", "pull", "fetch"} | NOTES
+ALL = {
+    "actor",
+    "boundary",
+    "seed",
+    "store",
+    "ci",
+    "identity",
+    "push",
+    "registry",
+    "state",
+    "rollout",
+    "compute",
+    "pull",
+    "fetch",
+} | NOTES
 
 
 def step(id, name, svg, lit):
     """Everything not lit is muted, except note boxes, which are hidden."""
     lit = set(lit) | {"actor", "boundary"}
-    return dict(id=id, name=name, svg=svg, lit=lit,
-                muted=ALL - lit - NOTES, hidden=NOTES - lit)
+    return dict(
+        id=id, name=name, svg=svg, lit=lit, muted=ALL - lit - NOTES, hidden=NOTES - lit
+    )
 
 
 LENSES = [
     # SECRET FLOW
-    step("seed", "1 seed (derived)", "sec-pipeline-1-seed.svg",
-         {"seed", "store"}),
+    step("seed", "1 seed (derived)", "sec-pipeline-1-seed.svg", {"seed", "store"}),
     # DEPLOY IDENTITY & STATE PROTECTION
-    step("identity", "2 identity (derived)", "sec-pipeline-2-identity.svg",
-         {"ci", "identity"}),
-    step("image", "3 image (derived)", "sec-pipeline-3-image.svg",
-         {"ci", "push", "registry"}),
-    step("state", "4 state (derived)", "sec-pipeline-4-state.svg",
-         {"ci", "state", "state_note"}),
+    step(
+        "identity",
+        "2 identity (derived)",
+        "sec-pipeline-2-identity.svg",
+        {"ci", "identity"},
+    ),
+    step(
+        "image",
+        "3 image (derived)",
+        "sec-pipeline-3-image.svg",
+        {"ci", "push", "registry"},
+    ),
+    step(
+        "state",
+        "4 state (derived)",
+        "sec-pipeline-4-state.svg",
+        {"ci", "state", "state_note"},
+    ),
     # RUNTIME
-    step("boot", "5 boot (derived)", "sec-pipeline-5-boot.svg",
-         {"rollout", "compute", "pull", "registry", "fetch", "store",
-          "runtime_note"}),
+    step(
+        "boot",
+        "5 boot (derived)",
+        "sec-pipeline-5-boot.svg",
+        {"rollout", "compute", "pull", "registry", "fetch", "store", "runtime_note"},
+    ),
 ]
 
-OPACITY = {"muted": 45, "hidden": 0, "dim": 20}
+OPACITY = {"muted": 25, "hidden": 0, "dim": 20}
 
 
 def set_opacity(style, value):
@@ -146,8 +175,12 @@ def light(cell, lens, parents):
 def find_cli():
     for c in CLI_CANDIDATES:
         try:
-            if subprocess.run([c, "--version"], capture_output=True,
-                              timeout=60).returncode == 0:
+            if (
+                subprocess.run(
+                    [c, "--version"], capture_output=True, timeout=60
+                ).returncode
+                == 0
+            ):
                 return c
         except (OSError, subprocess.SubprocessError):
             continue
@@ -162,9 +195,11 @@ def main():
     tree = ET.parse(DRAWIO)
     mxfile = tree.getroot()
 
-    master = next((d for d in mxfile.findall("diagram") if d.get("id") == "master"), None)
+    master = next(
+        (d for d in mxfile.findall("diagram") if d.get("id") == "master"), None
+    )
     if master is None:
-        sys.exit("no page with id=\"master\" — the master page is the source of truth")
+        sys.exit('no page with id="master" — the master page is the source of truth')
 
     for d in list(mxfile.findall("diagram")):
         if d is not master:
@@ -194,11 +229,24 @@ def main():
         cli = find_cli()
         if not cli:
             sys.exit("draw.io CLI not found — install it or export by hand")
-        for i, lens in enumerate(LENSES, start=2):   # page 1 is master
+        for i, lens in enumerate(LENSES, start=2):  # page 1 is master
             out = os.path.join(SVG_DIR, lens["svg"])
-            subprocess.run([cli, "-x", "-f", "svg", "-b", "10",
-                            "--page-index", str(i), "-o", out, DRAWIO],
-                           capture_output=True)
+            subprocess.run(
+                [
+                    cli,
+                    "-x",
+                    "-f",
+                    "svg",
+                    "-b",
+                    "10",
+                    "--page-index",
+                    str(i),
+                    "-o",
+                    out,
+                    DRAWIO,
+                ],
+                capture_output=True,
+            )
             print("  exported", os.path.relpath(out, ROOT))
 
 

@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BRAND_ICONS, type BrandIconKey } from "../components/BrandIcons.tsx";
+import DiagramLightbox from "../components/DiagramLightbox.tsx";
 import JobLifecycle from "../components/JobLifecycle.tsx";
 
-/* Hero 圖：左邊是垂直的技術堆疊（結構，靜止），右邊是 deploy pipeline
-   （流程，自動跑）。兩者不是兩張圖 —— pipeline 每一站都作用在堆疊的某一層，
-   所以 active 的站會把它打到的那幾層一起點亮。這個對應關係是這張圖的重點，
-   不是裝飾。資料來源：.github/workflows/ci-cd.yml。 */
+const AWS_DIAGRAM_LABEL = "AWS infrastructure diagram";
+const AWS_DIAGRAM_ALT =
+  "AWS infrastructure: ALB fronting an API ASG spread across two availability zones, with worker ASG, RDS, and Redis";
+
+/* Hero 圖：hover 左邊的技術層，右邊亮起作用到該層的 deploy stages。
+   一層可以對應多個 stage；這是 stack 與 pipeline 的多對多關係，不硬畫成
+   一對一。資料來源：.github/workflows/ci-cd.yml。 */
 
 /* 有品牌圖示的用圖示，沒有的（AWS 自家服務）用字母牌 —— 不自行仿畫商標。
    每層只留 tier + primary：解釋的工作交給右邊的 pipeline detail，
@@ -17,6 +21,7 @@ type Layer = {
   marks?: string[];
   primary: string;
   next?: { label: string; icon: BrandIconKey };
+  detail: string;
 };
 
 const STACK: Layer[] = [
@@ -24,11 +29,15 @@ const STACK: Layer[] = [
     tier: "APPLICATION",
     icons: ["django", "celery", "postgresql", "redis"],
     primary: "Django REST Framework · Celery",
+    detail:
+      "A push starts the workflow, then Django tests against Postgres before an image is built.",
   },
   {
     tier: "CONTAINER",
     icons: ["docker"],
     primary: "Docker",
+    detail:
+      "The tested application is packaged once and pushed as an immutable, commit-addressed image.",
   },
   {
     tier: "ORCHESTRATION",
@@ -36,16 +45,22 @@ const STACK: Layer[] = [
     primary: "EC2 Auto Scaling · ALB",
     // 這一格不是空的，是「還沒升級」。用 whisper 色標，視覺上就分得出來。
     next: { label: "Kubernetes", icon: "kubernetes" },
+    detail:
+      "An instance refresh replaces the fleet while keeping at least half of its capacity healthy.",
   },
   {
     tier: "INFRASTRUCTURE AS CODE",
     icons: ["terraform"],
     primary: "Terraform",
+    detail:
+      "Terraform applies the declared infrastructure and keeps its state in a protected remote backend.",
   },
   {
     tier: "CLOUD",
     marks: ["AWS"],
     primary: "AWS",
+    detail:
+      "GitHub OIDC provides short-lived AWS credentials for infrastructure and deployment changes.",
   },
 ];
 
@@ -53,128 +68,114 @@ const PIPELINE = [
   {
     label: "commit + push",
     targets: [0],
-    detail:
-      "A push to master is the only trigger. There is no manual deploy step and no clicking through a console.",
   },
   {
     label: "test",
     targets: [0],
-    detail:
-      "Django’s test suite runs against a real Postgres service container, not a stub — the same engine production uses.",
   },
   {
     label: "build & push",
     targets: [1],
-    detail:
-      "The image is tagged with the commit SHA, never latest, so every deploy points at one immutable artifact.",
   },
   {
     label: "terraform apply",
     targets: [3, 4],
-    detail:
-      "State lives in S3, and the runner assumes an AWS role over OIDC — there is no long-lived access key anywhere in the repo.",
   },
   {
     label: "roll ASGs",
     targets: [2],
-    detail:
-      "Instance refresh at 50% minimum healthy: replacements come up on the new image before the old ones are taken away.",
   },
 ];
 
-const STEP_MS = 3400;
-
 function StackFigure() {
-  const [step, setStep] = useState(0);
-  const [held, setHeld] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (held !== null) return;
-    const id = setInterval(
-      () => setStep((s) => (s + 1) % PIPELINE.length),
-      STEP_MS,
-    );
-    return () => clearInterval(id);
-  }, [held]);
-
-  const current = held ?? step;
-  const active = PIPELINE[current];
+  const [selectedLayer, setSelectedLayer] = useState<number | null>(null);
+  const [hoveredLayer, setHoveredLayer] = useState<number | null>(null);
+  const currentLayer = hoveredLayer ?? selectedLayer;
+  const activeLayer = currentLayer === null ? null : STACK[currentLayer];
 
   return (
     <figure className="hero-frame">
       <p className="eyebrow hero-frame-eyebrow">
         <span className="eyebrow-dot" />
-        THE STACK, AND HOW IT SHIPS
+        THE STACK
       </p>
 
       <div className="stackfig">
-        {/* ── 左：技術堆疊（靜止結構） ─────────────────────────── */}
+        {/* ── 左：技術堆疊，也是整張圖的互動入口 ───────────────── */}
         <ol className="stack-col">
           {STACK.map((layer, i) => (
             <li
               key={layer.tier}
               className={
-                active.targets.includes(i)
+                currentLayer !== null && i === currentLayer
                   ? "stack-layer is-lit"
                   : "stack-layer"
               }
             >
-              <div className="stack-glyphs" aria-hidden="true">
-                {layer.marks?.map((mark) => (
-                  <span key={mark} className="stack-mark">
-                    {mark}
-                  </span>
-                ))}
-                {layer.icons?.map((key) => {
-                  const Icon = BRAND_ICONS[key];
-                  return <Icon key={key} className="stack-icon" />;
-                })}
-              </div>
+              <button
+                type="button"
+                className="stack-layer-control"
+                aria-pressed={i === selectedLayer}
+                onMouseEnter={() => setHoveredLayer(i)}
+                onMouseLeave={() => setHoveredLayer(null)}
+                onFocus={() => setHoveredLayer(i)}
+                onBlur={() => setHoveredLayer(null)}
+                onClick={() =>
+                  setSelectedLayer((selected) => (selected === i ? null : i))
+                }
+              >
+                <span className="stack-glyphs" aria-hidden="true">
+                  {layer.marks?.map((mark) => (
+                    <span key={mark} className="stack-mark">
+                      {mark}
+                    </span>
+                  ))}
+                  {layer.icons?.map((key) => {
+                    const Icon = BRAND_ICONS[key];
+                    return <Icon key={key} className="stack-icon" />;
+                  })}
+                </span>
 
-              <div className="stack-text">
-                <span className="stack-tier">{layer.tier}</span>
-                <span className="stack-primary">{layer.primary}</span>
-                {layer.next && (
-                  <span className="stack-next">
-                    {(() => {
-                      const Icon = BRAND_ICONS[layer.next.icon];
-                      return <Icon className="stack-next-icon" />;
-                    })()}
-                    {layer.next.label} — next
-                  </span>
-                )}
-              </div>
+                <span className="stack-text">
+                  <span className="stack-tier">{layer.tier}</span>
+                  <span className="stack-primary">{layer.primary}</span>
+                  {layer.next && (
+                    <span className="stack-next">
+                      {(() => {
+                        const Icon = BRAND_ICONS[layer.next.icon];
+                        return <Icon className="stack-next-icon" />;
+                      })()}
+                      {layer.next.label} — next
+                    </span>
+                  )}
+                </span>
+              </button>
             </li>
           ))}
         </ol>
 
-        {/* ── 右：deploy pipeline（自動跑的流程） ───────────────── */}
+        {/* ── 右：只顯示左側所選 layer 對應的 deploy stages ────── */}
         <div className="pipe-col">
           <ol className="pipe-list">
-            {PIPELINE.map((stage, i) => (
+            {PIPELINE.map((stage) => (
               <li
                 key={stage.label}
                 className={
-                  i === current ? "pipe-stage is-active" : "pipe-stage"
+                  currentLayer !== null && stage.targets.includes(currentLayer)
+                    ? "pipe-stage is-active"
+                    : "pipe-stage"
                 }
               >
-                <button
-                  type="button"
-                  className="pipe-btn"
-                  onMouseEnter={() => setHeld(i)}
-                  onMouseLeave={() => setHeld(null)}
-                  onFocus={() => setHeld(i)}
-                  onBlur={() => setHeld(null)}
-                  onClick={() => setStep(i)}
-                >
+                <div className="pipe-stage-content">
                   <span className="pipe-mark" />
                   <span className="pipe-label">{stage.label}</span>
-                </button>
+                </div>
               </li>
             ))}
           </ol>
-          <figcaption className="pipe-detail" key={current}>
-            {active.detail}
+          <figcaption className="pipe-detail">
+            {activeLayer?.detail ??
+              "Hover or focus a stack layer to see how it moves through CI/CD."}
           </figcaption>
         </div>
       </div>
@@ -182,76 +183,83 @@ function StackFigure() {
   );
 }
 
-/* 每張卡的文案直接對應該頁實際內容 —— 這裡是全站的目錄，寫錯就是說謊。
-   description 一律壓成一句：卡片是目錄不是內文，讀者在這裡要做的決定
-   只有「進不進去」，多一句都是負擔。 */
+/* 卡片標題直接使用各頁 h1；首頁目錄不再替內頁重寫一套名稱。 */
 const ROUTE = [
   {
     to: "/auth",
     index: "01",
     eyebrow: "AUTHENTICATION",
-    title: "Two ways in, one token",
-    description:
-      "Password or Google OIDC — both end at the same JWT, decoded live in the browser.",
+    title: "Login, Register & Inspect Your JWT",
   },
   {
     to: "/queue",
     index: "02",
     eyebrow: "DISTRIBUTED QUEUE",
-    title: "Submit a job, poll it to done",
-    description:
-      "POST returns an id immediately, then real status transitions arrive from the backend.",
+    title: "Distributed Queue & Async Pattern",
   },
   {
     to: "/durability",
     index: "03",
     eyebrow: "DURABILITY",
     title: "Why every piece of this queue exists",
-    description:
-      "The causal chain from “a worker can die mid-task” down to visibility timeout, locking, and retry.",
   },
   {
     to: "/high-availability",
     index: "04",
     eyebrow: "HIGH AVAILABILITY",
-    title: "Surviving instance loss",
-    description:
-      "Kill a worker mid-job, or lose an API instance — neither breaks the run.",
+    title: "Surviving Instance Loss",
   },
   {
     to: "/scalability",
     index: "05",
     eyebrow: "SCALABILITY",
-    title: "Throughput scales with the worker pool",
-    description:
-      "Fire a batch and watch it spread across the pool in a live grid.",
+    title: "Throughput Scales With the Worker Pool",
   },
   {
     to: "/security",
     index: "06",
     eyebrow: "SECURITY",
-    title: "Three routes in, three kinds of control",
-    description:
-      "The public internet, the deploy pipeline, and a user account — each closed differently.",
+    title: "Security Control",
   },
 ];
 
 function HomePage() {
+  const [architectureOpen, setArchitectureOpen] = useState(false);
+
   return (
     <section className="home">
       <div className="hero">
-        <p className="eyebrow">
+        <p id="home-architecture-title" className="eyebrow">
           <span className="eyebrow-dot" />
           DURABLE QUEUE
         </p>
         <h1>Building a durable job processing system</h1>
         <p className="home-lede">
-          Job state lives in Postgres, not in a worker’s memory — so workers can
-          crash and restart without losing work. Six sections walk from the
-          login screen down to the network boundary, each with a demo you can
-          run against the real backend.
+          Job state lives in Postgres, so work survives worker crashes and
+          restarts.
         </p>
       </div>
+
+      <section
+        className="home-architecture"
+        aria-labelledby="home-architecture-title"
+      >
+        <p className="eyebrow">
+          <span className="eyebrow-dot" />
+          SYSTEM ARCHITECTURE
+        </p>
+        <figure className="home-architecture-figure">
+          <button
+            type="button"
+            className="diagram-zoom-trigger"
+            onClick={() => setArchitectureOpen(true)}
+            aria-label={`Open ${AWS_DIAGRAM_LABEL} full size`}
+          >
+            <img src="/aws-infra.svg" alt={AWS_DIAGRAM_ALT} loading="lazy" />
+            <span className="diagram-zoom-hint">⤢ Click to zoom</span>
+          </button>
+        </figure>
+      </section>
 
       <JobLifecycle />
 
@@ -277,7 +285,6 @@ function HomePage() {
                 {section.eyebrow}
               </p>
               <h3>{section.title}</h3>
-              <p className="route-card-body">{section.description}</p>
               <span className="route-card-satellite" aria-hidden="true">
                 →
               </span>
@@ -285,6 +292,14 @@ function HomePage() {
           ))}
         </div>
       </div>
+
+      {architectureOpen && (
+        <DiagramLightbox
+          imageSrc="/aws-infra.svg"
+          label={AWS_DIAGRAM_LABEL}
+          onClose={() => setArchitectureOpen(false)}
+        />
+      )}
     </section>
   );
 }

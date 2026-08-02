@@ -1,6 +1,6 @@
 locals {
   # 前端部署在 Vercel, api 和 worker 兩個 launch template 都要用到
-  frontend_url              = "https://durable-queue.vercel.app"
+  frontend_url              = "https://app.loijilai.site"
   google_redirect_uri       = "https://durable-queue.loijilai.site/api/auth/google/callback/"
   transcriber               = "fake"
   transcribe_seconds        = 1

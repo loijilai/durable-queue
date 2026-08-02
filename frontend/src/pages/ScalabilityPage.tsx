@@ -329,13 +329,13 @@ function ScalabilityPage() {
                 <code>docker compose up --build --scale worker=2</code>.
               </li>
               <li>
-                Click <strong>Run batch of {BATCH_SIZE}</strong> and let the grid
-                drain to all SUCCEEDED. The first result row appears.
+                Click <strong>Run batch of {BATCH_SIZE}</strong> and let the
+                grid drain to all SUCCEEDED. The first result row appears.
               </li>
               <li>
                 Rescale the pool to four —{" "}
-                <code>docker compose up -d --scale worker=4</code> — then run the
-                same batch again.
+                <code>docker compose up -d --scale worker=4</code> — then run
+                the same batch again.
               </li>
               <li>
                 Compare the two rows: double the workers, roughly half the drain
