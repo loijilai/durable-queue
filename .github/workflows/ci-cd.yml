@@ -90,6 +90,9 @@ jobs:
       contents: read
       id-token: write
 
+    environment:
+      name: production # require reviewer
+
     # 放 job 層級，只序列化 deploy（放 workflow 層級會連 test/build 也一起 gate）。
     # 所有叫做 production-deploy 的 job，同一時間只能有一個執行
     concurrency:
