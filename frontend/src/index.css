@@ -1699,40 +1699,6 @@ a {
   align-items: flex-end;
 }
 
-/* 有組名時 tab 條變兩層：組名在上、編號在下。組名不可點，它只負責讓
-   「五步分成三段」這件事在一眼裡成立。組與組之間拉開，段落界線才看得見。 */
-.sec-lens-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.sec-lens-group + .sec-lens-group {
-  margin-left: 20px;
-}
-
-.sec-lens-group-name {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--slate);
-}
-
-.sec-lens-group-tabs {
-  display: flex;
-  gap: 8px;
-}
-
-/* 編號 tab 是圓的、等寬的——它讀作「第幾步」，不是一個標籤。只有帶組名的
-   那種才套用；沒有組名時 tab 仍是文字，要保留原本的左右內距。 */
-.sec-lens-tab.is-step {
-  min-width: 38px;
-  padding: 8px 0;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
 .sec-lens-tab {
   font: inherit;
   font-size: 13px;
@@ -1765,10 +1731,77 @@ a {
   border: 1.5px solid var(--dust);
 }
 
+.sec-lens-visual {
+  position: relative;
+}
+
 .sec-lens-frame img {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.sec-lens-nav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  align-items: center;
+  padding: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  border-radius: 50%;
+  background: rgba(20, 20, 19, 0.88);
+  color: var(--white);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition:
+    opacity 0.18s ease,
+    background 0.18s ease;
+}
+
+.sec-lens-prev {
+  left: 12px;
+}
+
+.sec-lens-next {
+  right: 12px;
+}
+
+.sec-lens-visual:hover .sec-lens-nav,
+.sec-lens-visual:focus-within .sec-lens-nav {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sec-lens-nav:hover {
+  background: var(--ink);
+}
+
+.sec-lens-nav:focus-visible {
+  background: var(--ink);
+  outline: 2px solid var(--signal-orange);
+  outline-offset: 3px;
+}
+
+@media (hover: none) {
+  .sec-lens-nav {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-lens-nav {
+    transition: none;
+  }
 }
 
 .sec-lens-frame figcaption {

@@ -45,9 +45,6 @@ interface Lens {
   id: string;
   tab: string;
   caption: string;
-  // 有 group 的鏡頭組會改用「組名 + 編號」的 tab 條：打光要細（每一步一格），
-  // 標題要粗（三個階段）。連續同 group 的鏡頭收成一組，不用巢狀結構。
-  group?: string;
   src?: string | null;
 }
 
@@ -77,15 +74,13 @@ const TOPOLOGY_LENSES: Lens[] = [
 
 // ── ② CI/CD：一次部署的完整路徑、五個步驟 ─────────────────────────
 // 跟 ① 的差別是維度：① 是空間（同一張拓撲的三個切面，彼此平行），
-// ② 是時間（同一條管線的五個先後步驟）。tab 因此帶編號 —— tab 這個元件
-// 天生讀作平行選項，不編號的話讀者拿不到順序。
-// 打光五格、標題三組：group 相同的連續鏡頭在 UI 上收在同一個組名底下。
+// ② 是時間（同一條管線的五個先後步驟）。畫面以右側 next overlay 依序推進，
+// 第五步再前進會回到第一步。
 // 圖源 docs/7-deploy-pipeline.drawio 的 master 頁（幾何的單一真相來源）。
 // 改圖：編輯 master → python3 docs/7-deploy-pipeline.build.py --export。
 const PIPELINE_LENSES: Lens[] = [
   {
     id: "seed",
-    group: "Secret flow",
     tab: "1",
     src: "/sec-pipeline-1-seed.svg",
     caption:
@@ -93,7 +88,6 @@ const PIPELINE_LENSES: Lens[] = [
   },
   {
     id: "identity",
-    group: "Deploy identity & state protection",
     tab: "2",
     src: "/sec-pipeline-2-identity.svg",
     caption:
@@ -101,7 +95,6 @@ const PIPELINE_LENSES: Lens[] = [
   },
   {
     id: "image",
-    group: "Deploy identity & state protection",
     tab: "3",
     src: "/sec-pipeline-3-image.svg",
     caption:
@@ -109,7 +102,6 @@ const PIPELINE_LENSES: Lens[] = [
   },
   {
     id: "state",
-    group: "Deploy identity & state protection",
     tab: "4",
     src: "/sec-pipeline-4-state.svg",
     caption:
@@ -117,7 +109,6 @@ const PIPELINE_LENSES: Lens[] = [
   },
   {
     id: "boot",
-    group: "Runtime",
     tab: "5",
     src: "/sec-pipeline-5-boot.svg",
     caption:
@@ -200,77 +191,85 @@ function mockProbe(probe: Probe): Promise<number> {
 // 共用小元件
 // =====================================================================
 
-// 一個主體、三個鏡頭。圖框從頭到尾是同一個節點，切 tab 不會有 layout
-// jump——視覺上要忠實傳達「圖沒有換，只是鏡頭換了」。
-// 連續同 group 的鏡頭收成一組。用 reduce 而不是 Map，是因為順序就是時序，
-// 而 group 只會連續出現——不需要能處理交錯的資料結構。
-function groupLenses(lenses: Lens[]) {
-  return lenses.reduce<{ name?: string; lenses: Lens[] }[]>((groups, lens) => {
-    const last = groups[groups.length - 1];
-    if (last && last.name === lens.group) last.lenses.push(lens);
-    else groups.push({ name: lens.group, lenses: [lens] });
-    return groups;
-  }, []);
-}
-
 function LensFigure({
   lenses,
   label,
+  navigation = "tabs",
 }: {
   lenses: Lens[];
   label: string;
+  navigation?: "tabs" | "overlay-arrows";
 }) {
   const [lensId, setLensId] = useState(lenses[0].id);
-  const lens = lenses.find((l) => l.id === lensId) ?? lenses[0];
+  const lensIndex = Math.max(
+    lenses.findIndex((lens) => lens.id === lensId),
+    0,
+  );
+  const lens = lenses[lensIndex];
+  const previousLens = lenses[(lensIndex - 1 + lenses.length) % lenses.length];
+  const nextLens = lenses[(lensIndex + 1) % lenses.length];
+  const usesOverlayNavigation = navigation === "overlay-arrows";
 
   return (
     <div className="sec-lens">
-      <div className="sec-lens-tabs" role="tablist" aria-label={label}>
-        {groupLenses(lenses).map((group) => (
-          <div
-            className="sec-lens-group"
-            key={group.name ?? group.lenses[0].id}
-          >
-            {group.name ? (
-              <span className="sec-lens-group-name">{group.name}</span>
-            ) : null}
-            <div className="sec-lens-group-tabs">
-              {group.lenses.map((l) => (
-                <button
-                  key={l.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={l.id === lensId}
-                  aria-label={group.name ? `${group.name} — ${l.tab}` : l.tab}
-                  className={`sec-lens-tab${group.name ? " is-step" : ""}${
-                    l.id === lensId ? " is-active" : ""
-                  }`}
-                  onClick={() => setLensId(l.id)}
-                >
-                  {l.tab}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      {!usesOverlayNavigation && (
+        <div className="sec-lens-tabs" role="tablist" aria-label={label}>
+          {lenses.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={item.id === lensId}
+              aria-label={item.tab}
+              className={`sec-lens-tab${
+                item.id === lensId ? " is-active" : ""
+              }`}
+              onClick={() => setLensId(item.id)}
+            >
+              {item.tab}
+            </button>
+          ))}
+        </div>
+      )}
 
       <figure className="sec-lens-frame">
-        {lens.src ? (
-          <img src={lens.src} alt={lens.tab} />
-        ) : (
-          <div
-            className="sec-mock"
-            role="img"
-            aria-label={`${lens.tab} diagram placeholder`}
-          >
-            <span className="sec-mock-tag">DIAGRAM PENDING</span>
-            <span className="sec-mock-name">{lens.tab}</span>
-            <span className="sec-mock-hint">
-              one .drawio, three layers, three SVG exports
-            </span>
-          </div>
-        )}
+        <div className="sec-lens-visual">
+          {lens.src ? (
+            <img src={lens.src} alt={lens.tab} />
+          ) : (
+            <div
+              className="sec-mock"
+              role="img"
+              aria-label={`${lens.tab} diagram placeholder`}
+            >
+              <span className="sec-mock-tag">DIAGRAM PENDING</span>
+              <span className="sec-mock-name">{lens.tab}</span>
+              <span className="sec-mock-hint">
+                one .drawio, three layers, three SVG exports
+              </span>
+            </div>
+          )}
+          {usesOverlayNavigation && (
+            <>
+              <button
+                type="button"
+                className="sec-lens-nav sec-lens-prev"
+                onClick={() => setLensId(previousLens.id)}
+                aria-label={`Previous ${label}: ${previousLens.tab}`}
+              >
+                <span aria-hidden="true">{"<"}</span>
+              </button>
+              <button
+                type="button"
+                className="sec-lens-nav sec-lens-next"
+                onClick={() => setLensId(nextLens.id)}
+                aria-label={`Next ${label}: ${nextLens.tab}`}
+              >
+                <span aria-hidden="true">{">"}</span>
+              </button>
+            </>
+          )}
+        </div>
         <figcaption>{lens.caption}</figcaption>
       </figure>
     </div>
@@ -338,7 +337,11 @@ function SecurityPage() {
       <section id="cicd" className="sec-section">
         <SectionHead layer={LAYERS[1]} />
 
-        <LensFigure lenses={PIPELINE_LENSES} label="deploy pipeline lenses" />
+        <LensFigure
+          lenses={PIPELINE_LENSES}
+          label="deploy pipeline"
+          navigation="overlay-arrows"
+        />
 
         {/* 三個來源匯流成同一組環境變數；分類的依據放在最後一欄 */}
         <div className="sec-secrets">

@@ -4,6 +4,7 @@
 // components import the maps below rather than re-importing the raw files.
 
 import queueArch from '../assets/diagrams/1-queue-arch.excalidraw?raw'
+import workerSucceedTimeline from '../assets/diagrams/2-2-worker-succeed-timeline.excalidraw?raw'
 import workerFailure from '../assets/diagrams/2-worker-failure.excalidraw?raw'
 import visibilityTimeout from '../assets/diagrams/2-1-visibility-timeout.excalidraw?raw'
 import workerStuckDuplicate from '../assets/diagrams/3-worker-stuck-duplicate.excalidraw?raw'
@@ -25,7 +26,7 @@ export interface StepScenes {
 
 // Steps 1–3 (the fixed-frame stepper group).
 export const STEP_DIAGRAMS = {
-  crash: { arch: queueArch },
+  crash: { arch: queueArch, timeline: workerSucceedTimeline },
   'detect-death': { arch: workerFailure, timeline: visibilityTimeout },
   'at-least-once': { arch: workerStuckDuplicate, timeline: raceCondition },
 } satisfies Record<string, StepScenes>
