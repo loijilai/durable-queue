@@ -6,6 +6,8 @@ import BrandMark from "./BrandMark.tsx";
 import { API_BASE_URL } from "../lib/api.ts";
 
 const REPO_URL = "https://github.com/loijilai/durable-queue";
+const PROJECT_NOTES_URL =
+  "https://loijilai.site/Software-Engineering/Durable-Queue-Project-Notes";
 
 // Swagger UI 由 drf-spectacular 掛在後端的 /api/docs/，所以要跟著 API base
 // 走，不是跟著前端 origin。base 沒設時就不顯示，避免給出一個死連結。
@@ -108,6 +110,14 @@ function Layout() {
                 className="site-footer-link"
               >
                 GitHub repository <span aria-hidden="true">↗</span>
+              </a>
+              <a
+                href={PROJECT_NOTES_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="site-footer-link"
+              >
+                Project notes <span aria-hidden="true">↗</span>
               </a>
               {SWAGGER_URL && (
                 <a
