@@ -104,20 +104,19 @@ will help a future agent.
 
 ## Current verification commands
 
-Run commands from the repository root unless noted otherwise.
+Run the repository-owned harness from the repository root:
 
-- Environment contract: `python3 scripts/check_env_parity.py`
-- Django static check: `cd durable_queue && ../.venv/bin/python manage.py check`
-- Django tests: `cd durable_queue && ../.venv/bin/python manage.py test`
-- Frontend lint: `npm --prefix frontend run lint`
-- Frontend production build: `npm --prefix frontend run build`
-- Terraform formatting: `terraform -chdir=infra fmt -check -recursive`
-- Terraform validation: `terraform -chdir=infra validate`
+- Fast feedback without a database or running Docker daemon:
+  `./scripts/verify.sh quick`
+- Complete verification with tests, builds, and Terraform validation:
+  `./scripts/verify.sh full`
 
-Backend tests require Postgres and environment variables. Until a unified
-verification harness exists, use `durable_queue/.env` and the services in
-`durable_queue/docker-compose.yml`; local Compose command spelling may be
-`docker compose` or `docker-compose`.
+The harness bootstraps the Python virtual environment and frontend dependencies
+when their committed manifests change. It requires Python 3.13, Node.js 22,
+Terraform 1.5 or newer, and a Docker/Compose installation. Full verification
+starts an isolated PostgreSQL container and removes it on exit, so do not point
+it at the development database. CI uses the same full entry point with an
+external service container.
 
 ## Code conventions
 

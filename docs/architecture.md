@@ -44,6 +44,29 @@ serializer, service, task, and PostgreSQL row-lock concurrency behavior. The
 frontend contains the delivered authentication, queue, durability, HA,
 scalability, and security demo surfaces.
 
+## Verification and enforced boundaries
+
+`./scripts/verify.sh` is the repository's verification contract. `quick` runs
+all database-independent checks and is the default agent feedback loop. `full`
+adds an isolated PostgreSQL service, Django tests and migration drift detection,
+frontend and backend production builds, and validation of all three Terraform
+roots. Dependency manifests are hash-stamped so a clean checkout bootstraps
+itself while unchanged dependencies are reused.
+
+The quick loop mechanically enforces these current invariants:
+
+- Job lifecycle fields are mutated only by transactional operations in
+  `jobs/services.py`.
+- Models do not depend on higher job layers; services depend only on models;
+  tasks use services and the transcriber boundary rather than models directly.
+- Markdown links, product-spec indexing, execution-plan status/location, and
+  declared diagram assets remain internally consistent.
+- Application configuration, `.env.example`, and deployment inputs stay aligned.
+
+Checker failures include the violated invariant, source location, remediation,
+and the command to rerun. Tests and migrations are deliberately outside the
+production architecture scan.
+
 ## Request and job data flow
 
 1. An authenticated client calls `POST /api/jobs/` with a YouTube URL.
@@ -135,10 +158,8 @@ bounded by PostgreSQL, Redis, and the future external transcription API.
   Flower provides development-time Celery visibility only.
 - Worker scaling has no measured capacity envelope or backpressure policy for
   PostgreSQL, Redis, or the future external transcription API.
-- Local backend tests require separately running PostgreSQL; there is no single
-  hermetic verification command yet.
-- The frontend build succeeds with a large-chunk warning, and lint reports two
-  Fast Refresh warnings.
+- The frontend build succeeds with a large-chunk warning. Lint has a zero-warning
+  policy; the bundle warning remains a separate performance concern.
 
 ## Planned changes
 

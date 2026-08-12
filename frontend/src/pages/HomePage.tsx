@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { BRAND_ICONS, type BrandIconKey } from "../components/BrandIcons.tsx";
+import { BRAND_ICONS, type BrandIconKey } from "../components/brandIconRegistry.ts";
 import DiagramLightbox from "../components/DiagramLightbox.tsx";
 import JobLifecycle from "../components/JobLifecycle.tsx";
 

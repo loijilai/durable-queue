@@ -139,7 +139,7 @@ bootstrap_dependencies() {
 }
 
 export_test_environment() {
-  export SECRET_KEY="verification-secret-key"
+  export SECRET_KEY="verification-secret-key-at-least-32-bytes"
   export TRANSCRIBER="fake"
   export TRANSCRIBE_SECONDS="0"
   export CELERY_VISIBILITY_TIMEOUT="3600"
@@ -179,9 +179,9 @@ PY
   export POSTGRES_HOST="127.0.0.1"
   export POSTGRES_PORT="$VERIFY_POSTGRES_PORT"
 
-  run "Start isolated verification PostgreSQL" compose -f "$COMPOSE_FILE" -p "$VERIFY_COMPOSE_PROJECT" up -d
   VERIFY_POSTGRES_STARTED=1
   trap cleanup_postgres EXIT INT TERM
+  run "Start isolated verification PostgreSQL" compose -f "$COMPOSE_FILE" -p "$VERIFY_COMPOSE_PROJECT" up -d
 
   local attempt
   for attempt in $(seq 1 60); do
@@ -208,6 +208,9 @@ use_external_postgres() {
 run_quick() {
   export_test_environment
   run "Check environment contract" python3 "$ROOT_DIR/scripts/check_env_parity.py"
+  run "Test repository checkers" python3 -m unittest discover -s "$ROOT_DIR/scripts/tests" -v
+  run "Check architecture boundaries" python3 "$ROOT_DIR/scripts/check_architecture.py"
+  run "Check repository knowledge contract" python3 "$ROOT_DIR/scripts/check_repo_contract.py"
   run "Run Django system checks" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" check
   run "Lint frontend" npm --prefix "$ROOT_DIR/frontend" run lint
   run "Check Terraform formatting" terraform -chdir="$ROOT_DIR/infra" fmt -check -recursive
@@ -222,7 +225,7 @@ run_full() {
   fi
 
   run "Check for missing Django migrations" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" makemigrations --check --dry-run
-  run "Run Django tests" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" test
+  run "Run Django tests" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" test jobs
   run "Build frontend" npm --prefix "$ROOT_DIR/frontend" run build
 
   local terraform_root

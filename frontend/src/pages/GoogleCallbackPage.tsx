@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext.tsx'
+import { useAuth } from '../context/useAuth.ts'
 
 function GoogleCallbackPage() {
   const { completeGoogleLogin } = useAuth()

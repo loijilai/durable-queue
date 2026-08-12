@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef, useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import {
   login as loginRequest,
   refreshAccessToken as refreshAccessTokenRequest,
@@ -15,21 +15,8 @@ import {
   getRefreshToken,
   clearTokens,
   decodeJwtPayload,
-  type JwtPayload,
 } from '../lib/authStorage.ts'
-
-interface AuthContextValue {
-  accessToken: string | null
-  user: JwtPayload | null
-  login: (credentials: LoginCredentials) => Promise<void>
-  register: (fields: RegisterFields) => Promise<void>
-  completeGoogleLogin: (tokens: TokenPair) => void
-  logout: () => void
-  refreshAccessToken: () => Promise<string>
-  authedFetch: <T>(fn: (token: string) => Promise<T>) => Promise<T>
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
+import { AuthContext, type AuthContextValue } from './authContext.ts'
 
 function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(() => getAccessToken())
@@ -111,12 +98,4 @@ function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return ctx
-}
-
-export { AuthProvider, useAuth }
+export { AuthProvider }

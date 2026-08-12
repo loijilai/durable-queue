@@ -21,17 +21,17 @@ and repository-knowledge boundaries as actionable checks.
 
 - [x] `./scripts/verify.sh quick` bootstraps dependencies and runs all checks that
   do not require a database or Docker daemon.
-- [ ] `./scripts/verify.sh full` provisions an isolated local PostgreSQL service,
+- [x] `./scripts/verify.sh full` provisions an isolated local PostgreSQL service,
   runs all application and infrastructure checks, builds the backend image, and
   cleans up on success or failure.
-- [ ] CI invokes the full harness while preserving the existing job IDs and
+- [x] CI invokes the full harness while preserving the existing job IDs and
   deployment behavior.
-- [ ] Architecture and repository-contract violations fail with file, line,
+- [x] Architecture and repository-contract violations fail with file, line,
   invariant, remediation, and rerun guidance.
-- [ ] The custom checkers have unit coverage for allowed and forbidden cases.
-- [ ] Frontend lint passes with zero warnings and generated TypeScript build info
+- [x] The custom checkers have unit coverage for allowed and forbidden cases.
+- [x] Frontend lint passes with zero warnings and generated TypeScript build info
   no longer dirties the worktree.
-- [ ] Agent, architecture, and startup documentation describe the current
+- [x] Agent, architecture, and startup documentation describe the current
   verification contract and enforced boundaries.
 
 ## Out of scope
@@ -45,10 +45,10 @@ and repository-knowledge boundaries as actionable checks.
 
 - [x] Add dependency bootstrap, quick/full orchestration, and isolated PostgreSQL
   Compose support.
-- [ ] Add architecture and repository-contract checkers with unit tests.
-- [ ] Refactor frontend module boundaries and enforce zero lint warnings.
-- [ ] Route CI through the full harness while preserving existing job IDs.
-- [ ] Update repository documentation and run quick/full verification.
+- [x] Add architecture and repository-contract checkers with unit tests.
+- [x] Refactor frontend module boundaries and enforce zero lint warnings.
+- [x] Route CI through the full harness while preserving existing job IDs.
+- [x] Update repository documentation and run quick/full verification.
 - [ ] Record checkpoint commits and archive this plan.
 
 ## Progress
@@ -58,10 +58,16 @@ and repository-knowledge boundaries as actionable checks.
 - 2026-08-12: Added a Bash 3.2-compatible quick/full harness, dependency hash
   stamps, Compose-command compatibility, isolated PostgreSQL lifecycle, and
   worktree-safe handling of TypeScript build metadata. Quick verification passes.
+- 2026-08-12: Added AST dependency/lifecycle enforcement and repository knowledge
+  checks with 12 focused tests; refactored Fast Refresh module boundaries and
+  established zero-warning frontend lint.
+- 2026-08-12: Routed the existing CI test job through full verification, updated
+  current documentation, and verified both local-container and external-database
+  full modes end to end.
 
 ## Checkpoint commits
 
-- None yet.
+- `915465e` — self-bootstrapping quick/full harness and isolated PostgreSQL lifecycle.
 
 ## Decision log
 
@@ -80,6 +86,9 @@ and repository-knowledge boundaries as actionable checks.
   daemon is not running. Quick verification must remain usable in that state.
 - Tracked TypeScript build-info files are generated output and must be removed
   from version control before build verification becomes worktree-safe.
+- Running Django's default test discovery from the repository root discovered
+  the 12 checker tests instead of the 36 `jobs` tests. The harness now names the
+  `jobs` test label explicitly so its working directory cannot change coverage.
 
 ## Verification results
 
@@ -89,6 +98,15 @@ and repository-knowledge boundaries as actionable checks.
   unavailable.
 - `./scripts/verify.sh quick`: passed after the first dependency bootstrap; the
   two known Fast Refresh warnings remain until the Phase 2 frontend cleanup.
+- `./scripts/verify.sh quick`: passed with 12 checker tests and zero lint warnings
+  after the Phase 2 cleanup.
+- `./scripts/verify.sh full`: passed with 36 Django tests, no migration drift,
+  frontend build, validation of all three Terraform roots, backend image build,
+  and successful cleanup of the temporary database resources.
+- External-database full mode: passed against a separately managed PostgreSQL 16
+  container and left its lifecycle to the caller as intended for CI.
+- CI workflow YAML parse: passed; the real GitHub-hosted run remains post-push
+  evidence and is not available in this local-only task.
 
 ## Handoff
 

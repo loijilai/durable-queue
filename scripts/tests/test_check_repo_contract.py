@@ -1,0 +1,95 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest import TestCase
+
+from scripts.check_repo_contract import (
+    check_diagram_assets,
+    check_markdown_links,
+    check_plan_statuses,
+    check_product_spec_index,
+)
+
+
+class RepositoryContractCheckerTests(TestCase):
+    def test_broken_markdown_link_is_rejected(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            document = root / "README.md"
+            document.write_text("[missing](docs/missing.md)\n", encoding="utf-8")
+
+            violations = check_markdown_links(root, [document])
+
+        self.assertEqual([violation.code for violation in violations], ["REPO001"])
+        self.assertEqual(violations[0].line, 1)
+
+    def test_plan_status_must_match_directory(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            active = root / "docs" / "exec-plans" / "active"
+            completed = root / "docs" / "exec-plans" / "completed"
+            active.mkdir(parents=True)
+            completed.mkdir(parents=True)
+            (active / "wrong.md").write_text("- Status: completed\n", encoding="utf-8")
+
+            violations = check_plan_statuses(root)
+
+        self.assertEqual([violation.code for violation in violations], ["REPO002"])
+
+    def test_unindexed_product_spec_is_rejected(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            specs = root / "docs" / "product-specs"
+            specs.mkdir(parents=True)
+            (specs / "README.md").write_text("# Product specs\n", encoding="utf-8")
+            (specs / "new-feature.md").write_text("# New feature\n", encoding="utf-8")
+
+            violations = check_product_spec_index(root)
+
+        self.assertEqual([violation.code for violation in violations], ["REPO003"])
+
+    def test_missing_diagram_asset_is_rejected(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "docs" / "diagrams"
+            manifest.mkdir(parents=True)
+            (manifest / "README.md").write_text("# Diagrams\n", encoding="utf-8")
+
+            violations = check_diagram_assets(root, ("docs/diagrams/source.drawio",))
+
+        self.assertEqual([violation.code for violation in violations], ["REPO004"])
+
+    def test_valid_contract_fragments_pass(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            document = root / "README.md"
+            target = root / "docs" / "current.md"
+            target.parent.mkdir()
+            target.write_text("# Current\n", encoding="utf-8")
+            document.write_text("[current](docs/current.md)\n", encoding="utf-8")
+
+            active = root / "docs" / "exec-plans" / "active"
+            completed = root / "docs" / "exec-plans" / "completed"
+            active.mkdir(parents=True)
+            completed.mkdir(parents=True)
+            (active / "work.md").write_text("- Status: active\n", encoding="utf-8")
+            (completed / "done.md").write_text("- Status: completed\n", encoding="utf-8")
+
+            specs = root / "docs" / "product-specs"
+            specs.mkdir()
+            (specs / "feature.md").write_text("# Feature\n", encoding="utf-8")
+            (specs / "README.md").write_text("[feature](feature.md)\n", encoding="utf-8")
+
+            diagram_dir = root / "docs" / "diagrams"
+            diagram_dir.mkdir()
+            (diagram_dir / "README.md").write_text("# Diagrams\n", encoding="utf-8")
+            asset = diagram_dir / "source.drawio"
+            asset.write_text("diagram", encoding="utf-8")
+
+            violations = [
+                *check_markdown_links(root, [document]),
+                *check_plan_statuses(root),
+                *check_product_spec_index(root),
+                *check_diagram_assets(root, ("docs/diagrams/source.drawio",)),
+            ]
+
+        self.assertEqual(violations, [])

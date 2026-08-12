@@ -19,6 +19,7 @@ A distributed system built to answer one question : **how to make sure a job tha
     - [3. Scalability: two independent scaling axes](#3-scalability-two-independent-scaling-axes)
     - [4. Security: authorization vs. reachability](#4-security-authorization-vs-reachability)
   - [Deployment pipeline](#deployment-pipeline)
+  - [Verification](#verification)
   - [Tech stack](#tech-stack)
   - [Running locally](#running-locally)
 
@@ -96,6 +97,20 @@ Auth itself (JWT + Google OAuth from the [Requirements](#requirements)) follows 
 `git push` → Django tests run against a real Postgres service container → a single Docker image is built and pushed, tagged by commit SHA → Terraform applies the declared infrastructure → an EC2 **instance refresh** replaces the API fleet while keeping at least half of target capacity healthy throughout, so deploys are zero-downtime by construction rather than by luck.
 
 Defined in [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml); infrastructure lives in [`infra/`](infra).
+
+## Verification
+
+The repository has one verification interface for local agents and CI:
+
+```bash
+./scripts/verify.sh quick  # no database or running Docker daemon required
+./scripts/verify.sh full   # isolated PostgreSQL, all tests, builds, and Terraform validation
+```
+
+The first run creates `.venv` and installs the locked frontend dependencies.
+Later runs reuse them until `requirements.txt` or `package-lock.json` changes.
+Python 3.13, Node.js 22, Terraform 1.5+, Docker, and Docker Compose must be
+installed; the Docker daemon only needs to be running for `full`.
 
 ## Tech stack
 
