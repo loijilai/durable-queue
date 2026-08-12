@@ -78,12 +78,25 @@ class Violation:
 
 def tracked_markdown(root: Path) -> list[Path]:
     result = subprocess.run(
-        ["git", "-C", str(root), "ls-files", "*.md"],
+        [
+            "git",
+            "-C",
+            str(root),
+            "ls-files",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+            "*.md",
+        ],
         check=True,
         capture_output=True,
         text=True,
     )
-    return [root / line for line in result.stdout.splitlines() if line]
+    return sorted(
+        path
+        for line in result.stdout.splitlines()
+        if line and (path := root / line).exists()
+    )
 
 
 def check_markdown_links(root: Path, paths: list[Path]) -> list[Violation]:

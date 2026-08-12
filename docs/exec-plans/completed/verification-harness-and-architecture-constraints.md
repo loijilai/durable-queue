@@ -1,6 +1,6 @@
 # Verification harness and architecture constraints
 
-- Status: active
+- Status: completed
 - Started: 2026-08-12
 - Updated: 2026-08-12
 
@@ -49,7 +49,7 @@ and repository-knowledge boundaries as actionable checks.
 - [x] Refactor frontend module boundaries and enforce zero lint warnings.
 - [x] Route CI through the full harness while preserving existing job IDs.
 - [x] Update repository documentation and run quick/full verification.
-- [ ] Record checkpoint commits and archive this plan.
+- [x] Record checkpoint commits and archive this plan.
 
 ## Progress
 
@@ -68,6 +68,8 @@ and repository-knowledge boundaries as actionable checks.
 ## Checkpoint commits
 
 - `915465e` — self-bootstrapping quick/full harness and isolated PostgreSQL lifecycle.
+- `b6c7605` — architecture/repository enforcement, CI integration, frontend cleanup,
+  and current documentation.
 
 ## Decision log
 
@@ -110,5 +112,6 @@ and repository-knowledge boundaries as actionable checks.
 
 ## Handoff
 
-Implement the unified verification harness first, then checkpoint the verified
-milestone before adding structural constraints and CI integration.
+Phase 1 and Phase 2 are complete. Use `./scripts/verify.sh quick` during agent
+loops and `./scripts/verify.sh full` before handoff. The next product task may
+create its own active execution plan from the ready real-transcription spec.

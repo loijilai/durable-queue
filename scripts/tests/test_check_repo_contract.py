@@ -1,4 +1,5 @@
 from pathlib import Path
+import subprocess
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
@@ -7,10 +8,26 @@ from scripts.check_repo_contract import (
     check_markdown_links,
     check_plan_statuses,
     check_product_spec_index,
+    tracked_markdown,
 )
 
 
 class RepositoryContractCheckerTests(TestCase):
+    def test_markdown_discovery_uses_current_worktree_paths(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            old = root / "old.md"
+            old.write_text("# Old\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "old.md"], check=True)
+            old.unlink()
+            current = root / "current.md"
+            current.write_text("# Current\n", encoding="utf-8")
+
+            paths = tracked_markdown(root)
+
+        self.assertEqual([path.name for path in paths], ["current.md"])
+
     def test_broken_markdown_link_is_rejected(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
