@@ -78,6 +78,20 @@ behavior, schema, architecture, infrastructure, or more than one subsystem.
 Completed plans are historical evidence and must not be edited to represent
 current behavior.
 
+### Commit messages
+
+Use Conventional Commit-style subjects:
+
+```text
+<type>: <imperative summary>
+```
+
+Allowed types are `feat`, `fix`, `test`, `docs`, `refactor`, `chore`, and `ci`.
+Describe the intent of the checkpoint in the imperative mood, keep the subject
+concise, and do not use vague messages such as `update files` or `work in
+progress`. Add a body only when the reason, trade-off, or verification context
+will help a future agent.
+
 ## Documentation freshness
 
 - Behavior, schema, architecture, and operations changes include documentation
