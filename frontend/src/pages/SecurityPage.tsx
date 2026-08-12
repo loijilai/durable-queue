@@ -38,8 +38,8 @@ const LAYERS: Layer[] = [
 // ── ① INFRA：一張拓撲圖、三個鏡頭 ──────────────────────────────────
 // 三個子題（subnet 隔離 / SG 鏈 / HTTPS）是同一張圖的三個切面，不拆成
 // 三張卡——要讓人帶走的是「這是同一個防禦姿態的三個面向」。
-// 圖源 docs/6-security-topology.drawio 的 master 頁（幾何的單一真相來源）。
-// 改圖：在 draw.io 編輯 master → 存檔 → python3 docs/6-security-topology.build.py
+// 圖源 docs/diagrams/sources/security-topology.drawio 的 master 頁。
+// 改圖後執行 python3 tools/diagrams/build_security_topology.py --export。
 // --export，它會重算三個鏡頭頁並覆寫下面這三張 SVG。
 interface Lens {
   id: string;
@@ -52,21 +52,21 @@ const TOPOLOGY_LENSES: Lens[] = [
   {
     id: "network",
     tab: "Network boundary",
-    src: "/sec-topology-network.svg",
+    src: "/diagrams/sec-topology-network.svg",
     caption:
       "The public subnets hold only the ALB and the NAT gateway. Every compute and data node lives in a private subnet with no public IP — and no security group anywhere opens :22. The admin plane is SSM Session Manager, so there is no bastion and no SSH surface to attack.",
   },
   {
     id: "sg",
     tab: "SG authorization chain",
-    src: "/sec-topology-sg.svg",
+    src: "/diagrams/sec-topology-sg.svg",
     caption:
       "Each hop authorizes the security group upstream of it rather than a CIDR block, so the boundary follows the resource instead of its IP — instances can scale out or move AZ without a rule change. The worker has zero ingress at all: it is a client that pulls work.",
   },
   {
     id: "tls",
     tab: "Encryption boundary",
-    src: "/sec-topology-tls.svg",
+    src: "/diagrams/sec-topology-tls.svg",
     caption:
       "TLS terminates at the ALB against an ACM certificate; :80 exists only to 301 clients up to :443. Inside the VPC traffic is plaintext — a deliberate trade-off that leans on the two boundaries above.",
   },
@@ -76,41 +76,41 @@ const TOPOLOGY_LENSES: Lens[] = [
 // 跟 ① 的差別是維度：① 是空間（同一張拓撲的三個切面，彼此平行），
 // ② 是時間（同一條管線的五個先後步驟）。畫面以右側 next overlay 依序推進，
 // 第五步再前進會回到第一步。
-// 圖源 docs/7-deploy-pipeline.drawio 的 master 頁（幾何的單一真相來源）。
-// 改圖：編輯 master → python3 docs/7-deploy-pipeline.build.py --export。
+// 圖源 docs/diagrams/sources/deploy-pipeline.drawio 的 master 頁。
+// 改圖後執行 python3 tools/diagrams/build_deploy_pipeline.py --export。
 const PIPELINE_LENSES: Lens[] = [
   {
     id: "seed",
     tab: "1",
-    src: "/sec-pipeline-1-seed.svg",
+    src: "/diagrams/sec-pipeline-1-seed.svg",
     caption:
       "The only plaintext copy of the app secrets sits in a local .env file. One manual put-secret-value writes it into Secrets Manager — it never enters the repository, and it never travels down the pipeline in the steps that follow.",
   },
   {
     id: "identity",
     tab: "2",
-    src: "/sec-pipeline-2-identity.svg",
+    src: "/diagrams/sec-pipeline-2-identity.svg",
     caption:
       "The runner holds no AWS key. It presents a GitHub OIDC id_token and STS hands back credentials that expire with the job — so there is nothing in the repository to leak, and nothing to rotate. The role it lands in is least-privilege, with iam:PassRole pinned to a single role ARN.",
   },
   {
     id: "image",
     tab: "3",
-    src: "/sec-pipeline-3-image.svg",
+    src: "/diagrams/sec-pipeline-3-image.svg",
     caption:
       "Those credentials push one artifact, tagged with the commit SHA. The thing that ships is addressable back to the commit that was tested, and a redeploy of the same SHA is the same bytes.",
   },
   {
     id: "state",
     tab: "4",
-    src: "/sec-pipeline-4-state.svg",
+    src: "/diagrams/sec-pipeline-4-state.svg",
     caption:
       "The same credentials read and write Terraform's state, which records real infrastructure and resolved secret ARNs. That makes the bucket a secret in its own right: encrypted at rest, versioned, and blocked from public access.",
   },
   {
     id: "boot",
     tab: "5",
-    src: "/sec-pipeline-5-boot.svg",
+    src: "/diagrams/sec-pipeline-5-boot.svg",
     caption:
       "The instance refresh replaces the machine, and the new one authenticates as itself. Its instance profile pulls that same commit SHA and fetches the secrets, which land as environment variables inside the container and nowhere else.",
   },

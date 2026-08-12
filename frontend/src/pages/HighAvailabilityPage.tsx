@@ -635,7 +635,7 @@ function HighAvailabilityPage() {
 
       {zoomed && (
         <DiagramLightbox
-          imageSrc="/aws-infra.svg"
+          imageSrc="/diagrams/aws-infra.svg"
           label={DIAGRAM_LABEL}
           onClose={() => setZoomed(false)}
         />

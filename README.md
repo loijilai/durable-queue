@@ -43,7 +43,7 @@ A distributed system built to answer one question : **how to make sure a job tha
 
 ## Architecture
 
-![AWS infrastructure diagram](readme-diagram/aws-infra.svg)
+![AWS infrastructure diagram](frontend/public/diagrams/aws-infra.svg)
 
 - **Route53 + ACM** terminate TLS on a public **ALB**, which fronts two independently-scaling **EC2 Auto Scaling Groups** in private subnets.
 - **RDS Postgres** is the durable source of truth for job state. **ElastiCache Redis** is only the Celery broker + result backend.
@@ -57,7 +57,7 @@ An unacked job doesn't vanish with its worker — Redis re-delivers it to anothe
 
 | Normal dispatch → crash → re-dispatch                                                          | Visibility-timeout mechanics                                                                                       |
 | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| ![Worker A dies mid-job, Redis re-dispatches to Worker B](readme-diagram/2-worker-failure.png) | ![Redis holds the job invisible until ACK or timeout, then re-delivers](readme-diagram/2-1-visibility-timeout.png) |
+| ![Worker A dies mid-job, Redis re-dispatches to Worker B](docs/diagrams/rendered/2-worker-failure.png) | ![Redis holds the job invisible until ACK or timeout, then re-delivers](docs/diagrams/rendered/2-1-visibility-timeout.png) |
 
 ### 2. Concurrency: what the lock actually protects
 
@@ -65,13 +65,13 @@ Redis alone only guarantees _delivery_, not _exclusivity_ — after a re-deliver
 
 | The race                                                                                                                  | `SELECT ... FOR UPDATE` closes it                                                                                                           |
 | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| ![Two workers both processing the same re-delivered job, racing to update the row](readme-diagram/3-1-race-condition.png) | ![Worker B's SELECT blocks until Worker A commits, then reads the post-commit status and aborts](readme-diagram/4-sequence-concurrency.png) |
+| ![Two workers both processing the same re-delivered job, racing to update the row](docs/diagrams/rendered/3-1-race-condition.png) | ![Worker B's SELECT blocks until Worker A commits, then reads the post-commit status and aborts](docs/diagrams/rendered/4-sequence-concurrency.png) |
 
 ### 3. Scalability: two independent scaling axes
 
 The queue decouples the API tier from the worker pool, so each scales on its own signal — HTTP concurrency for the API, queue depth for workers — which only works because the API is stateless (JWT, not session cookies).
 
-![Both the API pool and the worker pool scale 2 → N independently through the Redis queue](readme-diagram/5-scale-out.png)
+![Both the API pool and the worker pool scale 2 → N independently through the Redis queue](docs/diagrams/rendered/5-scale-out.png)
 
 ### 4. Security: authorization vs. reachability
 
@@ -79,17 +79,17 @@ The queue decouples the API tier from the worker pool, so each scales on its own
 
 | Network reachability                                                                                        | Security-group authorization chain                                                                          |
 | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| ![Private subnets reach the internet only outbound, via NAT + IGW](readme-diagram/sec-topology-network.svg) | ![SGs reference SGs — ALB → EC2 → {RDS, ElastiCache}, never a raw CIDR](readme-diagram/sec-topology-sg.svg) |
+| ![Private subnets reach the internet only outbound, via NAT + IGW](frontend/public/diagrams/sec-topology-network.svg) | ![SGs reference SGs — ALB → EC2 → {RDS, ElastiCache}, never a raw CIDR](frontend/public/diagrams/sec-topology-sg.svg) |
 
 CI/CD identity and secrets follow the same discipline — no long-lived credentials, no plaintext at rest:
 
 | GitHub OIDC → short-lived AWS credentials                                                                                    | Bootstrap vs. app-infra state split                                                                                         |
 | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| ![GitHub Actions trades a workflow claim for temporary AWS credentials via OIDC](readme-diagram/sec-pipeline-2-identity.svg) | ![Permanent IAM/bootstrap state kept separate from the day-to-day app-infra state](readme-diagram/sec-pipeline-4-state.svg) |
+| ![GitHub Actions trades a workflow claim for temporary AWS credentials via OIDC](frontend/public/diagrams/sec-pipeline-2-identity.svg) | ![Permanent IAM/bootstrap state kept separate from the day-to-day app-infra state](frontend/public/diagrams/sec-pipeline-4-state.svg) |
 
 Auth itself (JWT + Google OAuth from the [Requirements](#requirements)) follows the standard OIDC authorization-code flow — front-channel redirect to Google, back-channel code-for-token exchange, then the app mints its own short-lived JWT:
 
-![Google OIDC authorization-code login sequence, ending in an app-issued JWT](readme-diagram/auth-sequence-google-oidc.png)
+![Google OIDC authorization-code login sequence, ending in an app-issued JWT](docs/diagrams/rendered/auth-sequence-google-oidc.png)
 
 ## Deployment pipeline
 

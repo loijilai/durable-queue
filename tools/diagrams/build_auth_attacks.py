@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Derive the three attack lenses of the security page from the login sequence.
 
-    python3 docs/8-auth-attacks.build.py
+    python3 tools/diagrams/build_auth_attacks.py
 
-Same contract as 6-security-topology.build.py / 7-deploy-pipeline.build.py:
+Same contract as the other generators in tools/diagrams:
 
     frontend/src/assets/diagrams/auth-sequence-google-oidc.excalidraw
                                                 owns the GEOMETRY
@@ -41,7 +41,7 @@ import json
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
+ROOT = os.path.dirname(os.path.dirname(HERE))
 SCENE_DIR = os.path.join(ROOT, "frontend", "src", "assets", "diagrams")
 BASE = os.path.join(SCENE_DIR, "auth-sequence-google-oidc.excalidraw")
 

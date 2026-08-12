@@ -38,7 +38,7 @@ export const raceIdempotencyScene = sequenceConcurrency
 export const authSequenceScene = authSequenceGoogleOidc
 
 // Security page § APP — the same login sequence ghosted down to one attack at a
-// time. Derived from the scene above by docs/8-auth-attacks.build.py, so they
+// time. Derived by tools/diagrams/build_auth_attacks.py, so they
 // cannot drift from it; never hand-edit the three files.
 export const AUTH_ATTACK_SCENES = {
   state: authAttackState,

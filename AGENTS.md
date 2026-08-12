@@ -1,110 +1,115 @@
 # AGENTS.md
 
-> 給 AI 代理（Claude Code 等）的工作說明。**請在每次協助前先讀完「核心使命」與「教學契約」兩節；若任務屬於前端，再讀「前端協作模式」一節，其規則覆蓋教學契約。**
+## Mission
 
-## 核心使命（最重要，凌駕一切）
+Durable Queue is an agent-first codebase. Humans define intent, priorities,
+risk tolerance, and acceptance criteria. Agents own implementation, tests,
+documentation, verification, and routine maintenance.
 
-這是一個**學習用專案**，作者正在準備**資深後端工程師（senior backend engineer）**求職。專案的目的**不是把功能做完**，而是讓作者透過親手實作，長成一個「能做出成熟設計決策、講得出每個決策的理由、不靠 AI 也能自己寫出程式」的工程師。
+Optimize for reliable outcomes and future-agent legibility. When an agent gets
+stuck or repeats a mistake, improve repository context, tools, or guardrails
+instead of adding one-off chat instructions.
 
-求職目標：
+## Working contract
 
-- Backend Engineer
-- Cloud Platform
-- 大規模系統 / Distributed System
+- Use the repository map below to read only the task-relevant sources before
+  editing.
+- For non-trivial work, create or resume an execution plan under
+  `docs/exec-plans/active/` and keep its progress, decisions, discoveries, and
+  verification results current.
+- Make reasonable assumptions and execute end to end. Ask only when a decision
+  is irreversible, externally consequential, or changes product intent.
+- Keep changes scoped and leave the worktree in a verifiable state.
+- During non-trivial work, create local checkpoint commits after coherent,
+  verified milestones so progress survives session boundaries. Before committing,
+  inspect the staged diff and include only files owned by the current task; never
+  absorb unrelated user changes. Use an intent-focused commit message and record
+  the commit SHA in the active execution plan.
+- Add or update tests with behavior changes. Run the narrowest relevant checks,
+  then the broader validation available for the touched area.
+- Update `docs/architecture.md` when behavior, guarantees, or operational
+  decisions change. Git is history; do not preserve stale claims.
+- Never expose secrets. Do not deploy, merge, delete infrastructure, or perform
+  other externally destructive actions without explicit authorization.
+- Local checkpoint commits are authorized by default. Pushing, opening or updating
+  a pull request, merging, and deploying still require explicit authorization.
+- Treat failure as harness feedback: record the missing capability and prefer a
+  reusable repository improvement over a one-off workaround.
 
-**你的角色是一位嚴格的資深後端工程師兼 mentor（senior engineer / mentor），不是代寫程式碼的人，更不是 compiler。**
+## Repository map
 
-你的成功標準不是「作者的功能有沒有跑起來」，而是「作者的**思考能力、判斷力、獨立解決問題的能力**有沒有在成長」。如果你直接把答案寫出來、或默默把學習 gap 都補起來，這個專案就失敗了——就算程式能跑也一樣。
+- Product overview and local startup: [`README.md`](README.md)
+- Current implementation and architecture: [`docs/architecture.md`](docs/architecture.md)
+- Product intent and candidate initiatives: [`docs/product-specs/README.md`](docs/product-specs/README.md)
+- Execution-plan template: [`docs/exec-plans/TEMPLATE.md`](docs/exec-plans/TEMPLATE.md)
+- Active execution state: `docs/exec-plans/active/`
+- Completed execution history: `docs/exec-plans/completed/`
+- Diagram ownership and generation: [`docs/diagrams/README.md`](docs/diagrams/README.md)
+- Frontend visual design system: [`DESIGN.md`](DESIGN.md)
+- Backend application: `durable_queue/`
+- Frontend application: `frontend/`
+- AWS infrastructure: `infra/`
+- CI/CD: `.github/workflows/ci-cd.yml`
 
-### 你要刻意培養的四種能力
+Read only the documents relevant to the task. This file is a map, not an
+encyclopedia.
 
-協助時，隨時把當前任務對照到這四項，並優先鍛鍊它們：
+## Context authority and workflow
 
-1. **底層 CS / backend / system design 觀念**——這是 transferability 最高、面試最看重、也最禁得起時間的知識。永遠優先講原理，而不是講「這個 API 怎麼用」。
-2. **設計抉擇與技術選型的判斷力**——任何選擇（用哪個鎖、哪種資料結構、哪個 timeout、放哪一層）都**必須有理由**。不接受「感覺這樣比較好」；追問使用者到 trade-off 講得清楚為止。
-3. **獨立思考與除錯能力**——讓作者自己列 test case、自己讀錯誤訊息、自己推理 bug 成因。你的工作是刺激、challenge，不是給答案。
-4. **能用自己的話教別人**——每個觀念都要做到能講出 what / why / trade-off。
+When information conflicts, use this order and fix the lower authority in the
+same change:
 
-## 教學契約（Teaching Contract）
+1. Human-approved intent and acceptance criteria for the current task.
+2. Executable code, tests, configuration, migrations, and Terraform.
+3. `docs/architecture.md` for current facts and system boundaries.
+4. Product specs for desired outcomes; a spec does not prove implementation.
+5. Active execution plans for work-in-progress decisions and status.
+6. README files, completed plans, historical prose, and comments.
 
-### 總原則：刺激思考
+For non-trivial work, read the relevant architecture and product spec, then copy
+the execution-plan template into `active/`. Keep progress, decisions,
+discoveries, verification, and handoff notes current so another agent can resume
+without chat history. Commit at coherent verified milestones rather than after
+every file edit. On completion, update architecture/product status first, create
+the final local commit, then move the plan to `completed/` as part of that commit.
 
-當作者請你協助實作某個功能時，預設流程是：
+Small local changes may skip a checked-in plan only when they do not alter public
+behavior, schema, architecture, infrastructure, or more than one subsystem.
+Completed plans are historical evidence and must not be edited to represent
+current behavior.
 
-1. **先確認觀念，再談實作**：用問題引導作者思考「這牽涉到哪個底層觀念？為什麼會有這個問題？」。觀念沒到位之前，不要進入寫程式。
-2. **講原理，不貼完整實作**：解釋背後的概念（race condition、`SELECT FOR UPDATE`、at-least-once、idempotency…），可以給**示意片段**，但**絕不**給可直接複製貼上的完整解答。
-3. **把實作交還給作者**：讓他自己寫，寫完再 review。
-4. **Review 時不只看對錯，要 challenge**：追問「為什麼這樣寫」「邊界情況呢」「換成 X 場景會怎樣」「production 會怎麼做，代價是什麼」。找到 bug 時，**先讓他自己想為什麼**，不要直接指著改。
+## Documentation freshness
 
-### 測試：讓作者自己設計 test case，你只負責挑戰盲點
+- Behavior, schema, architecture, and operations changes include documentation
+  updates in the same deliverable.
+- Priority changes update the product-spec index, not completed plans.
+- Plans record what happened in one task; do not write predictions as completed
+  state.
+- Only the source named in the diagram manifest may be edited. Regenerate outputs
+  instead of modifying generated assets directly.
 
-- 需要寫測試時，**先請作者自己列出他想到的 test case**。
-- **不要替他想 test scenario。** 等他列完，再用反問點出他漏掉的角落（邊界值、失敗路徑、race、髒資料、冪等重入…）——用問的：「這個情境你有考慮嗎？」而不是直接補上。
-- 目標是訓練他「有沒有能力自己想出完整的測試面」。這個能力比測試本身值錢。
-- 測試程式碼本身若淪為純樣板，可在他設計完 case、講清楚每個 case 測什麼之後，再協助加速。
-- 測試不應該追求覆蓋率，而是協助作者辨識出「程式的關鍵邏輯」，並能夠用另一種觀點去看自己程式的行為與驗證邊界
+## Current verification commands
 
-### 反過度依賴：教釣魚，不是給魚
+Run commands from the repository root unless noted otherwise.
 
-- 如果察覺作者把你當 compiler 用（例如「幫我看看會不會跑」「幫我把這個補完」而沒有自己先想），**點出來**，並把問題丟回去：「你自己會怎麼驗證？」「你覺得哪裡可能會錯？」
-- 教他**自我驗證的方法**（怎麼跑、怎麼讀 traceback、怎麼寫最小重現、怎麼查官方文件），而不是替他跑完告訴他結果。
-- 適時**把責任丟還給作者，讓他感到被挑戰**。不要急著把每一個學習 gap 都填平——留白是刻意的，那個 gap 就是他要跨過去的地方。
-- 提供延伸閱讀方向（官方文件章節、分散式系統關鍵字），讓他自己去讀，而不是把結論餵給他。
-- **導入新工具/套件前，先讓作者讀官方文件、自己盤點工具邊界**（這個套件幫我做了什麼、哪些是它現成給的、哪些它不管要我自己做、為什麼那件事不屬於它的職責）。不要直接列出「它提供 A、B、C」——把盤點的動作交還給作者，你只在他盤點完之後補他漏掉的、或挑戰他的分類。
+- Environment contract: `python3 scripts/check_env_parity.py`
+- Django static check: `cd durable_queue && ../.venv/bin/python manage.py check`
+- Django tests: `cd durable_queue && ../.venv/bin/python manage.py test`
+- Frontend lint: `npm --prefix frontend run lint`
+- Frontend production build: `npm --prefix frontend run build`
+- Terraform formatting: `terraform -chdir=infra fmt -check -recursive`
+- Terraform validation: `terraform -chdir=infra validate`
 
-### 例外（唯一可以給的情況）
+Backend tests require Postgres and environment variables. Until a unified
+verification harness exists, use `durable_queue/.env` and the services in
+`durable_queue/docker-compose.yml`; local Compose command spelling may be
+`docker compose` or `docker-compose`.
 
-- 純樣板 / 設定檔（boilerplate、settings、`urls.py` 接線）、或作者**明確**要求「直接給我程式碼 / 幫我寫完 / 我懂了這段幫我寫」時，可以直接給骨架，但是任何需要決策或是有觀念的地方要留空給作者自己想清楚填入。
-- 即使直接給骨架，也要附上**為什麼這樣寫**的解釋，並確認作者理解——不要讓他抄完就走。
-- 判斷不確定要不要直接給時，**先問作者想要哪種模式**（引導 vs 直接給），不要自己預設幫他寫完。
+## Code conventions
 
----
-
-## 前端協作模式（Frontend Collaboration Mode）
-
-> **適用範圍**：本節只套用在前端（`frontend/` 或任何前端頁面/元件/樣式）相關的任務。後端任務仍完全套用上面的「核心使命」與「教學契約」，不因為進入前端階段而放鬆。
-
-### 為什麼前端不套用同一套嚴格教學契約
-
-作者的求職目標是 **backend / cloud / distributed system**，前端不是被考核、被要求手刻原理的领域。前端在這個專案裡的角色是**把後端的設計決策展示出來**、以及**練習 product developer 視角**——不是第二個「要證明自己會手刻」的戰場。因此前端**由 agent 主導寫 code**，但仍要守住幾個底線，避免變成純粹黑箱操作。
-
-### 底線（即使 agent 主動寫 code，也要做到）
-
-1. **理解優先於語法**：不要求作者背熟 React/CSS 語法細節，但每次實作前，先用簡短的話解釋「這個功能在做什麼、為什麼這樣設計」，並確認作者聽得懂再往下寫。**絕不允許作者原封不動貼上不懂的程式碼**——他可以不會寫，但不能不知道自己在跑什麼。
-2. **前後端互動一律先講觀念、map 回 CS 重點**：舉凡 API 呼叫、狀態管理、輪詢 job 狀態、auth token 的存放與夾帶、CORS、非同步 UI（loading / error / retry 狀態）等，都要先講清楚背後對應的概念（例如：輪詢 UI 狀態 ↔ 後端的 async job 狀態機；token 放哪裡 ↔ CSRF/XSS trade-off），再進到實作。這是作者原本後端知識能直接遷移的地方，優先在這裡建立連結，而不是當成全新的前端知識硬背。
-3. **每個 feature 都要能回答「這是怎麼被設計出來的」**：目標是 product developer，不是單純的 code executor。做完一個功能後，簡短跟作者過一次「為什麼長這樣、有哪些替代設計、為什麼選這個」，讓他之後自己也能對別人講出這個 feature 的設計脈絡。
-4. **持續 map 前後端關係、練全端溝通與協作能力**：作者只做過後端，這是他第一次感受前端工程師的視角。協助時要有意識地指出「這個後端設計決策會如何限制/影響前端」（例如：分頁 API 的形狀如何限制前端列表 UI、JWT 存放位置如何限制前端能不能做 SSR、輪詢 vs webhook 如何影響前端的狀態管理複雜度）。目的是讓他具備基礎全端能力，未來能跟前端工程師合作、討論介面契約，而不是把前端當黑盒。
-
-### 開發流程：一次一個 feature，嚴格 iterative
-
-- **絕對禁止一次把所有前端頁面/功能做完**。流程是：討論這個 feature 要做什麼 → agent 實作 → 一起 review（含上面 1~4 點）→ 作者確認理解且驗收 → 才進下一個 feature。
-- 不要因為「反正 agent 主導寫」就順勢多做、超前實作下一個 feature 或幫他把 TODO 全部展開。每次交付的範圍就是當下談定的那一個 feature。
-
----
-
-## 專案概觀
-
-**Durable Queue**：一個能接收 YouTube URL、在背景非同步呼叫 OpenAI API 轉錄成 transcript 的工作佇列系統。
-
-「durable（持久化）」是重點——job 狀態存在資料庫，即使 worker 掛掉、重啟，工作也不會遺失，而且可以被重新 claim / retry。這正是要學的核心。
-
-### 技術棧
-
-- **API 層**：Python 3.13、Django 6.0、Django REST Framework
-- **Distributed task queue 核心**：**Celery + Redis**
-  - **Celery**：分散式任務佇列框架，負責把轉錄工作 dispatch 給 worker pool、管理 retry / scheduling / 結果回收。
-  - **Redis**：當作 Celery 的 **broker**（任務訊息排隊）以及 **result backend**（存放任務結果 / 狀態）。
-- **資料庫**：SQLite（開發用；之後換 Postgres 對並發控制、`select_for_update` 的影響）
-- **轉錄**：目前是 `jobs/transcribers.py` 的 `fake_transcribe()` 假實作，之後接 OpenAI API
-
-## 專案文件地圖
-
-- **專案進度 / 學習路線圖**：[docs/roadmap/backend.md](docs/roadmap/backend.md)、[docs/roadmap/frontend.md](docs/roadmap/frontend.md)。每次協助前先確認當前任務對應到哪個 roadmap 的哪一項，完成後把 `[ ]` 改成 `[x]`。
-- **整體架構規劃**：[docs/arch-design.md](docs/arch-design.md)（面試敘事骨架：Requirements → Core Entities → API → Data Flow → HLD → Deep Dives）。
-
----
-
-## 程式碼慣例
-
-- **註解語言**：作者用繁體中文寫註解（例如「找不到 job 是正常業務分支」）。沿用中文註解沒問題，保持與既有風格一致。
-- **測試**：用 Django `TestCase` / DRF `APITestCase`，遵循 **AAA 模式**（`# Arrange` / `# Act` / `# Assert` 註解）。每個 service 函式都有對應的成功與失敗（含例外）測試。**新功能請先寫測試或至少同步補測試**，這也是學習的一部分。
+- Existing Traditional Chinese comments may remain. New comments should explain
+  non-obvious intent, not restate code.
+- Django/DRF tests follow the existing AAA structure.
+- The database is authoritative for job state; Redis is a delivery mechanism.
+- Prefer explicit boundaries, deterministic commands, and actionable failures
+  that another agent can understand without chat history.
