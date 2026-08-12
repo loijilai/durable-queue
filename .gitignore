@@ -41,6 +41,7 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 .hypothesis/
+*.tsbuildinfo
 
 # IDEs and editors
 .idea/
