@@ -112,7 +112,8 @@ click, and long transcripts no longer blow up card height.
 
 ## Checkpoint commits
 
-- `<sha>` — verified milestone represented by this commit.
+- `0bf625d` — all four fixes implemented, lint/build/manual browser
+  verification passed.
 
 ## Decision log
 
