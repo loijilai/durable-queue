@@ -1,6 +1,6 @@
 # Real YouTube transcription
 
-- Status: awaiting-final-review
+- Status: completed
 - Started: 2026-08-13
 - Updated: 2026-08-13
 
@@ -221,6 +221,14 @@ split into multiple sub-25MB chunks that are transcribed and concatenated.
   job outcome, raised `REAL_TRANSCRIBE_MAX_DURATION_SECONDS` default,
   extended tests, updated architecture docs. Full verification passed;
   status changed to `awaiting-final-review`.
+- 2026-08-13: While setting up local testing, found and fixed a missing
+  `ffmpeg` in the shared Docker image (`39d5f1d`) so `TRANSCRIBER=real`
+  actually works via the documented `docker compose up --build` workflow.
+- 2026-08-13: Product owner set `TRANSCRIBER=real` and a real
+  `OPENAI_API_KEY` locally, ran `docker compose up --build`, and submitted a
+  real YouTube job end to end; confirmed success. The product owner granted
+  final approval; `docs/product-specs/README.md` and `docs/architecture.md`
+  updated to reflect delivered status, and this plan archived as `completed`.
 
 ## Checkpoint commits
 
@@ -380,11 +388,18 @@ Round 2 (chunking for long videos):
   no missing migrations, frontend build, all three Terraform roots
   validated, backend Docker image build, isolated PostgreSQL cleanup.
 
+Manual end-to-end (product owner, local Docker Compose):
+
+- `TRANSCRIBER=real` with a real `OPENAI_API_KEY` via `docker compose up
+  --build`; a real YouTube URL was submitted and reached `SUCCEEDED` with a
+  persisted transcript. Confirmed by the product owner as a successful test.
+
 ## Handoff
 
-Both rounds are implemented and passed full verification. Real-adapter
-behavior (`TRANSCRIBER=real`): `yt-dlp` downloads raw audio, a single
-`ffmpeg` pass re-encodes it to 64kbps mono and splits it into
+Both rounds are implemented, fully verified (automated), and manually
+verified end to end locally by the product owner. Real-adapter behavior
+(`TRANSCRIBER=real`): `yt-dlp` downloads raw audio, a single `ffmpeg` pass
+re-encodes it to 64kbps mono and splits it into
 `REAL_TRANSCRIBE_CHUNK_SECONDS`-long chunks, each chunk is transcribed via
 OpenAI with bounded in-process retry on retryable failures, chunk
 transcripts are concatenated in order, and the whole job fails
@@ -392,6 +407,7 @@ all-or-nothing on any chunk's permanent failure or exhausted retries. The
 fake adapter and its existing tests are unchanged. The idempotency-window
 decision (Option A — accept and document) and the chunking design (axis
 1: chunk-level retry, axis 2: all-or-nothing) are recorded in the Decision
-log and in `docs/architecture.md`. Round 1 is committed as `3d04b44`; round
-2 is staged and ready for a checkpoint commit. Awaiting explicit final
-product-owner approval before moving this plan to `completed/`.
+log and in `docs/architecture.md`. Final approval received; this plan is
+archived as `completed`. Future work on this surface (e.g. exactly-once
+execution, production deployment of the real adapter) should start a new
+execution plan rather than reopen this one.

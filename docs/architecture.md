@@ -246,6 +246,5 @@ including production (`infra/compute.tf`).
 
 Planned work is intentionally not described as current architecture. See:
 
-- [Real transcription](product-specs/real-transcription.md)
 - [Kubernetes and SQS](product-specs/kubernetes-sqs.md)
 - [Production observability](product-specs/production-observability.md)
