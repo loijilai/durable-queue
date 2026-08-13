@@ -16,7 +16,7 @@ and the current architecture document agree.
 
 | Status | Initiative | Source |
 | --- | --- | --- |
-| ready | Real YouTube transcription | [`real-transcription.md`](real-transcription.md) |
+| delivered | Real YouTube transcription | [`real-transcription.md`](real-transcription.md) |
 | proposed | Kubernetes and SQS migration | [`kubernetes-sqs.md`](kubernetes-sqs.md) |
 | proposed | Production observability | [`production-observability.md`](production-observability.md) |
 | delivered | Durable Celery/Postgres job lifecycle | [`../architecture.md`](../architecture.md) |
@@ -25,8 +25,11 @@ and the current architecture document agree.
 | delivered | AWS v1 and OIDC CI/CD | [`../architecture.md`](../architecture.md) |
 
 Priority is expressed by a human changing this index, not by the age or ordering
-of a historical roadmap. The real-transcription spec is `ready` because it was
-selected as the first product task after the agent-first context phase.
+of a historical roadmap. The real-transcription spec was the first product
+task selected after the agent-first context phase, and is now `delivered`:
+`docs/architecture.md`'s "Real transcriber (local opt-in)" section and
+`durable_queue/jobs/transcribers.py` implement it, and the product owner
+verified a real job locally end to end.
 
 ## Roadmap migration ledger
 

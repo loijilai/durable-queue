@@ -3,7 +3,7 @@
 Status: current repository architecture. Future work is explicitly labeled and
 lives under [`product-specs/`](product-specs/).
 
-Last verified from the repository: 2026-08-12.
+Last verified from the repository: 2026-08-13.
 
 ## Problem and guarantees
 
@@ -39,8 +39,9 @@ Not guaranteed today:
 | React SPA | `frontend/src/` | Authentication and interactive system-design demo |
 | AWS infrastructure | `infra/` | Network, compute, stateful services, TLS/DNS, IAM, and deployment inputs |
 
-The current backend has 36 Django tests covering API, authorization, OAuth,
-serializer, service, task, and PostgreSQL row-lock concurrency behavior. The
+The current backend has 64 Django tests covering API, authorization, OAuth,
+serializer, service, task, real-transcriber chunking/error mapping/cleanup,
+and PostgreSQL row-lock concurrency behavior. The
 frontend contains the delivered authentication, queue, durability, HA,
 scalability, and security demo surfaces.
 
@@ -79,8 +80,11 @@ production architecture scan.
    `execute_job.delay(job_id)`, and returns the job representation.
 3. A Celery worker receives the delivery and calls `mark_running()` inside a
    database transaction. The worker identity is appended to `worker_attempts`.
-4. The configured transcriber runs. The fake adapter is the current implemented
-   path; the real adapter raises `NotImplementedError`.
+4. The configured transcriber runs. `TRANSCRIBER=fake` (the default) sleeps and
+   returns fixed text. `TRANSCRIBER=real` downloads audio with `yt-dlp` and
+   transcribes it through the OpenAI transcription API; it is a local opt-in
+   path only — production infrastructure still deploys `TRANSCRIBER=fake`
+   (`infra/compute.tf`).
 5. The task writes `SUCCEEDED` plus transcript or, after exhausted retry/failure,
    `FAILED` plus error through the service boundary.
 6. The SPA polls the owner-scoped API until it observes a terminal database state.
@@ -100,8 +104,19 @@ itself would serialize updates but could still allow a decision based on stale d
 ![Serialized state transitions](diagrams/rendered/4-sequence-concurrency.png)
 
 At-least-once delivery leaves an execution-layer window: an external side effect
-can complete before the database result is committed. This is accepted for the
-fake adapter and must be revisited by the real-transcription product spec.
+can complete before the database result is committed. For the fake adapter this
+is harmless. For the real adapter (`TRANSCRIBER=real`) it is an accepted,
+documented risk rather than a solved problem: a worker crash, or a
+`CELERY_VISIBILITY_TIMEOUT` shorter than actual task duration, between a
+successful `yt-dlp`/OpenAI call and the `mark_succeeded` commit can cause the
+same job to be transcribed more than once, incurring duplicate OpenAI cost.
+`mark_running`/`mark_succeeded`/`mark_failed` are no-ops once a job reaches a
+terminal state, so the database always converges to one consistent final
+result even if the external call ran twice — only external cost, not data
+correctness, is at risk. No claim/lease/lock mechanism exists to close this
+window; `worker_attempts` (recorded per delivery attempt) is the
+observability signal — a job with more than one attempt that still reaches
+`SUCCEEDED` indicates the window was hit.
 
 ![Duplicate delivery window](diagrams/rendered/3-worker-stuck-duplicate.png)
 
@@ -151,11 +166,72 @@ bounded by PostgreSQL, Redis, and the future external transcription API.
 
 ![Independent worker scaling](diagrams/rendered/5-scale-out.png)
 
+## Real transcriber (local opt-in)
+
+`TRANSCRIBER=real` swaps the fake adapter for `yt-dlp` audio download +
+OpenAI transcription (`durable_queue/jobs/transcribers.py`). It is opt-in for
+local development only; the fake adapter remains the default everywhere,
+including production (`infra/compute.tf`).
+
+- **Opt-in workflow**: set `TRANSCRIBER=real` and `OPENAI_API_KEY` in `.env`
+  (see `durable_queue/.env.example`). `ffmpeg` must be on `PATH` — it is
+  baked into the shared API/worker image (`durable_queue/Dockerfile`) for
+  `docker compose up`, and must be installed separately (e.g. Homebrew) when
+  running the worker natively outside Docker. `fake`-mode Django/Celery
+  processes never need `OPENAI_API_KEY` set; it is only read, and only
+  required, when a job actually runs through the real adapter.
+- **Chunking**: OpenAI's `audio.transcriptions.create()` enforces a 25MB
+  per-request file size limit, independent of duration. To transcribe videos
+  of any practical length (the product requirement is at least 2.5 hours),
+  the downloaded audio is re-encoded to a fixed 64kbps mono bitrate and split
+  by ffmpeg's `segment` muxer into fixed-duration chunks
+  (`REAL_TRANSCRIBE_CHUNK_SECONDS`, default 1200s/20min ≈ 9.6MB/chunk — about
+  2.5x margin under the 25MB limit). Splits are not sentence-aware, by
+  explicit product decision. Each chunk is transcribed independently and the
+  chunk transcripts are concatenated in order into the job's final
+  transcript.
+- **Chunk-level retry, all-or-nothing at the job level**: a chunk's retryable
+  failure (timeout/connection/rate limit) is retried in-process up to
+  `CHUNK_MAX_ATTEMPTS` (3, mirroring `execute_job`'s `max_retries=3`) with
+  exponential backoff before it is allowed to fail the whole job. This
+  matters because otherwise a transient blip on chunk N would trigger a
+  whole-task Celery retry that re-transcribes (and re-bills) already
+  succeeded chunks 1..N-1, compounding the idempotency-window risk below. If
+  a chunk exhausts its retries, or fails permanently (invalid media), the
+  whole job fails — no partial transcript is persisted and no new job state
+  was introduced; the existing single-`transcript`-field, four-state job
+  model is unchanged.
+- **Cost**: each job makes one billable OpenAI transcription call per audio
+  chunk per successful (or successfully-retried) attempt; pricing is set by
+  OpenAI, not this repository. The accepted idempotency-window risk below
+  means a job can occasionally be billed more than once.
+- **Input limits**: `REAL_TRANSCRIBE_MAX_DURATION_SECONDS` (default 14400s/4hr)
+  rejects videos longer than the configured limit as a permanent
+  `PermanentInputError` before any chunking or OpenAI call, so oversized
+  input never retries or incurs API cost. Chunking (above) is what makes long
+  videos below this limit actually transcribable, rather than the duration
+  limit itself.
+- **Timeout behavior**: `REAL_TRANSCRIBE_TIMEOUT_SECONDS` (default 120s)
+  bounds the `yt-dlp` socket timeout and each chunk's OpenAI call timeout.
+  Timeouts, connection failures, and rate limiting (`TranscriptionRetryableError`
+  and subclasses) are retried at the chunk level first (above), then by the
+  same Celery policy as `ConnectionError`/`TimeoutError` (`max_retries=3`,
+  exponential backoff with jitter) if a chunk still fails. Invalid media,
+  permanent input failure, and misconfigured/rejected credentials
+  (`TranscriptionPermanentError` and subclasses, including
+  `TranscriptionConfigurationError`) fail the job immediately without
+  consuming a retry.
+- **Secrets and cleanup**: `OPENAI_API_KEY` is never logged or included in
+  raised error messages. Downloaded audio and all its chunks live in a
+  per-job temporary directory that is removed on every exit path (success,
+  retryable failure, permanent failure).
+
 ## Known implementation gaps
 
-- `real_transcribe()` is not implemented; normal execution still uses the fake
-  adapter. External timeout, rate limit, cost, media handling, and execution-layer
-  idempotency remain unresolved.
+- `real_transcribe()` is a local opt-in path (`TRANSCRIBER=real`); production
+  infrastructure still deploys the fake adapter. The execution-layer
+  duplicate-delivery window is an accepted, documented risk rather than a
+  solved problem (see "State and concurrency boundaries" above).
 - Redis is single-node, RDS has `multi_az = false`, and egress uses one NAT. The
   complete system does not provide stateful-tier or egress HA.
 - API and worker startup both run migrations, which can race during rollout.
@@ -170,6 +246,5 @@ bounded by PostgreSQL, Redis, and the future external transcription API.
 
 Planned work is intentionally not described as current architecture. See:
 
-- [Real transcription](product-specs/real-transcription.md)
 - [Kubernetes and SQS](product-specs/kubernetes-sqs.md)
 - [Production observability](product-specs/production-observability.md)

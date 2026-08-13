@@ -32,6 +32,26 @@ function formatDuration(startIso: string, endIso: string): string {
   return `${min}m ${sec}s`;
 }
 
+// Poll 拿到的 list 順序不保證新到舊，前端自己排序才能讓最新送出的 job 一直釘在最上面。
+function sortByCreatedAtDesc(jobs: TranscriptionJob[]): TranscriptionJob[] {
+  return [...jobs].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+}
+
+// 卡片寬度固定、字型固定，用字元數估算是否會超過收合狀態的 max-height，
+// 比量測 DOM scrollHeight 簡單，且對這個 demo 頁面的排版已經足夠準確。
+const TRANSCRIPT_TRUNCATE_LENGTH = 220;
+
+const YOUTUBE_ID_PATTERN =
+  /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/;
+
+function getYouTubeThumbnailUrl(videoUrl: string): string | null {
+  const match = videoUrl.match(YOUTUBE_ID_PATTERN);
+  if (!match) return null;
+  return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
+}
+
 function stepState(
   stepStatus: JobStatus,
   job: TranscriptionJob,
@@ -87,6 +107,8 @@ function QueuePage() {
   const [retryingId, setRetryingId] = useState<number | null>(null);
   const [retryErrors, setRetryErrors] = useState<Record<number, string>>({});
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [expandedTranscriptIds, setExpandedTranscriptIds] = useState<Set<number>>(new Set());
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   function toggleExpanded(id: number) {
     setExpandedIds((cur) => {
@@ -97,13 +119,28 @@ function QueuePage() {
     });
   }
 
+  function toggleTranscriptExpanded(id: number) {
+    setExpandedTranscriptIds((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleCopyTranscript(id: number, transcript: string) {
+    await navigator.clipboard.writeText(transcript);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
+  }
+
   const hasActiveJob = jobs.some((j) => !TERMINAL_STATUSES.includes(j.status));
 
   // 進頁面先把使用者現有的 job 歷史抓回來——不只是這次 session 建立的那一批。
   useEffect(() => {
     if (!accessToken) return;
     authedFetch((token) => listJobs(token))
-      .then(setJobs)
+      .then((fetched) => setJobs(sortByCreatedAtDesc(fetched)))
       .catch(() => {
         // 初次載入失敗就維持空列表，使用者仍可以送出新 job
       });
@@ -120,7 +157,7 @@ function QueuePage() {
     const id = setInterval(async () => {
       try {
         const updated = await authedFetch((token) => listJobs(token));
-        setJobs(updated);
+        setJobs(sortByCreatedAtDesc(updated));
       } catch {
         // 輪詢中的暫時性失敗（含 refresh 也失敗）不中斷 loop，下一次 tick 再試
       }
@@ -215,8 +252,21 @@ function QueuePage() {
             YOUR JOBS
           </p>
           <div className="job-board">
-            {jobs.map((j) => (
+            {jobs.map((j) => {
+              const thumbnailUrl = getYouTubeThumbnailUrl(j.video_url);
+              const transcriptExpanded = expandedTranscriptIds.has(j.id);
+              return (
               <div key={j.id} className="job-card">
+                {thumbnailUrl && (
+                  <img
+                    className="job-thumbnail"
+                    src={thumbnailUrl}
+                    alt=""
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
                 <p className="job-meta">
                   <strong>#{j.id}</strong> — {j.video_url}
                 </p>
@@ -230,7 +280,64 @@ function QueuePage() {
                   <p className="auth-error">{j.error}</p>
                 )}
                 {j.status === "succeeded" && j.transcript && (
-                  <p className="job-transcript">{j.transcript}</p>
+                  <div className="job-transcript-block">
+                    <button
+                      type="button"
+                      className="btn-copy-transcript"
+                      title={copiedId === j.id ? "Copied" : "Copy transcript"}
+                      aria-label={copiedId === j.id ? "Copied" : "Copy transcript"}
+                      onClick={() => handleCopyTranscript(j.id, j.transcript!)}
+                    >
+                      {copiedId === j.id ? (
+                        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                          <path
+                            d="M4 10.5L8 14.5L16 5.5"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                          <rect
+                            x="7"
+                            y="7"
+                            width="10"
+                            height="10"
+                            rx="2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          />
+                          <path
+                            d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                    <p
+                      className={
+                        transcriptExpanded
+                          ? "job-transcript job-transcript-expanded"
+                          : "job-transcript"
+                      }
+                    >
+                      {j.transcript}
+                    </p>
+                    {j.transcript.length > TRANSCRIPT_TRUNCATE_LENGTH && (
+                      <div className="job-transcript-actions">
+                        <button
+                          type="button"
+                          className="link-button"
+                          onClick={() => toggleTranscriptExpanded(j.id)}
+                        >
+                          {transcriptExpanded ? "Show less" : "Show more"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
                 {j.status === "failed" && (
                   <>
@@ -265,7 +372,8 @@ function QueuePage() {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}

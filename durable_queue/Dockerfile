@@ -11,6 +11,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# ffmpeg：TRANSCRIBER=real 時 yt-dlp/音檔切片都要靠它，TRANSCRIBER=fake 用不到
+# 但兩種角色共用同一份 image，所以固定裝好。
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # 依賴套件
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
