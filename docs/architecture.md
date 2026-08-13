@@ -3,7 +3,7 @@
 Status: current repository architecture. Future work is explicitly labeled and
 lives under [`product-specs/`](product-specs/).
 
-Last verified from the repository: 2026-08-12.
+Last verified from the repository: 2026-08-13.
 
 ## Problem and guarantees
 
@@ -39,8 +39,9 @@ Not guaranteed today:
 | React SPA | `frontend/src/` | Authentication and interactive system-design demo |
 | AWS infrastructure | `infra/` | Network, compute, stateful services, TLS/DNS, IAM, and deployment inputs |
 
-The current backend has 36 Django tests covering API, authorization, OAuth,
-serializer, service, task, and PostgreSQL row-lock concurrency behavior. The
+The current backend has 57 Django tests covering API, authorization, OAuth,
+serializer, service, task, real-transcriber error mapping/cleanup, and
+PostgreSQL row-lock concurrency behavior. The
 frontend contains the delivered authentication, queue, durability, HA,
 scalability, and security demo surfaces.
 
@@ -79,8 +80,11 @@ production architecture scan.
    `execute_job.delay(job_id)`, and returns the job representation.
 3. A Celery worker receives the delivery and calls `mark_running()` inside a
    database transaction. The worker identity is appended to `worker_attempts`.
-4. The configured transcriber runs. The fake adapter is the current implemented
-   path; the real adapter raises `NotImplementedError`.
+4. The configured transcriber runs. `TRANSCRIBER=fake` (the default) sleeps and
+   returns fixed text. `TRANSCRIBER=real` downloads audio with `yt-dlp` and
+   transcribes it through the OpenAI transcription API; it is a local opt-in
+   path only — production infrastructure still deploys `TRANSCRIBER=fake`
+   (`infra/compute.tf`).
 5. The task writes `SUCCEEDED` plus transcript or, after exhausted retry/failure,
    `FAILED` plus error through the service boundary.
 6. The SPA polls the owner-scoped API until it observes a terminal database state.
@@ -100,8 +104,19 @@ itself would serialize updates but could still allow a decision based on stale d
 ![Serialized state transitions](diagrams/rendered/4-sequence-concurrency.png)
 
 At-least-once delivery leaves an execution-layer window: an external side effect
-can complete before the database result is committed. This is accepted for the
-fake adapter and must be revisited by the real-transcription product spec.
+can complete before the database result is committed. For the fake adapter this
+is harmless. For the real adapter (`TRANSCRIBER=real`) it is an accepted,
+documented risk rather than a solved problem: a worker crash, or a
+`CELERY_VISIBILITY_TIMEOUT` shorter than actual task duration, between a
+successful `yt-dlp`/OpenAI call and the `mark_succeeded` commit can cause the
+same job to be transcribed more than once, incurring duplicate OpenAI cost.
+`mark_running`/`mark_succeeded`/`mark_failed` are no-ops once a job reaches a
+terminal state, so the database always converges to one consistent final
+result even if the external call ran twice — only external cost, not data
+correctness, is at risk. No claim/lease/lock mechanism exists to close this
+window; `worker_attempts` (recorded per delivery attempt) is the
+observability signal — a job with more than one attempt that still reaches
+`SUCCEEDED` indicates the window was hit.
 
 ![Duplicate delivery window](diagrams/rendered/3-worker-stuck-duplicate.png)
 
@@ -151,11 +166,46 @@ bounded by PostgreSQL, Redis, and the future external transcription API.
 
 ![Independent worker scaling](diagrams/rendered/5-scale-out.png)
 
+## Real transcriber (local opt-in)
+
+`TRANSCRIBER=real` swaps the fake adapter for `yt-dlp` audio download +
+OpenAI transcription (`durable_queue/jobs/transcribers.py`). It is opt-in for
+local development only; the fake adapter remains the default everywhere,
+including production (`infra/compute.tf`).
+
+- **Opt-in workflow**: set `TRANSCRIBER=real` and `OPENAI_API_KEY` in `.env`
+  (see `durable_queue/.env.example`), and have `ffmpeg` on `PATH` (`yt-dlp`
+  shells out to it for audio extraction). `fake`-mode Django/Celery processes
+  never need `OPENAI_API_KEY` set; it is only read, and only required, when a
+  job actually runs through the real adapter.
+- **Cost**: each job makes one billable OpenAI transcription call per
+  successful (or successfully-retried) attempt; pricing is set by OpenAI, not
+  this repository. The accepted idempotency-window risk below means a job can
+  occasionally be billed more than once.
+- **Input limits**: `REAL_TRANSCRIBE_MAX_DURATION_SECONDS` (default 1800s)
+  rejects videos longer than the configured limit as a permanent
+  `PermanentInputError` before calling OpenAI, so oversized input never
+  retries or incurs API cost.
+- **Timeout behavior**: `REAL_TRANSCRIBE_TIMEOUT_SECONDS` (default 120s)
+  bounds both the `yt-dlp` socket timeout and the OpenAI call timeout.
+  Timeouts, connection failures, and rate limiting (`TranscriptionRetryableError`
+  and subclasses) are retried by the same Celery policy as `ConnectionError`/
+  `TimeoutError` (`max_retries=3`, exponential backoff with jitter). Invalid
+  media, permanent input failure, and misconfigured/rejected credentials
+  (`TranscriptionPermanentError` and subclasses, including
+  `TranscriptionConfigurationError`) fail the job immediately without
+  consuming a retry.
+- **Secrets and cleanup**: `OPENAI_API_KEY` is never logged or included in
+  raised error messages. Downloaded audio lives in a per-job temporary
+  directory that is removed on every exit path (success, retryable failure,
+  permanent failure).
+
 ## Known implementation gaps
 
-- `real_transcribe()` is not implemented; normal execution still uses the fake
-  adapter. External timeout, rate limit, cost, media handling, and execution-layer
-  idempotency remain unresolved.
+- `real_transcribe()` is a local opt-in path (`TRANSCRIBER=real`); production
+  infrastructure still deploys the fake adapter. The execution-layer
+  duplicate-delivery window is an accepted, documented risk rather than a
+  solved problem (see "State and concurrency boundaries" above).
 - Redis is single-node, RDS has `multi_az = false`, and egress uses one NAT. The
   complete system does not provide stateful-tier or egress HA.
 - API and worker startup both run migrations, which can race during rollout.

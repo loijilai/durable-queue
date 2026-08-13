@@ -1,6 +1,6 @@
 from celery import Task, shared_task
 from jobs.services import mark_running, mark_succeeded, mark_failed
-from jobs.transcribers import get_transcriber
+from jobs.transcribers import get_transcriber, TranscriptionRetryableError
 
 
 class ExecuteJobTask(Task):
@@ -14,7 +14,7 @@ class ExecuteJobTask(Task):
 @shared_task(
     base=ExecuteJobTask,
     acks_late=True,
-    autoretry_for=(ConnectionError, TimeoutError),
+    autoretry_for=(ConnectionError, TimeoutError, TranscriptionRetryableError),
     max_retries=3,
     retry_backoff=True,
     retry_jitter=True,
