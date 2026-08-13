@@ -1154,6 +1154,14 @@ a {
   flex-direction: column;
 }
 
+.job-thumbnail {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
 .job-meta {
   font-size: 14px;
   color: var(--slate);
@@ -1255,14 +1263,41 @@ a {
   font-size: 14px;
 }
 
-.job-transcript {
+.job-transcript-block {
   margin-top: 16px;
+}
+
+.job-transcript {
+  margin: 0;
   font-size: 14px;
   color: var(--charcoal);
   background: var(--canvas-lifted);
   border-radius: 12px;
   padding: 16px;
   white-space: pre-wrap;
+  max-height: 120px;
+  overflow: hidden;
+  position: relative;
+}
+
+.job-transcript:not(.job-transcript-expanded)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 32px;
+  background: linear-gradient(to bottom, transparent, var(--canvas-lifted));
+}
+
+.job-transcript-expanded {
+  max-height: none;
+}
+
+.job-transcript-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
 }
 
 .btn-inspect {
