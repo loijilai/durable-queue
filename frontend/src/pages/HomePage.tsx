@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { BRAND_ICONS, type BrandIconKey } from "../components/BrandIcons.tsx";
+import { BRAND_ICONS, type BrandIconKey } from "../components/brandIconRegistry.ts";
 import DiagramLightbox from "../components/DiagramLightbox.tsx";
 import JobLifecycle from "../components/JobLifecycle.tsx";
 
@@ -255,7 +255,7 @@ function HomePage() {
             onClick={() => setArchitectureOpen(true)}
             aria-label={`Open ${AWS_DIAGRAM_LABEL} full size`}
           >
-            <img src="/aws-infra.svg" alt={AWS_DIAGRAM_ALT} loading="lazy" />
+            <img src="/diagrams/aws-infra.svg" alt={AWS_DIAGRAM_ALT} loading="lazy" />
             <span className="diagram-zoom-hint">⤢ Click to zoom</span>
           </button>
         </figure>
@@ -295,7 +295,7 @@ function HomePage() {
 
       {architectureOpen && (
         <DiagramLightbox
-          imageSrc="/aws-infra.svg"
+          imageSrc="/diagrams/aws-infra.svg"
           label={AWS_DIAGRAM_LABEL}
           onClose={() => setArchitectureOpen(false)}
         />

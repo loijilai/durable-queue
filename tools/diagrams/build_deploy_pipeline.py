@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Derive the three lens pages of 7-deploy-pipeline.drawio from its master page.
+"""Derive the five lens pages of deploy-pipeline.drawio from its master page.
 
-    python3 docs/7-deploy-pipeline.build.py            # rebuild pages only
-    python3 docs/7-deploy-pipeline.build.py --export   # rebuild + export the SVGs
+    python3 tools/diagrams/build_deploy_pipeline.py
+    python3 tools/diagrams/build_deploy_pipeline.py --export
 
-Same contract as 6-security-topology.build.py:
+Same contract as build_security_topology.py:
 
-    docs/7-deploy-pipeline.drawio, page "master"   owns the GEOMETRY
-    this script                                    owns the LIGHTING
+    docs/diagrams/sources/deploy-pipeline.drawio owns the GEOMETRY
+    this script                                  owns the LIGHTING
 
 Edit the master page in draw.io, save, re-run. The derived pages are overwritten
 every time, so never hand-edit them. When you add a cell to master, give it a
@@ -24,9 +24,9 @@ import sys
 import xml.etree.ElementTree as ET
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
-DRAWIO = os.path.join(HERE, "7-deploy-pipeline.drawio")
-SVG_DIR = os.path.join(ROOT, "frontend", "public")
+ROOT = os.path.dirname(os.path.dirname(HERE))
+DRAWIO = os.path.join(ROOT, "docs", "diagrams", "sources", "deploy-pipeline.drawio")
+SVG_DIR = os.path.join(ROOT, "frontend", "public", "diagrams")
 
 CLI_CANDIDATES = [
     "drawio",

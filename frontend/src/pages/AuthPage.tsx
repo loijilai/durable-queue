@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useAuth } from "../context/AuthContext.tsx";
+import { useAuth } from "../context/useAuth.ts";
 import { ApiError, API_BASE_URL } from "../lib/api.ts";
 import JwtInspector from "../components/JwtInspector.tsx";
 import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 // Renders a raw .excalidraw scene (JSON string) as an inline SVG. The heavy
 // @excalidraw/excalidraw package is dynamically imported so it is code-split
 // away from the initial bundle and only fetched when a diagram actually mounts.
-// The .excalidraw files in ../../docs are the single source of truth — editing
+// The .excalidraw files in ../assets/diagrams are the single source of truth — editing
 // one and saving re-runs this via HMR, so the page never drifts from the art.
 function ExcalidrawDiagram({
   scene,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.tsx";
+import { useAuth } from "../context/useAuth.ts";
 import BackendStatus from "./BackendStatus.tsx";
 import BrandMark from "./BrandMark.tsx";
 import { API_BASE_URL } from "../lib/api.ts";

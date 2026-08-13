@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Derive the three lens pages of 6-security-topology.drawio from its master page.
+"""Derive the three lens pages of security-topology.drawio from its master page.
 
-    python3 docs/6-security-topology.build.py            # rebuild pages only
-    python3 docs/6-security-topology.build.py --export   # rebuild + export the SVGs
+    python3 tools/diagrams/build_security_topology.py
+    python3 tools/diagrams/build_security_topology.py --export
 
 Division of labour — the whole point of this file:
 
-    docs/6-security-topology.drawio, page "master"   owns the GEOMETRY
-    this script                                      owns the LIGHTING
+    docs/diagrams/sources/security-topology.drawio owns the GEOMETRY
+    this script                                    owns the LIGHTING
 
 Edit the master page in draw.io (move things, resize, add nodes), save, re-run.
 The three derived pages are overwritten every time, so never hand-edit them.
@@ -24,9 +24,9 @@ import sys
 import xml.etree.ElementTree as ET
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
-DRAWIO = os.path.join(HERE, "6-security-topology.drawio")
-SVG_DIR = os.path.join(ROOT, "frontend", "public")
+ROOT = os.path.dirname(os.path.dirname(HERE))
+DRAWIO = os.path.join(ROOT, "docs", "diagrams", "sources", "security-topology.drawio")
+SVG_DIR = os.path.join(ROOT, "frontend", "public", "diagrams")
 
 CLI_CANDIDATES = [
     "drawio",

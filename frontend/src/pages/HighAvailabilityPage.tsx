@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.tsx";
+import { useAuth } from "../context/useAuth.ts";
 import {
   ApiError,
   API_BASE_URL,
@@ -635,7 +635,7 @@ function HighAvailabilityPage() {
 
       {zoomed && (
         <DiagramLightbox
-          imageSrc="/aws-infra.svg"
+          imageSrc="/diagrams/aws-infra.svg"
           label={DIAGRAM_LABEL}
           onClose={() => setZoomed(false)}
         />
