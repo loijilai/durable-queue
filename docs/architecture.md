@@ -39,9 +39,9 @@ Not guaranteed today:
 | React SPA | `frontend/src/` | Authentication and interactive system-design demo |
 | AWS infrastructure | `infra/` | Network, compute, stateful services, TLS/DNS, IAM, and deployment inputs |
 
-The current backend has 57 Django tests covering API, authorization, OAuth,
-serializer, service, task, real-transcriber error mapping/cleanup, and
-PostgreSQL row-lock concurrency behavior. The
+The current backend has 64 Django tests covering API, authorization, OAuth,
+serializer, service, task, real-transcriber chunking/error mapping/cleanup,
+and PostgreSQL row-lock concurrency behavior. The
 frontend contains the delivered authentication, queue, durability, HA,
 scalability, and security demo surfaces.
 
@@ -178,27 +178,51 @@ including production (`infra/compute.tf`).
   shells out to it for audio extraction). `fake`-mode Django/Celery processes
   never need `OPENAI_API_KEY` set; it is only read, and only required, when a
   job actually runs through the real adapter.
-- **Cost**: each job makes one billable OpenAI transcription call per
-  successful (or successfully-retried) attempt; pricing is set by OpenAI, not
-  this repository. The accepted idempotency-window risk below means a job can
-  occasionally be billed more than once.
-- **Input limits**: `REAL_TRANSCRIBE_MAX_DURATION_SECONDS` (default 1800s)
+- **Chunking**: OpenAI's `audio.transcriptions.create()` enforces a 25MB
+  per-request file size limit, independent of duration. To transcribe videos
+  of any practical length (the product requirement is at least 2.5 hours),
+  the downloaded audio is re-encoded to a fixed 64kbps mono bitrate and split
+  by ffmpeg's `segment` muxer into fixed-duration chunks
+  (`REAL_TRANSCRIBE_CHUNK_SECONDS`, default 1200s/20min ≈ 9.6MB/chunk — about
+  2.5x margin under the 25MB limit). Splits are not sentence-aware, by
+  explicit product decision. Each chunk is transcribed independently and the
+  chunk transcripts are concatenated in order into the job's final
+  transcript.
+- **Chunk-level retry, all-or-nothing at the job level**: a chunk's retryable
+  failure (timeout/connection/rate limit) is retried in-process up to
+  `CHUNK_MAX_ATTEMPTS` (3, mirroring `execute_job`'s `max_retries=3`) with
+  exponential backoff before it is allowed to fail the whole job. This
+  matters because otherwise a transient blip on chunk N would trigger a
+  whole-task Celery retry that re-transcribes (and re-bills) already
+  succeeded chunks 1..N-1, compounding the idempotency-window risk below. If
+  a chunk exhausts its retries, or fails permanently (invalid media), the
+  whole job fails — no partial transcript is persisted and no new job state
+  was introduced; the existing single-`transcript`-field, four-state job
+  model is unchanged.
+- **Cost**: each job makes one billable OpenAI transcription call per audio
+  chunk per successful (or successfully-retried) attempt; pricing is set by
+  OpenAI, not this repository. The accepted idempotency-window risk below
+  means a job can occasionally be billed more than once.
+- **Input limits**: `REAL_TRANSCRIBE_MAX_DURATION_SECONDS` (default 14400s/4hr)
   rejects videos longer than the configured limit as a permanent
-  `PermanentInputError` before calling OpenAI, so oversized input never
-  retries or incurs API cost.
+  `PermanentInputError` before any chunking or OpenAI call, so oversized
+  input never retries or incurs API cost. Chunking (above) is what makes long
+  videos below this limit actually transcribable, rather than the duration
+  limit itself.
 - **Timeout behavior**: `REAL_TRANSCRIBE_TIMEOUT_SECONDS` (default 120s)
-  bounds both the `yt-dlp` socket timeout and the OpenAI call timeout.
+  bounds the `yt-dlp` socket timeout and each chunk's OpenAI call timeout.
   Timeouts, connection failures, and rate limiting (`TranscriptionRetryableError`
-  and subclasses) are retried by the same Celery policy as `ConnectionError`/
-  `TimeoutError` (`max_retries=3`, exponential backoff with jitter). Invalid
-  media, permanent input failure, and misconfigured/rejected credentials
+  and subclasses) are retried at the chunk level first (above), then by the
+  same Celery policy as `ConnectionError`/`TimeoutError` (`max_retries=3`,
+  exponential backoff with jitter) if a chunk still fails. Invalid media,
+  permanent input failure, and misconfigured/rejected credentials
   (`TranscriptionPermanentError` and subclasses, including
   `TranscriptionConfigurationError`) fail the job immediately without
   consuming a retry.
 - **Secrets and cleanup**: `OPENAI_API_KEY` is never logged or included in
-  raised error messages. Downloaded audio lives in a per-job temporary
-  directory that is removed on every exit path (success, retryable failure,
-  permanent failure).
+  raised error messages. Downloaded audio and all its chunks live in a
+  per-job temporary directory that is removed on every exit path (success,
+  retryable failure, permanent failure).
 
 ## Known implementation gaps
 

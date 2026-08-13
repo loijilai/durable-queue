@@ -18,9 +18,46 @@ def _make_request():
     return httpx2.Request("POST", "https://api.openai.com/v1/audio/transcriptions")
 
 
+def _fake_ydl_factory(video_id="test123", ext="webm", duration=60):
+    """Builds a yt_dlp.YoutubeDL side_effect that writes a raw placeholder
+    audio file and returns metadata matching what real_transcribe reads."""
+    recorded_tmp_dirs = []
+
+    def fake_ydl(options):
+        tmp_dir = os.path.dirname(options["outtmpl"])
+        recorded_tmp_dirs.append(tmp_dir)
+        instance = MagicMock()
+        instance.__enter__.return_value = instance
+        instance.__exit__.return_value = False
+        info = {"id": video_id, "ext": ext, "duration": duration}
+        instance.extract_info.return_value = info
+        audio_path = os.path.join(tmp_dir, f"{video_id}.{ext}")
+        instance.prepare_filename.return_value = audio_path
+        with open(audio_path, "wb") as handle:
+            handle.write(b"raw-audio-bytes")
+        return instance
+
+    return fake_ydl, recorded_tmp_dirs
+
+
+def _fake_ffmpeg_factory(chunk_count=1):
+    """Builds a subprocess.run side_effect that creates `chunk_count` fake
+    chunk files in the same directory as the ffmpeg output pattern arg."""
+
+    def fake_run(command, capture_output=True, text=True):
+        output_pattern = command[-1]
+        tmp_dir = os.path.dirname(output_pattern)
+        for index in range(chunk_count):
+            chunk_path = os.path.join(tmp_dir, f"chunk_{index:03d}.mp3")
+            with open(chunk_path, "wb") as handle:
+                handle.write(b"chunk-audio-bytes")
+        return MagicMock(returncode=0, stderr="")
+
+    return fake_run
+
+
 class RealTranscribeSuccessTests(TestCase):
     VIDEO_URL = "https://www.youtube.com/watch?v=test123"
-    TRANSCRIPT = "hello world"
 
     def setUp(self):
         patcher = patch.dict(os.environ, {"OPENAI_API_KEY": "sk-secret-value"})
@@ -28,63 +65,41 @@ class RealTranscribeSuccessTests(TestCase):
         self.addCleanup(patcher.stop)
 
     @patch("openai.OpenAI")
+    @patch("jobs.transcribers.subprocess.run")
     @patch("yt_dlp.YoutubeDL")
-    def test_downloads_transcribes_and_cleans_up(self, mock_ydl_cls, mock_openai_cls):
+    def test_downloads_splits_transcribes_and_cleans_up(
+        self, mock_ydl_cls, mock_run, mock_openai_cls
+    ):
         # Arrange
-        recorded_tmp_dirs = []
-
-        def fake_ydl(options):
-            recorded_tmp_dirs.append(os.path.dirname(options["outtmpl"]))
-            instance = MagicMock()
-            instance.__enter__.return_value = instance
-            instance.__exit__.return_value = False
-            instance.extract_info.return_value = {"id": "test123", "duration": 60}
-            audio_path = os.path.join(
-                os.path.dirname(options["outtmpl"]), "test123.mp3"
-            )
-            instance.prepare_filename.return_value = audio_path
-            with open(audio_path, "wb") as handle:
-                handle.write(b"fake-audio-bytes")
-            return instance
-
+        fake_ydl, recorded_tmp_dirs = _fake_ydl_factory(duration=3600)
         mock_ydl_cls.side_effect = fake_ydl
+        mock_run.side_effect = _fake_ffmpeg_factory(chunk_count=3)
 
         mock_client = MagicMock()
-        mock_client.audio.transcriptions.create.return_value = MagicMock(
-            text=self.TRANSCRIPT
-        )
+        mock_client.audio.transcriptions.create.side_effect = [
+            MagicMock(text="first"),
+            MagicMock(text="second"),
+            MagicMock(text="third"),
+        ]
         mock_openai_cls.return_value = mock_client
 
         # Act
         result = transcribers.real_transcribe(self.VIDEO_URL)
 
         # Assert
-        self.assertEqual(result, self.TRANSCRIPT)
+        self.assertEqual(result, "first second third")
+        self.assertEqual(mock_client.audio.transcriptions.create.call_count, 3)
         self.assertEqual(len(recorded_tmp_dirs), 1)
         self.assertFalse(os.path.exists(recorded_tmp_dirs[0]))
 
     @patch("openai.OpenAI")
+    @patch("jobs.transcribers.subprocess.run")
     @patch("yt_dlp.YoutubeDL")
-    def test_duration_over_limit_is_permanent_and_skips_openai(
-        self, mock_ydl_cls, mock_openai_cls
+    def test_duration_over_limit_is_permanent_and_skips_ffmpeg_and_openai(
+        self, mock_ydl_cls, mock_run, mock_openai_cls
     ):
         # Arrange
-        recorded_tmp_dirs = []
-
-        def fake_ydl(options):
-            recorded_tmp_dirs.append(os.path.dirname(options["outtmpl"]))
-            instance = MagicMock()
-            instance.__enter__.return_value = instance
-            instance.__exit__.return_value = False
-            instance.extract_info.return_value = {"id": "test123", "duration": 999999}
-            audio_path = os.path.join(
-                os.path.dirname(options["outtmpl"]), "test123.mp3"
-            )
-            instance.prepare_filename.return_value = audio_path
-            with open(audio_path, "wb") as handle:
-                handle.write(b"fake-audio-bytes")
-            return instance
-
+        fake_ydl, recorded_tmp_dirs = _fake_ydl_factory(duration=999999)
         mock_ydl_cls.side_effect = fake_ydl
         mock_openai_cls.return_value = MagicMock()
 
@@ -92,7 +107,130 @@ class RealTranscribeSuccessTests(TestCase):
         with self.assertRaises(transcribers.PermanentInputError):
             transcribers.real_transcribe(self.VIDEO_URL)
 
+        mock_run.assert_not_called()
         mock_openai_cls.return_value.audio.transcriptions.create.assert_not_called()
+        self.assertFalse(os.path.exists(recorded_tmp_dirs[0]))
+
+    @patch("openai.OpenAI")
+    @patch("jobs.transcribers.subprocess.run")
+    @patch("yt_dlp.YoutubeDL")
+    def test_permanent_chunk_failure_stops_remaining_chunks_all_or_nothing(
+        self, mock_ydl_cls, mock_run, mock_openai_cls
+    ):
+        # Arrange
+        fake_ydl, recorded_tmp_dirs = _fake_ydl_factory(duration=3600)
+        mock_ydl_cls.side_effect = fake_ydl
+        mock_run.side_effect = _fake_ffmpeg_factory(chunk_count=3)
+
+        mock_client = MagicMock()
+        mock_client.audio.transcriptions.create.side_effect = [
+            MagicMock(text="first"),
+            openai.BadRequestError(
+                "bad chunk", response=_make_response(400), body=None
+            ),
+            MagicMock(text="third"),
+        ]
+        mock_openai_cls.return_value = mock_client
+
+        # Act / Assert
+        with self.assertRaises(transcribers.InvalidMediaError):
+            transcribers.real_transcribe(self.VIDEO_URL)
+
+        # Only the first (succeeded) and second (failed) chunks were attempted.
+        self.assertEqual(mock_client.audio.transcriptions.create.call_count, 2)
+        self.assertFalse(os.path.exists(recorded_tmp_dirs[0]))
+
+    @patch("jobs.transcribers.time.sleep")
+    @patch("openai.OpenAI")
+    @patch("jobs.transcribers.subprocess.run")
+    @patch("yt_dlp.YoutubeDL")
+    def test_chunk_retries_transient_failure_before_succeeding(
+        self, mock_ydl_cls, mock_run, mock_openai_cls, mock_sleep
+    ):
+        # Arrange
+        fake_ydl, _ = _fake_ydl_factory(duration=600)
+        mock_ydl_cls.side_effect = fake_ydl
+        mock_run.side_effect = _fake_ffmpeg_factory(chunk_count=1)
+
+        mock_client = MagicMock()
+        mock_client.audio.transcriptions.create.side_effect = [
+            openai.APITimeoutError(_make_request()),
+            MagicMock(text="recovered"),
+        ]
+        mock_openai_cls.return_value = mock_client
+
+        # Act
+        result = transcribers.real_transcribe(self.VIDEO_URL)
+
+        # Assert
+        self.assertEqual(result, "recovered")
+        self.assertEqual(mock_client.audio.transcriptions.create.call_count, 2)
+        mock_sleep.assert_called_once()
+
+    @patch("jobs.transcribers.time.sleep")
+    @patch("openai.OpenAI")
+    @patch("jobs.transcribers.subprocess.run")
+    @patch("yt_dlp.YoutubeDL")
+    def test_chunk_exhausts_retries_then_fails_job(
+        self, mock_ydl_cls, mock_run, mock_openai_cls, mock_sleep
+    ):
+        # Arrange
+        fake_ydl, _ = _fake_ydl_factory(duration=600)
+        mock_ydl_cls.side_effect = fake_ydl
+        mock_run.side_effect = _fake_ffmpeg_factory(chunk_count=1)
+
+        mock_client = MagicMock()
+        mock_client.audio.transcriptions.create.side_effect = openai.APITimeoutError(
+            _make_request()
+        )
+        mock_openai_cls.return_value = mock_client
+
+        # Act / Assert
+        with self.assertRaises(transcribers.TranscriptionTimeoutError):
+            transcribers.real_transcribe(self.VIDEO_URL)
+
+        self.assertEqual(
+            mock_client.audio.transcriptions.create.call_count,
+            transcribers.CHUNK_MAX_ATTEMPTS,
+        )
+
+    @patch("openai.OpenAI")
+    @patch("yt_dlp.YoutubeDL")
+    def test_ffmpeg_failure_is_permanent_and_cleans_up(
+        self, mock_ydl_cls, mock_openai_cls
+    ):
+        # Arrange
+        fake_ydl, recorded_tmp_dirs = _fake_ydl_factory(duration=60)
+        mock_ydl_cls.side_effect = fake_ydl
+
+        def failing_run(command, capture_output=True, text=True):
+            return MagicMock(returncode=1, stderr="Invalid data found")
+
+        # Act / Assert
+        with patch("jobs.transcribers.subprocess.run", side_effect=failing_run):
+            with self.assertRaises(transcribers.InvalidMediaError):
+                transcribers.real_transcribe(self.VIDEO_URL)
+
+        mock_openai_cls.assert_not_called()
+        self.assertFalse(os.path.exists(recorded_tmp_dirs[0]))
+
+    @patch("openai.OpenAI")
+    @patch("yt_dlp.YoutubeDL")
+    def test_missing_ffmpeg_binary_is_configuration_error(
+        self, mock_ydl_cls, mock_openai_cls
+    ):
+        # Arrange
+        fake_ydl, recorded_tmp_dirs = _fake_ydl_factory(duration=60)
+        mock_ydl_cls.side_effect = fake_ydl
+
+        # Act / Assert
+        with patch(
+            "jobs.transcribers.subprocess.run", side_effect=FileNotFoundError()
+        ):
+            with self.assertRaises(transcribers.TranscriptionConfigurationError):
+                transcribers.real_transcribe(self.VIDEO_URL)
+
+        mock_openai_cls.assert_not_called()
         self.assertFalse(os.path.exists(recorded_tmp_dirs[0]))
 
 
@@ -100,27 +238,16 @@ class RealTranscribeConfigTests(TestCase):
     VIDEO_URL = "https://www.youtube.com/watch?v=test123"
 
     @patch("openai.OpenAI")
+    @patch("jobs.transcribers.subprocess.run")
     @patch("yt_dlp.YoutubeDL")
     def test_missing_api_key_fails_permanently_without_calling_openai(
-        self, mock_ydl_cls, mock_openai_cls
+        self, mock_ydl_cls, mock_run, mock_openai_cls
     ):
         # Arrange
         os.environ.pop("OPENAI_API_KEY", None)
-
-        def fake_ydl(options):
-            instance = MagicMock()
-            instance.__enter__.return_value = instance
-            instance.__exit__.return_value = False
-            instance.extract_info.return_value = {"id": "test123", "duration": 5}
-            audio_path = os.path.join(
-                os.path.dirname(options["outtmpl"]), "test123.mp3"
-            )
-            instance.prepare_filename.return_value = audio_path
-            with open(audio_path, "wb") as handle:
-                handle.write(b"fake-audio-bytes")
-            return instance
-
+        fake_ydl, _ = _fake_ydl_factory(duration=5)
         mock_ydl_cls.side_effect = fake_ydl
+        mock_run.side_effect = _fake_ffmpeg_factory(chunk_count=1)
 
         # Act / Assert
         with self.assertRaises(transcribers.TranscriptionConfigurationError) as ctx:
@@ -137,7 +264,7 @@ class RealTranscribeConfigTests(TestCase):
 
         # Act / Assert
         with self.assertRaises(transcribers.InvalidMediaError) as ctx:
-            transcribers.real_transcribe(self.VIDEO_URL)
+            transcribers.real_transcribe("https://www.youtube.com/watch?v=test123")
 
         self.assertNotIn("sk-do-not-leak-me", str(ctx.exception))
 
@@ -158,9 +285,40 @@ class RealTranscribeConfigTests(TestCase):
         with patch("jobs.transcribers.tempfile.mkdtemp", side_effect=spy_mkdtemp):
             # Act / Assert
             with self.assertRaises(transcribers.TranscriptionConnectionError):
-                transcribers.real_transcribe(self.VIDEO_URL)
+                transcribers.real_transcribe("https://www.youtube.com/watch?v=test123")
 
         self.assertFalse(os.path.exists(captured["tmp_dir"]))
+
+
+class SplitIntoChunksTests(TestCase):
+    def setUp(self):
+        import shutil
+        import tempfile
+
+        self.tmp_dir = tempfile.mkdtemp(prefix="test-split-into-chunks-")
+        self.addCleanup(shutil.rmtree, self.tmp_dir, True)
+        self.source_path = os.path.join(self.tmp_dir, "source.webm")
+        with open(self.source_path, "wb") as handle:
+            handle.write(b"raw-audio-bytes")
+
+    def test_chunk_count_matches_ffmpeg_output(self):
+        with patch(
+            "jobs.transcribers.subprocess.run",
+            side_effect=_fake_ffmpeg_factory(chunk_count=5),
+        ):
+            chunk_paths = transcribers._split_into_chunks(
+                self.source_path, self.tmp_dir, 1200
+            )
+        self.assertEqual(len(chunk_paths), 5)
+        self.assertEqual(chunk_paths, sorted(chunk_paths))
+
+    def test_no_chunks_produced_is_permanent(self):
+        def no_op_run(command, capture_output=True, text=True):
+            return MagicMock(returncode=0, stderr="")
+
+        with patch("jobs.transcribers.subprocess.run", side_effect=no_op_run):
+            with self.assertRaises(transcribers.InvalidMediaError):
+                transcribers._split_into_chunks(self.source_path, self.tmp_dir, 1200)
 
 
 class DownloadErrorClassificationTests(TestCase):
@@ -197,24 +355,20 @@ class OpenAIErrorMappingTests(TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        sleep_patcher = patch("jobs.transcribers.time.sleep")
+        sleep_patcher.start()
+        self.addCleanup(sleep_patcher.stop)
+
         ydl_patcher = patch("yt_dlp.YoutubeDL")
-        self.mock_ydl_cls = ydl_patcher.start()
+        mock_ydl_cls = ydl_patcher.start()
         self.addCleanup(ydl_patcher.stop)
+        fake_ydl, _ = _fake_ydl_factory(duration=5)
+        mock_ydl_cls.side_effect = fake_ydl
 
-        def fake_ydl(options):
-            instance = MagicMock()
-            instance.__enter__.return_value = instance
-            instance.__exit__.return_value = False
-            instance.extract_info.return_value = {"id": "test123", "duration": 5}
-            audio_path = os.path.join(
-                os.path.dirname(options["outtmpl"]), "test123.mp3"
-            )
-            instance.prepare_filename.return_value = audio_path
-            with open(audio_path, "wb") as handle:
-                handle.write(b"fake-audio-bytes")
-            return instance
-
-        self.mock_ydl_cls.side_effect = fake_ydl
+        run_patcher = patch("jobs.transcribers.subprocess.run")
+        mock_run = run_patcher.start()
+        self.addCleanup(run_patcher.stop)
+        mock_run.side_effect = _fake_ffmpeg_factory(chunk_count=1)
 
         openai_patcher = patch("openai.OpenAI")
         self.mock_openai_cls = openai_patcher.start()

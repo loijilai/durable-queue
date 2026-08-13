@@ -42,6 +42,16 @@ Current state, confirmed by reading the source:
   permanent outcomes.
 - `docs/product-specs/README.md`'s roadmap ledger names the intended
   libraries explicitly: "Real `yt-dlp` + OpenAI transcription."
+- Product-owner review of the first implementation round found a real gap:
+  OpenAI's `audio.transcriptions.create()` endpoint enforces a **25MB
+  per-request file size limit**, independent of and unrelated to the
+  duration limit implemented in round 1. The round-1 `real_transcribe()`
+  downloaded and transcribed the whole video as a single audio file with no
+  size check, so anything longer than roughly 15-40 minutes (depending on
+  encoded bitrate) would fail as a permanent `InvalidMediaError` even though
+  the job's configured duration limit allowed it. The product owner needs
+  videos up to at least 2.5 hours (9000s) to transcribe successfully, which
+  is impossible without splitting audio into multiple sub-25MB requests.
 
 ## Goal
 
@@ -49,7 +59,10 @@ A configured worker downloads audio for a submitted YouTube URL with
 `yt-dlp`, transcribes it via the OpenAI transcription API, and persists the
 result through the existing job lifecycle — with explicit retryable/permanent
 error handling, guaranteed temp-file cleanup, no secret leakage, and a
-recorded decision on the execution-layer idempotency window.
+recorded decision on the execution-layer idempotency window. Videos long
+enough that their extracted audio would exceed OpenAI's 25MB per-request
+limit (e.g. 2.5-hour content) must still transcribe successfully by being
+split into multiple sub-25MB chunks that are transcribed and concatenated.
 
 ## Acceptance criteria
 
@@ -78,6 +91,21 @@ recorded decision on the execution-layer idempotency window.
 - [x] Cost, input limits (e.g. max video duration/file size), timeout
   behavior, and the local opt-in workflow (`TRANSCRIBER=real` + required env
   vars) are documented.
+- [x] A video up to at least 2.5 hours (9000s) transcribes successfully:
+  audio is split into fixed-duration chunks that individually stay well
+  under OpenAI's 25MB per-request limit, each chunk is transcribed, and the
+  chunk transcripts are concatenated in order into the job's final
+  transcript.
+- [x] A single chunk's retryable failure (timeout/connection/rate limit) is
+  retried at the chunk level, up to a bounded number of attempts, before it
+  is allowed to fail the whole job — so a transient blip on chunk N does not
+  force re-transcribing already-succeeded chunks 1..N-1 via a whole-task
+  Celery retry.
+- [x] If a chunk exhausts its chunk-level retries (retryable) or fails
+  permanently, the whole job fails (all-or-nothing at the job level); no
+  partial transcript is persisted and no new job state is introduced.
+- [x] Chunk splitting/count/size behavior is covered by tests that mock
+  `yt-dlp`/`ffmpeg`/OpenAI — no real audio processing or network calls.
 
 ## Out of scope
 
@@ -126,6 +154,40 @@ recorded decision on the execution-layer idempotency window.
   timeout behavior, and the local `TRANSCRIBER=real` opt-in workflow.
 - [x] Run `./scripts/verify.sh quick` and `./scripts/verify.sh full`, fix any
   failures, then stop for final review.
+- [x] ~~Set the `yt-dlp` `FFmpegExtractAudio` postprocessor to a fixed, low,
+  speech-appropriate encoding~~ — implemented differently than planned: kept
+  `yt-dlp` downloading the raw `bestaudio` stream with no postprocessor, then
+  re-encode-and-split in one `ffmpeg` `subprocess.run` call (`-ac 1 -ar 16000
+  -b:a 64k -f segment -segment_time <N>`) instead of a separate yt-dlp
+  postprocessor pass followed by a `-c copy` split. One ffmpeg invocation
+  instead of two; see Decision log.
+- [x] After download, split into fixed-duration chunks at
+  `REAL_TRANSCRIBE_CHUNK_SECONDS` (new env var, default 1200s/20min — at
+  64kbps mono that is ~9.6MB per chunk, comfortably under the 25MB limit).
+  No sentence-boundary awareness; chunks cut at fixed time offsets.
+- [x] Transcribe each chunk in order; on a chunk's retryable failure, retry
+  that chunk in-process up to a bounded count (e.g. 3, mirroring the task's
+  existing `max_retries=3`) with backoff before propagating; on chunk
+  permanent failure, propagate immediately. Either propagation fails the
+  whole `real_transcribe()` call (all-or-nothing) with the same
+  retryable/permanent typed exception the chunk raised, so `tasks.py`'s
+  existing retry policy applies unchanged at the job level.
+- [x] Concatenate successful chunk transcripts in order (simple join; cut
+  points are not sentence-aware by explicit product decision) into the
+  single transcript returned to `mark_succeeded`.
+- [x] Raise the default `REAL_TRANSCRIBE_MAX_DURATION_SECONDS` from 1800s to
+  a value that comfortably covers 2.5-hour input (e.g. 14400s/4h), since the
+  chunking work removes the file-size reason to keep it low; update
+  `.env.example` and architecture docs accordingly.
+- [x] Add/extend tests: chunk count for a given duration and
+  `REAL_TRANSCRIBE_CHUNK_SECONDS`, in-order concatenation, chunk-level retry
+  exhausting before job failure, chunk permanent failure short-circuiting
+  remaining chunks, and cleanup still removing all per-chunk files on every
+  outcome.
+- [x] Update `docs/architecture.md`'s real-transcriber section with the
+  chunking behavior, the 25MB constraint it works around, and the new/raised
+  env vars. Re-run `./scripts/verify.sh quick` and `./scripts/verify.sh full`,
+  then stop for final review again.
 
 ## Progress
 
@@ -140,11 +202,33 @@ recorded decision on the execution-layer idempotency window.
 - 2026-08-13: Implemented the real adapter, retryable/permanent exception
   taxonomy, task retry-policy extension, dependency/env-var additions, tests,
   and documentation. Full verification passed; status changed to
-  `awaiting-final-review`.
+  `awaiting-final-review`. (A checkpoint commit was attempted but denied by
+  the environment's permission prompt; the round-1 changes remained
+  uncommitted in the working tree pending review.)
+- 2026-08-13: Product-owner review before final approval found that the
+  25MB OpenAI per-request file-size limit was not handled, blocking the
+  stated requirement of transcribing videos up to 2.5 hours. Discussed and
+  agreed the chunking design (see Decision log); status reverted to `active`
+  and this plan updated with the round-2 acceptance criteria and
+  implementation steps. Round-2 code has not been written yet — implementation
+  resumes on next approval to proceed.
+- 2026-08-13: Product owner confirmed the chunk-level-retry +
+  all-or-nothing design and asked to commit round 1 before continuing.
+  Resolved a global `git commit` permission deny (see Discoveries and
+  risks) and committed round 1 as `3d04b44`.
+- 2026-08-13: Implemented round 2 (chunking): single-pass `ffmpeg`
+  re-encode+split, chunk-level bounded retry with backoff, all-or-nothing
+  job outcome, raised `REAL_TRANSCRIBE_MAX_DURATION_SECONDS` default,
+  extended tests, updated architecture docs. Full verification passed;
+  status changed to `awaiting-final-review`.
 
 ## Checkpoint commits
 
-- `<sha>` — verified milestone represented by this commit.
+- `3d04b44` — round 1: single-file real adapter (download, transcribe,
+  retryable/permanent taxonomy, task retry-policy extension, dependency/env-var
+  additions, tests, docs). Passed full verification before commit. (A
+  `git commit` permission deny at the user-settings level had to be resolved
+  first — see Discoveries and risks.)
 
 ## Decision log
 
@@ -191,6 +275,38 @@ recorded decision on the execution-layer idempotency window.
   hardcodes `TRANSCRIBER=fake`, so the real adapter's config was never meant to
   be deployed, and adding Terraform/Secrets Manager wiring for it is out of
   scope for this local opt-in task.
+- Long-video support (>25MB extracted audio): product owner chose **chunk-level
+  retry (axis 1) + all-or-nothing at the job level (axis 2)**, rejecting a
+  partial-transcript/new-job-state design. Reasoning discussed and agreed:
+  the job model's single `transcript` field and four-state lifecycle
+  (`PENDING/RUNNING/SUCCEEDED/FAILED`) is an explicit architecture invariant;
+  partial results would require a new state, API/serializer changes, and
+  frontend changes, which is a separate product decision out of scope for
+  this spec. Chunk-level retry (bounded attempts per chunk, in-process,
+  before propagating to the Celery task) avoids re-transcribing
+  already-succeeded chunks on a transient failure, which matters because it
+  would otherwise compound the already-accepted idempotency-window cost risk.
+  A chunk that exhausts retries or fails permanently fails the whole job
+  through the existing typed-exception path, so `tasks.py`'s retry policy
+  and `services.py`'s state machine need no changes for this.
+- Chunking rule: fixed-duration splitting, not sentence/silence-aware, per
+  explicit product-owner instruction ("不用避免切在字句中間"). Implemented as
+  a single `ffmpeg` invocation per job: `yt-dlp` downloads the raw
+  `bestaudio` stream (no postprocessor), then one `ffmpeg` call re-encodes to
+  a fixed 64kbps mono/16kHz bitrate *and* splits via the `segment` muxer at
+  `REAL_TRANSCRIBE_CHUNK_SECONDS` (default 1200s/20min ≈ 9.6MB/chunk, ~2.5x
+  margin under the 25MB API limit) in one pass. This was simpler than the
+  originally planned two-step "yt-dlp extracts via `FFmpegExtractAudio`
+  postprocessor, then a second `-c copy` ffmpeg split" — one subprocess call
+  instead of two, and no dependency on yt-dlp's postprocessor-args API
+  surface for forcing mono/bitrate. Rejected alternative: single-file
+  aggressive compression to fit under 25MB — this only postpones the problem
+  to even longer videos and degrades quality further, whereas chunking
+  scales to arbitrary length.
+- `REAL_TRANSCRIBE_MAX_DURATION_SECONDS` default will be raised from 1800s
+  (round 1's arbitrary conservative default) to a value that comfortably
+  covers the stated 2.5-hour need, now that chunking removes the file-size
+  reason to keep it small.
 
 ## Discoveries and risks
 
@@ -201,8 +317,23 @@ recorded decision on the execution-layer idempotency window.
 - The idempotency window is a known, previously-deferred gap
   (`docs/architecture.md:102-105`); this task is the first to require a
   concrete decision rather than deferral.
+- Round-1 implementation missed OpenAI's 25MB per-request audio file size
+  limit entirely (only duration was bounded). Found during product-owner
+  review before final approval, not during automated verification — no
+  automated check would have caught this because it is a product-input
+  question ("how long must supported videos be"), not a code defect.
+  Round 2 (chunking) addresses it; see Decision log.
+- `git commit` was globally denied by a `Bash(git commit:*)` rule in
+  `~/.claude/settings.json`'s `permissions.deny`, independent of the command's
+  content (a plain `git commit -m "..."` was denied identically). Resolved
+  with the product owner's explicit direction: removed that user-level deny
+  entry, and added a project-scoped `Bash(git commit *)` allow rule to this
+  repo's `.claude/settings.local.json` so commits here no longer prompt.
+  `git push` and `rm -rf` remain denied at the user level, unchanged.
 
 ## Verification results
+
+Round 1 only (single audio file per job, no chunking):
 
 - New focused tests: `durable_queue/jobs/tests/test_real_transcriber.py` (19
   tests: happy path, temp-dir cleanup on success/failure, duration-limit
@@ -218,15 +349,33 @@ recorded decision on the execution-layer idempotency window.
   build, all three Terraform roots validated, backend Docker image build,
   isolated PostgreSQL cleanup.
 
+Round 2 (chunking for long videos):
+
+- Extended/new focused tests in `durable_queue/jobs/tests/test_real_transcriber.py`
+  (26 tests total, +7 over round 1): multi-chunk happy path with in-order
+  concatenation, duration limit skips ffmpeg/OpenAI entirely, permanent
+  chunk failure stops remaining chunks (all-or-nothing), chunk-level retry
+  recovers from a transient failure, chunk-level retry exhausts then fails
+  the job, ffmpeg non-zero exit is a permanent error, missing `ffmpeg`
+  binary is a configuration error, plus a dedicated `_split_into_chunks`
+  unit-test class.
+- `./scripts/verify.sh quick`: passed.
+- `./scripts/verify.sh full`: passed — 64 Django tests (was 57; +7 new),
+  no missing migrations, frontend build, all three Terraform roots
+  validated, backend Docker image build, isolated PostgreSQL cleanup.
+
 ## Handoff
 
-Implementation and full verification are complete. Real-adapter behavior
-(`TRANSCRIBER=real`): downloads audio via `yt-dlp`, transcribes via OpenAI,
-classifies failures into retryable (`TranscriptionRetryableError` and
-subclasses: timeout/connection/rate-limit) vs. permanent
-(`TranscriptionPermanentError` and subclasses: invalid media/permanent
-input/configuration), and always cleans up its temp directory. The fake
-adapter and its existing tests are unchanged. The idempotency-window decision
-(Option A — accept and document) is recorded in the Decision log and in
-`docs/architecture.md`. Awaiting explicit final product-owner approval before
-moving this plan to `completed/`.
+Both rounds are implemented and passed full verification. Real-adapter
+behavior (`TRANSCRIBER=real`): `yt-dlp` downloads raw audio, a single
+`ffmpeg` pass re-encodes it to 64kbps mono and splits it into
+`REAL_TRANSCRIBE_CHUNK_SECONDS`-long chunks, each chunk is transcribed via
+OpenAI with bounded in-process retry on retryable failures, chunk
+transcripts are concatenated in order, and the whole job fails
+all-or-nothing on any chunk's permanent failure or exhausted retries. The
+fake adapter and its existing tests are unchanged. The idempotency-window
+decision (Option A — accept and document) and the chunking design (axis
+1: chunk-level retry, axis 2: all-or-nothing) are recorded in the Decision
+log and in `docs/architecture.md`. Round 1 is committed as `3d04b44`; round
+2 is staged and ready for a checkpoint commit. Awaiting explicit final
+product-owner approval before moving this plan to `completed/`.
