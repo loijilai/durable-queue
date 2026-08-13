@@ -1,6 +1,6 @@
 # Plan approval gates
 
-- Status: active
+- Status: awaiting-final-review
 - Started: 2026-08-13
 - Updated: 2026-08-13
 
@@ -46,7 +46,8 @@ approval gates.
 
 ## Checkpoint commits
 
-- None yet.
+- `e9f1dfc` — approval lifecycle, repository guidance, checker enforcement,
+  focused tests, and full verification.
 
 ## Decision log
 
@@ -71,4 +72,6 @@ approval gates.
 
 ## Handoff
 
-Implement the lifecycle, verify it, and stop at `awaiting-final-review`.
+Implementation and full verification are complete. Await explicit final approval;
+then set this plan to `completed`, move it to `completed/`, and create the final
+local commit.
