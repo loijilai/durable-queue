@@ -174,10 +174,12 @@ local development only; the fake adapter remains the default everywhere,
 including production (`infra/compute.tf`).
 
 - **Opt-in workflow**: set `TRANSCRIBER=real` and `OPENAI_API_KEY` in `.env`
-  (see `durable_queue/.env.example`), and have `ffmpeg` on `PATH` (`yt-dlp`
-  shells out to it for audio extraction). `fake`-mode Django/Celery processes
-  never need `OPENAI_API_KEY` set; it is only read, and only required, when a
-  job actually runs through the real adapter.
+  (see `durable_queue/.env.example`). `ffmpeg` must be on `PATH` — it is
+  baked into the shared API/worker image (`durable_queue/Dockerfile`) for
+  `docker compose up`, and must be installed separately (e.g. Homebrew) when
+  running the worker natively outside Docker. `fake`-mode Django/Celery
+  processes never need `OPENAI_API_KEY` set; it is only read, and only
+  required, when a job actually runs through the real adapter.
 - **Chunking**: OpenAI's `audio.transcriptions.create()` enforces a 25MB
   per-request file size limit, independent of duration. To transcribe videos
   of any practical length (the product requirement is at least 2.5 hours),
