@@ -233,6 +233,12 @@ split into multiple sub-25MB chunks that are transcribed and concatenated.
   pass, chunk-level bounded retry, all-or-nothing job outcome, raised
   duration-limit default, extended tests and docs. Passed full verification
   before commit.
+- `39d5f1d` — local-testing fix: install `ffmpeg` in the shared API/worker
+  Docker image. Found while setting up local testing: the documented
+  `docker compose up --build` workflow shares one image for both roles, and
+  it had no `ffmpeg`, so `TRANSCRIBER=real` would fail inside Docker even
+  with valid config. Verified `ffmpeg -version` and `yt-dlp` both run inside
+  the built image.
 
 ## Decision log
 
@@ -334,6 +340,12 @@ split into multiple sub-25MB chunks that are transcribed and concatenated.
   entry, and added a project-scoped `Bash(git commit *)` allow rule to this
   repo's `.claude/settings.local.json` so commits here no longer prompt.
   `git push` and `rm -rf` remain denied at the user level, unchanged.
+- While setting up local testing per the product owner's request, found the
+  shared API/worker Docker image (`durable_queue/Dockerfile`) had no
+  `ffmpeg`, so the documented `docker compose up --build` workflow would fail
+  `TRANSCRIBER=real` jobs with a configuration error even with a valid
+  `OPENAI_API_KEY`. Fixed in `39d5f1d`. Running the worker natively (outside
+  Docker) still requires `ffmpeg` installed separately on the host.
 
 ## Verification results
 
