@@ -16,6 +16,13 @@ RERUN = "./scripts/verify.sh quick"
 MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 STATUS_RE = re.compile(r"^- Status:\s*([a-z-]+)\s*$", re.MULTILINE)
 
+ACTIVE_PLAN_STATUSES = {
+    "awaiting-approval",
+    "active",
+    "awaiting-final-review",
+}
+COMPLETED_PLAN_STATUSES = {"completed"}
+
 DIAGRAM_ASSETS = (
     "docs/diagrams/sources/aws-infra.drawio",
     "docs/diagrams/sources/security-topology.drawio",
@@ -125,21 +132,27 @@ def check_markdown_links(root: Path, paths: list[Path]) -> list[Violation]:
 
 def check_plan_statuses(root: Path) -> list[Violation]:
     violations: list[Violation] = []
-    for directory, expected in (("active", "active"), ("completed", "completed")):
+    allowed_by_directory = {
+        "active": ACTIVE_PLAN_STATUSES,
+        "completed": COMPLETED_PLAN_STATUSES,
+    }
+    for directory, allowed in allowed_by_directory.items():
         plan_dir = root / "docs" / "exec-plans" / directory
         for path in sorted(plan_dir.glob("*.md")):
             text = path.read_text(encoding="utf-8")
             match = STATUS_RE.search(text)
             actual = match.group(1) if match else None
-            if actual == expected:
+            if actual in allowed:
                 continue
+            expected = ", ".join(sorted(allowed))
             violations.append(
                 Violation(
                     path,
                     text.count("\n", 0, match.start()) + 1 if match else 1,
                     "REPO002",
-                    f"plan in {directory}/ must have Status: {expected}; found {actual or 'no status'}.",
-                    f"Set the status to {expected} or move the plan to the matching directory.",
+                    f"plan in {directory}/ must have one of these statuses: {expected}; "
+                    f"found {actual or 'no status'}.",
+                    "Set an allowed status or move the plan to the matching directory.",
                 )
             )
     return violations

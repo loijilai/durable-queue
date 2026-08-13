@@ -1,6 +1,6 @@
 # <Task title>
 
-- Status: active
+- Status: awaiting-approval
 - Started: YYYY-MM-DD
 - Updated: YYYY-MM-DD
 
@@ -27,6 +27,8 @@ The outcome this task must produce.
 ## Progress
 
 - YYYY-MM-DD: Durable progress update.
+- YYYY-MM-DD: Implementation approved by the product owner; status changed to
+  `active`.
 
 ## Checkpoint commits
 
@@ -46,4 +48,6 @@ The outcome this task must produce.
 
 ## Handoff
 
-Exact next action or final state for the next agent.
+Exact next action or final state for the next agent. After full verification,
+set the status to `awaiting-final-review` and stop. Move this plan to
+`completed/` only after explicit final approval.

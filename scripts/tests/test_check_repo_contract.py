@@ -39,7 +39,23 @@ class RepositoryContractCheckerTests(TestCase):
         self.assertEqual([violation.code for violation in violations], ["REPO001"])
         self.assertEqual(violations[0].line, 1)
 
-    def test_plan_status_must_match_directory(self):
+    def test_active_directory_accepts_each_in_progress_state(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            active = root / "docs" / "exec-plans" / "active"
+            completed = root / "docs" / "exec-plans" / "completed"
+            active.mkdir(parents=True)
+            completed.mkdir(parents=True)
+            for status in ("awaiting-approval", "active", "awaiting-final-review"):
+                (active / f"{status}.md").write_text(
+                    f"- Status: {status}\n", encoding="utf-8"
+                )
+
+            violations = check_plan_statuses(root)
+
+        self.assertEqual(violations, [])
+
+    def test_completed_status_is_rejected_in_active_directory(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             active = root / "docs" / "exec-plans" / "active"
@@ -47,6 +63,21 @@ class RepositoryContractCheckerTests(TestCase):
             active.mkdir(parents=True)
             completed.mkdir(parents=True)
             (active / "wrong.md").write_text("- Status: completed\n", encoding="utf-8")
+
+            violations = check_plan_statuses(root)
+
+        self.assertEqual([violation.code for violation in violations], ["REPO002"])
+
+    def test_review_state_is_rejected_in_completed_directory(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            active = root / "docs" / "exec-plans" / "active"
+            completed = root / "docs" / "exec-plans" / "completed"
+            active.mkdir(parents=True)
+            completed.mkdir(parents=True)
+            (completed / "wrong.md").write_text(
+                "- Status: awaiting-final-review\n", encoding="utf-8"
+            )
 
             violations = check_plan_statuses(root)
 
@@ -88,7 +119,13 @@ class RepositoryContractCheckerTests(TestCase):
             completed = root / "docs" / "exec-plans" / "completed"
             active.mkdir(parents=True)
             completed.mkdir(parents=True)
+            (active / "plan.md").write_text(
+                "- Status: awaiting-approval\n", encoding="utf-8"
+            )
             (active / "work.md").write_text("- Status: active\n", encoding="utf-8")
+            (active / "review.md").write_text(
+                "- Status: awaiting-final-review\n", encoding="utf-8"
+            )
             (completed / "done.md").write_text("- Status: completed\n", encoding="utf-8")
 
             specs = root / "docs" / "product-specs"

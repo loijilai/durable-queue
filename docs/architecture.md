@@ -63,6 +63,11 @@ The quick loop mechanically enforces these current invariants:
   declared diagram assets remain internally consistent.
 - Application configuration, `.env.example`, and deployment inputs stay aligned.
 
+Non-trivial execution plans use two human gates. A new plan remains
+`awaiting-approval` until implementation is explicitly approved; after full
+verification it becomes `awaiting-final-review` and remains under `active/`
+until explicit final approval permits archival as `completed`.
+
 Checker failures include the violated invariant, source location, remediation,
 and the command to rerun. Tests and migrations are deliberately outside the
 production architecture scan.

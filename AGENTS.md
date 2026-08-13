@@ -17,6 +17,10 @@ instead of adding one-off chat instructions.
 - For non-trivial work, create or resume an execution plan under
   `docs/exec-plans/active/` and keep its progress, decisions, discoveries, and
   verification results current.
+- New non-trivial plans start in `awaiting-approval`. Stop after writing the plan
+  and do not change application code until the human explicitly approves
+  implementation. After approval, set the plan to `active` and record the approval
+  in its progress log.
 - Make reasonable assumptions and execute end to end. Ask only when a decision
   is irreversible, externally consequential, or changes product intent.
 - Keep changes scoped and leave the worktree in a verifiable state.
@@ -70,8 +74,19 @@ For non-trivial work, read the relevant architecture and product spec, then copy
 the execution-plan template into `active/`. Keep progress, decisions,
 discoveries, verification, and handoff notes current so another agent can resume
 without chat history. Commit at coherent verified milestones rather than after
-every file edit. On completion, update architecture/product status first, create
-the final local commit, then move the plan to `completed/` as part of that commit.
+every file edit. After implementation and full verification, set the plan to
+`awaiting-final-review` and stop for human review. Only after explicit final
+approval may the agent update architecture/product status, set the plan to
+`completed`, create the final local commit, and move the plan to `completed/`.
+
+Execution-plan states are:
+
+- `awaiting-approval`: planning is complete; implementation is blocked on human
+  approval.
+- `active`: implementation was approved and is in progress.
+- `awaiting-final-review`: implementation and full verification are complete;
+  archival is blocked on human approval.
+- `completed`: final approval was received and the historical plan is archived.
 
 Small local changes may skip a checked-in plan only when they do not alter public
 behavior, schema, architecture, infrastructure, or more than one subsystem.
