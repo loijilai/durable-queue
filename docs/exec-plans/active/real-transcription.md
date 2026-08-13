@@ -229,6 +229,10 @@ split into multiple sub-25MB chunks that are transcribed and concatenated.
   additions, tests, docs). Passed full verification before commit. (A
   `git commit` permission deny at the user-settings level had to be resolved
   first — see Discoveries and risks.)
+- `a1d39d6` — round 2: chunked download/re-encode/split via a single ffmpeg
+  pass, chunk-level bounded retry, all-or-nothing job outcome, raised
+  duration-limit default, extended tests and docs. Passed full verification
+  before commit.
 
 ## Decision log
 
