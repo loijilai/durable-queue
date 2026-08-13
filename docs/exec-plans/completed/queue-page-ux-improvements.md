@@ -1,6 +1,6 @@
 # Queue page UX improvements
 
-- Status: awaiting-final-review
+- Status: completed
 - Started: 2026-08-13
 - Updated: 2026-08-13
 
@@ -160,6 +160,6 @@ click, and long transcripts no longer blow up card height.
 
 ## Handoff
 
-All four acceptance criteria are implemented and verified. Status set to
-`awaiting-final-review` — awaiting explicit human approval to move this
-plan to `completed/`.
+All four acceptance criteria, including the icon-button copy control
+requested after initial review, are implemented and verified. Final
+approval received; plan archived to `completed/`.
