@@ -53,9 +53,9 @@ click, and long transcripts no longer blow up card height.
       requires scrolling to see it.
 - [x] Each job card shows a YouTube thumbnail derived from `video_url`
       (`https://img.youtube.com/vi/<id>/mqdefault.jpg`).
-- [x] Each succeeded job with a transcript has a "Copy" control that copies
-      the full transcript text to the clipboard, with visible success
-      feedback (e.g. label changes to "Copied").
+- [x] Each succeeded job with a transcript has a copy-icon control, anchored
+      to the transcript's top-right corner, that copies the full transcript
+      text to the clipboard and swaps to a checkmark on success.
 - [x] Transcripts longer than a fixed height are visually truncated with a
       "Show more" / "Show less" control; short transcripts render unchanged.
 - [x] `npm run lint` and `npm run build` pass in `frontend/`.
@@ -109,6 +109,12 @@ click, and long transcripts no longer blow up card height.
   copy-to-clipboard and show-more/less truncation both work against a
   seeded long transcript. Verification containers/dev server were torn
   down afterward.
+- 2026-08-13: Product owner requested the copy control be a corner icon
+  button instead of a "Copy" text link. Replaced it with an absolutely
+  positioned icon button in the transcript's top-right corner (clipboard
+  icon → checkmark on success); had to add `z-index` since `.job-transcript`
+  is also `position: relative` and was painting over it. Re-verified with
+  the same Playwright flow.
 
 ## Checkpoint commits
 

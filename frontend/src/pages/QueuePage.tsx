@@ -281,6 +281,42 @@ function QueuePage() {
                 )}
                 {j.status === "succeeded" && j.transcript && (
                   <div className="job-transcript-block">
+                    <button
+                      type="button"
+                      className="btn-copy-transcript"
+                      title={copiedId === j.id ? "Copied" : "Copy transcript"}
+                      aria-label={copiedId === j.id ? "Copied" : "Copy transcript"}
+                      onClick={() => handleCopyTranscript(j.id, j.transcript!)}
+                    >
+                      {copiedId === j.id ? (
+                        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                          <path
+                            d="M4 10.5L8 14.5L16 5.5"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                          <rect
+                            x="7"
+                            y="7"
+                            width="10"
+                            height="10"
+                            rx="2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          />
+                          <path
+                            d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          />
+                        </svg>
+                      )}
+                    </button>
                     <p
                       className={
                         transcriptExpanded
@@ -290,8 +326,8 @@ function QueuePage() {
                     >
                       {j.transcript}
                     </p>
-                    <div className="job-transcript-actions">
-                      {j.transcript.length > TRANSCRIPT_TRUNCATE_LENGTH && (
+                    {j.transcript.length > TRANSCRIPT_TRUNCATE_LENGTH && (
+                      <div className="job-transcript-actions">
                         <button
                           type="button"
                           className="link-button"
@@ -299,15 +335,8 @@ function QueuePage() {
                         >
                           {transcriptExpanded ? "Show less" : "Show more"}
                         </button>
-                      )}
-                      <button
-                        type="button"
-                        className="link-button"
-                        onClick={() => handleCopyTranscript(j.id, j.transcript!)}
-                      >
-                        {copiedId === j.id ? "Copied ✓" : "Copy"}
-                      </button>
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 {j.status === "failed" && (
