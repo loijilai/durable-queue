@@ -1,6 +1,6 @@
 # Plan approval gates
 
-- Status: awaiting-final-review
+- Status: completed
 - Started: 2026-08-13
 - Updated: 2026-08-13
 
@@ -43,6 +43,8 @@ approval gates.
   approval-gate workflow.
 - 2026-08-13: Added the four-state lifecycle, both mandatory stop conditions,
   machine-enforced directory rules, and focused checker coverage.
+- 2026-08-13: The product owner granted final approval; the plan was archived as
+  completed.
 
 ## Checkpoint commits
 
@@ -72,6 +74,5 @@ approval gates.
 
 ## Handoff
 
-Implementation and full verification are complete. Await explicit final approval;
-then set this plan to `completed`, move it to `completed/`, and create the final
-local commit.
+Final approval was received. The approval-gate workflow is complete and ready
+for future non-trivial tasks.
