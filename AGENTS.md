@@ -29,3 +29,9 @@ Terraform 1.5 or newer, and a Docker/Compose installation. Full verification
 starts an isolated PostgreSQL container and removes it on exit, so do not point
 it at the development database. CI uses the same full entry point with an
 external service container.
+
+## Language
+
+- Specs, tickets, CONTEXT.md, ADRs: Traditional Chinese prose, English domain terms.
+- Code, comments, tests, commit messages: whatever the repo's documented coding standards say — `CODING_STANDARDS.md` or the like. Where none say, match the surrounding code; English when it is new.
+- docs/agents/*: English, verbatim from the skill seeds — do not translate.

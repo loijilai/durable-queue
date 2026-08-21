@@ -1,5 +1,7 @@
 # Project-specific agent instructions
 .claude/
+.agents/
+skills-lock.json
 
 # Python bytecode and caches
 __pycache__/
