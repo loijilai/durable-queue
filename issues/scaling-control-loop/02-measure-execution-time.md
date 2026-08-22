@@ -35,7 +35,7 @@ limit。答案會成為 Scaling Ceiling 的推導依據之一。
 
 **Blocked by:** None — can start immediately.
 
-- [ ] 轉錄的測試script可以寫在scripts底下
+- [x] 轉錄的測試script可以寫在scripts底下
 - [ ] 上述 4 支影片各完成一次真實轉錄，逐支記錄三個階段的耗時
 - [ ] 產出線性模型的兩個係數，以及三個階段的佔比
 - [ ] 明確記錄樣本數，且文件中不出現以此樣本推得的百分位數

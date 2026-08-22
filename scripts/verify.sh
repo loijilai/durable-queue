@@ -208,7 +208,7 @@ use_external_postgres() {
 run_quick() {
   export_test_environment
   run "Check environment contract" python3 "$ROOT_DIR/scripts/check_env_parity.py"
-  run "Test repository checkers" python3 -m unittest discover -s "$ROOT_DIR/scripts/tests" -v
+  run "Test repository checkers" "$PYTHON_BIN" -m unittest discover -s "$ROOT_DIR/scripts/tests" -v
   run "Check architecture boundaries" python3 "$ROOT_DIR/scripts/check_architecture.py"
   run "Check repository knowledge contract" python3 "$ROOT_DIR/scripts/check_repo_contract.py"
   run "Run Django system checks" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" check
