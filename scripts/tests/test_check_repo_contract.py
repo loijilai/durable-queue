@@ -7,7 +7,6 @@ from scripts.check_repo_contract import (
     check_diagram_assets,
     check_markdown_links,
     check_plan_statuses,
-    check_product_spec_index,
     tracked_markdown,
 )
 
@@ -83,18 +82,6 @@ class RepositoryContractCheckerTests(TestCase):
 
         self.assertEqual([violation.code for violation in violations], ["REPO002"])
 
-    def test_unindexed_product_spec_is_rejected(self):
-        with TemporaryDirectory() as directory:
-            root = Path(directory)
-            specs = root / "docs" / "product-specs"
-            specs.mkdir(parents=True)
-            (specs / "README.md").write_text("# Product specs\n", encoding="utf-8")
-            (specs / "new-feature.md").write_text("# New feature\n", encoding="utf-8")
-
-            violations = check_product_spec_index(root)
-
-        self.assertEqual([violation.code for violation in violations], ["REPO003"])
-
     def test_missing_diagram_asset_is_rejected(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
@@ -128,11 +115,6 @@ class RepositoryContractCheckerTests(TestCase):
             )
             (completed / "done.md").write_text("- Status: completed\n", encoding="utf-8")
 
-            specs = root / "docs" / "product-specs"
-            specs.mkdir()
-            (specs / "feature.md").write_text("# Feature\n", encoding="utf-8")
-            (specs / "README.md").write_text("[feature](feature.md)\n", encoding="utf-8")
-
             diagram_dir = root / "docs" / "diagrams"
             diagram_dir.mkdir()
             (diagram_dir / "README.md").write_text("# Diagrams\n", encoding="utf-8")
@@ -142,7 +124,6 @@ class RepositoryContractCheckerTests(TestCase):
             violations = [
                 *check_markdown_links(root, [document]),
                 *check_plan_statuses(root),
-                *check_product_spec_index(root),
                 *check_diagram_assets(root, ("docs/diagrams/source.drawio",)),
             ]
 
