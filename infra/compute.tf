@@ -109,7 +109,6 @@ resource "aws_launch_template" "api" {
     db_host                   = aws_db_instance.postgres.address
     db_port                   = aws_db_instance.postgres.port
     celery_broker_url         = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
-    celery_result_backend     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
     celery_visibility_timeout = local.celery_visibility_timeout
     transcriber               = local.transcriber
     transcribe_seconds        = local.transcribe_seconds
@@ -150,7 +149,6 @@ resource "aws_launch_template" "worker" {
     db_host                   = aws_db_instance.postgres.address
     db_port                   = aws_db_instance.postgres.port
     celery_broker_url         = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
-    celery_result_backend     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/1"
     celery_visibility_timeout = local.celery_visibility_timeout
     transcriber               = local.transcriber
     transcribe_seconds        = local.transcribe_seconds

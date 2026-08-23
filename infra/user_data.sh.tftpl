@@ -33,7 +33,6 @@ docker run -d --restart always \
   -e POSTGRES_HOST=${db_host} \
   -e POSTGRES_PORT=${db_port} \
   -e CELERY_BROKER_URL=${celery_broker_url} \
-  -e CELERY_RESULT_BACKEND=${celery_result_backend} \
   -e CELERY_VISIBILITY_TIMEOUT=${celery_visibility_timeout} \
   -e TRANSCRIBER=${transcriber} \
   -e TRANSCRIBE_SECONDS=${transcribe_seconds} \

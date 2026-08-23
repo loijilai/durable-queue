@@ -150,14 +150,21 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # 且 .env.example 成為唯一的設定清單，不用回頭讀 settings.py 找隱藏預設值。
 CELERY_BROKER_URL = os.environ["CELERY_BROKER_URL"]
 
-CELERY_RESULT_BACKEND = os.environ["CELERY_RESULT_BACKEND"]
+# Result backend 刪除而非遷移：Job 狀態的真相在 Postgres，從來沒有人讀取這個設定。
+# 不設定 CELERY_RESULT_BACKEND 即是明確關閉結果儲存（Celery 預設 result_backend=None）。
 
 CELERY_TIMEZONE = TIME_ZONE
 
 # 不變式：visibility_timeout 必須 > task 最長執行時間，否則正常 job 被誤判死亡而重送
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(os.environ["CELERY_VISIBILITY_TIMEOUT"]),
+    # SQS 的 region 是連線層設定，不是容量決策；本機與正式環境目前共用同一個值。
+    "region": "us-east-1",
 }
+
+# 指標正確性的前提：預取的訊息會轉為不可見，Backlog 會顯示成已消化，而工作其實只是
+# 移動到一個觀測不到的地方。之後每一個容量訊號都建立在這個設定上。
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
 
 # drf-spectacular (OpenAPI schema)

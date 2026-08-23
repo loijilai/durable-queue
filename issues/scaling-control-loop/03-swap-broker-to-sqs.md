@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 03 — 把 broker 換成 SQS，在本機驗證
 
@@ -20,10 +20,10 @@ Status: open
 
 **Blocked by:** None — can start immediately.
 
-- [ ] 本機 stack 以 SQS 相容服務取代 Redis 容器，不需任何雲端憑證
-- [ ] 從 API 送出的 Job 在本機環境走到終態
-- [ ] Job 處理邏輯、dispatch 呼叫與 task 宣告未被修改
-- [ ] Celery result backend 的設定與讀取路徑一併移除
-- [ ] 預取倍數設為 1，且該設定的實際生效值有測試斷言
-- [ ] 環境變數對帳檢查在新的設定清單下通過
-- [ ] `./scripts/verify.sh full` 通過
+- [x] 本機 stack 以 SQS 相容服務取代 Redis 容器，不需任何雲端憑證
+- [x] 從 API 送出的 Job 在本機環境走到終態
+- [x] Job 處理邏輯、dispatch 呼叫與 task 宣告未被修改
+- [x] Celery result backend 的設定與讀取路徑一併移除
+- [x] 預取倍數設為 1，且該設定的實際生效值有測試斷言
+- [x] 環境變數對帳檢查在新的設定清單下通過
+- [x] `./scripts/verify.sh full` 通過
