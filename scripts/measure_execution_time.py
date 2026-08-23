@@ -39,6 +39,44 @@ DEFAULT_SAMPLES_FILE = (
     ROOT / "issues" / "scaling-control-loop" / "execution-time-samples.json"
 )
 
+# yt-dlp's default client currently gets 403'd on download by YouTube's
+# PO-token/SABR requirement in this environment (see
+# https://github.com/yt-dlp/yt-dlp/issues/12482). The "android" client still
+# returns playable URLs without a token. This override is scoped to the
+# measurement harness only — jobs/transcribers.py's real_transcribe() is left
+# untouched; whether production needs the same override is a separate call.
+YOUTUBE_PLAYER_CLIENT = os.environ.get("MEASURE_YOUTUBE_PLAYER_CLIENT", "android")
+
+
+def _download_audio(video_url, tmp_dir, timeout_seconds):
+    """Copy of jobs.transcribers._download_audio with a yt-dlp player_client
+    override (see YOUTUBE_PLAYER_CLIENT above). Reuses transcribers' error
+    classification and exception types so retry/permanent handling stays
+    identical to production."""
+    import yt_dlp
+
+    options = {
+        "format": "bestaudio/best",
+        "outtmpl": os.path.join(tmp_dir, "%(id)s.%(ext)s"),
+        "quiet": True,
+        "noprogress": True,
+        "no_warnings": True,
+        "socket_timeout": timeout_seconds,
+        "extractor_args": {"youtube": {"player_client": [YOUTUBE_PLAYER_CLIENT]}},
+    }
+    try:
+        with yt_dlp.YoutubeDL(options) as ydl:
+            info = ydl.extract_info(video_url, download=True)
+    except yt_dlp.utils.DownloadError as exc:
+        raise transcribers._classify_download_error(exc) from exc
+
+    audio_path = ydl.prepare_filename(info)
+    if not os.path.exists(audio_path):
+        raise transcribers.InvalidMediaError(
+            f"yt-dlp reported success but produced no audio file for {video_url}"
+        )
+    return audio_path, info.get("duration")
+
 
 def _transcribe_chunks_with_retry(chunk_paths, timeout_seconds):
     """Mirrors jobs.transcribers._transcribe_chunk_with_retry's retry/backoff
@@ -87,7 +125,7 @@ def measure(
     tmp_dir = tempfile.mkdtemp(prefix="durable-queue-measure-")
     try:
         download_start = time.monotonic()
-        audio_path, video_duration = transcribers._download_audio(
+        audio_path, video_duration = _download_audio(
             video_url, tmp_dir, timeout_seconds
         )
         download_seconds = time.monotonic() - download_start
@@ -152,9 +190,7 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Human-readable label for this sample (e.g. a video length).",
     )
-    parser.add_argument(
-        "--samples-file", type=Path, default=DEFAULT_SAMPLES_FILE
-    )
+    parser.add_argument("--samples-file", type=Path, default=DEFAULT_SAMPLES_FILE)
     args = parser.parse_args(argv)
 
     print(f"Measuring {args.video_url} ...")

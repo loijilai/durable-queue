@@ -1,0 +1,46 @@
+[
+  {
+    "label": "8m34s",
+    "video_url": "https://youtu.be/mBePcvqLX88",
+    "video_duration_seconds": 515,
+    "chunk_count": 1,
+    "download_seconds": 1.825,
+    "split_seconds": 0.937,
+    "transcribe_seconds": 20.985,
+    "total_seconds": 23.747,
+    "retryable_errors_encountered": []
+  },
+  {
+    "label": "20m43s",
+    "video_url": "https://youtu.be/UNzCG3lw6O0",
+    "video_duration_seconds": 1243,
+    "chunk_count": 2,
+    "download_seconds": 4.657,
+    "split_seconds": 2.077,
+    "transcribe_seconds": 30.246,
+    "total_seconds": 36.979,
+    "retryable_errors_encountered": []
+  },
+  {
+    "label": "58m45s",
+    "video_url": "https://youtu.be/sMujMp4h_EY",
+    "video_duration_seconds": 3525,
+    "chunk_count": 3,
+    "download_seconds": 31.956,
+    "split_seconds": 5.597,
+    "transcribe_seconds": 81.248,
+    "total_seconds": 118.801,
+    "retryable_errors_encountered": []
+  },
+  {
+    "label": "2h08m",
+    "video_url": "https://youtu.be/N5AQFYtqx8Q",
+    "video_duration_seconds": 7693,
+    "chunk_count": 7,
+    "download_seconds": 24.97,
+    "split_seconds": 11.371,
+    "transcribe_seconds": 151.616,
+    "total_seconds": 187.957,
+    "retryable_errors_encountered": []
+  }
+]
