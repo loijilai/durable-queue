@@ -159,7 +159,9 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(os.environ["CELERY_VISIBILITY_TIMEOUT"]),
     # SQS 的 region 是連線層設定，不是容量決策；本機與正式環境目前共用同一個值。
-    "region": "us-east-1",
+    # 對本機的 ElasticMQ 而言這個值不受檢查，但要跟 infra/compute.tf 的部署區域一致，
+    # 才不會在正式環境接上真實 SQS 時才發現兜不起來。
+    "region": "ap-northeast-1",
 }
 
 # 指標正確性的前提：預取的訊息會轉為不可見，Backlog 會顯示成已消化，而工作其實只是
