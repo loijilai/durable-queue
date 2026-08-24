@@ -109,14 +109,24 @@ resource "aws_iam_role_policy" "api_task_sqs" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "sqs:GetQueueUrl",
-        "sqs:SendMessage"
-      ]
-      Resource = aws_sqs_queue.celery.arn
-    }]
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:GetQueueUrl",
+          "sqs:SendMessage"
+        ]
+        Resource = aws_sqs_queue.celery.arn
+      },
+      {
+        # 跟 worker.tf 的 worker_task_sqs 同構、同一個理由：kombu 的 SQS
+        # transport 建連線一定會呼叫 ListQueues，帳號層級 API，不能綁在單一
+        # 佇列 ARN 上。
+        Effect   = "Allow"
+        Action   = "sqs:ListQueues"
+        Resource = "*"
+      }
+    ]
   })
 }
 
