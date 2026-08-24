@@ -59,9 +59,10 @@ resource "aws_iam_role_policy" "github_actions" {
           "autoscaling:StartInstanceRefresh",
           "autoscaling:DescribeInstanceRefreshes"
         ]
+        # worker 的 ASG 在 05 被 ECS/Fargate service 取代（見 TfWriteEcs），
+        # 這裡只剩 API 一個 ASG 還在用這組權限。
         Resource = [
-          "arn:aws:autoscaling:ap-northeast-1:461346075470:autoScalingGroup:*:autoScalingGroupName/durable-queue-api",
-          "arn:aws:autoscaling:ap-northeast-1:461346075470:autoScalingGroup:*:autoScalingGroupName/durable-queue-worker"
+          "arn:aws:autoscaling:ap-northeast-1:461346075470:autoScalingGroup:*:autoScalingGroupName/durable-queue-api"
         ]
       },
       {
@@ -123,6 +124,90 @@ resource "aws_iam_role_policy" "github_actions" {
         Condition = {
           StringEquals = {
             "iam:PassedToService" = "ec2.amazonaws.com"
+          }
+        }
+      },
+      {
+        # 05：worker.tf 的 task definition 每次 `image_tag` 換值都要註冊新的
+        # revision，並讓 service 指過去 —— 這兩件事現在是每次 deploy 都會
+        # 觸發的 terraform apply 的一部分，不再只是 launch template 那樣的
+        # 例外，所以需要跟 TfWriteLaunchTemplate 同等地位的常態權限。
+        Sid    = "TfWriteEcs"
+        Effect = "Allow"
+        Action = [
+          "ecs:CreateCluster",
+          "ecs:DeleteCluster",
+          "ecs:DescribeClusters",
+          "ecs:RegisterTaskDefinition",
+          "ecs:DeregisterTaskDefinition",
+          "ecs:DescribeTaskDefinition",
+          "ecs:CreateService",
+          "ecs:DeleteService",
+          "ecs:UpdateService",
+          "ecs:DescribeServices",
+          "ecs:TagResource",
+          "ecs:ListTagsForResource"
+        ]
+        Resource = "*" # ECS 對 task-definition/cluster/service 的讀取類 API 多半不支援資源層級限制
+      },
+      {
+        Sid    = "TfWriteQueue"
+        Effect = "Allow"
+        Action = [
+          "sqs:CreateQueue",
+          "sqs:DeleteQueue",
+          "sqs:GetQueueAttributes",
+          "sqs:SetQueueAttributes",
+          "sqs:TagQueue",
+          "sqs:ListQueueTags"
+        ]
+        Resource = [
+          "arn:aws:sqs:ap-northeast-1:461346075470:celery",
+          "arn:aws:sqs:ap-northeast-1:461346075470:celery-dlq"
+        ]
+      },
+      {
+        Sid    = "TfWriteWorkerLogGroup"
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:DeleteLogGroup",
+          "logs:PutRetentionPolicy",
+          "logs:DescribeLogGroups",
+          "logs:ListTagsForResource",
+          "logs:TagResource"
+        ]
+        Resource = "arn:aws:logs:ap-northeast-1:461346075470:log-group:/ecs/durable-queue-worker*"
+      },
+      {
+        Sid    = "TfWriteWorkerRoles"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:GetRolePolicy",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+          "iam:TagRole"
+        ]
+        Resource = [
+          "arn:aws:iam::461346075470:role/durable-queue-worker-execution",
+          "arn:aws:iam::461346075470:role/durable-queue-worker-task"
+        ]
+      },
+      {
+        Sid    = "TfPassWorkerRoles"
+        Effect = "Allow"
+        Action = "iam:PassRole"
+        Resource = [
+          "arn:aws:iam::461346075470:role/durable-queue-worker-execution",
+          "arn:aws:iam::461346075470:role/durable-queue-worker-task"
+        ]
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
           }
         }
       }

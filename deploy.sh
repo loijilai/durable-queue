@@ -10,7 +10,7 @@ set -euo pipefail
 REGION="ap-northeast-1"
 ECR_REPO="durable-queue"
 APP_SECRET_ID="durable-queue-app"
-ASGS=("durable-queue-api" "durable-queue-worker")
+ECS_CLUSTER="durable-queue"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_CONTEXT="${ROOT}/durable_queue"
@@ -36,11 +36,14 @@ aws secretsmanager put-secret-value --region "$REGION" --secret-id "$APP_SECRET_
     --arg cs  "$(get_env GOOGLE_CLIENT_SECRET)" \
     '{secret_key: $sk, google_client_id: $cid, google_client_secret: $cs}')" >/dev/null
 
-# ── 4. 滾動 ASG（新 instance 重跑 user_data → pull 新 image + 讀 secret）
-for asg in "${ASGS[@]}"; do
-  aws autoscaling start-instance-refresh --region "$REGION" \
-    --auto-scaling-group-name "$asg" \
-    --preferences '{"MinHealthyPercentage":0}' >/dev/null
-done
+# ── 4a. 滾動 API 的 ASG（新 instance 重跑 user_data → pull 新 image + 讀 secret）
+aws autoscaling start-instance-refresh --region "$REGION" \
+  --auto-scaling-group-name "durable-queue-api" \
+  --preferences '{"MinHealthyPercentage":0}' >/dev/null
+
+# ── 4b. 讓 worker service 抓新 image（05 之後 worker 是 ECS/Fargate，不再是 ASG）
+aws ecs update-service --region "$REGION" \
+  --cluster "$ECS_CLUSTER" --service durable-queue-worker \
+  --force-new-deployment >/dev/null
 
 echo "✓ done."

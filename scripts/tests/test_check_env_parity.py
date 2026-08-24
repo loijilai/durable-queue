@@ -5,7 +5,9 @@ from unittest import TestCase
 
 from scripts.check_env_parity import (
     DOCKER_ENV_RE,
+    TASK_DEFINITION_ENV_RE,
     USER_DATA_SOURCE,
+    WORKER_TASK_DEFINITION_SOURCE,
     DeploymentSource,
     reconcile,
 )
@@ -36,6 +38,39 @@ class DeploymentSourceTests(TestCase):
             source = DeploymentSource(label="user_data", path=path, pattern=DOCKER_ENV_RE)
 
             self.assertEqual(source.declared(), {"FOO", "BAR"})
+
+    def test_declared_with_task_definition_pattern_matches_hcl_style(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "worker.tf"
+            path.write_text(
+                "environment = [\n"
+                '  { name = "FOO", value = "1" },\n'
+                '  { name = "BAR", value = local.bar },\n'
+                "]\n"
+                'secrets = [{ name = "BAZ", valueFrom = "arn:..." }]\n',
+                encoding="utf-8",
+            )
+            source = DeploymentSource(
+                label="worker.tf", path=path, pattern=TASK_DEFINITION_ENV_RE
+            )
+
+            self.assertEqual(source.declared(), {"FOO", "BAR", "BAZ"})
+
+    def test_task_definition_pattern_ignores_lowercase_resource_names(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "worker.tf"
+            path.write_text(
+                'resource "aws_ecs_service" "worker" {\n'
+                '  name = "durable-queue-worker"\n'
+                "}\n"
+                'environment = [{ name = "FOO", value = "1" }]\n',
+                encoding="utf-8",
+            )
+            source = DeploymentSource(
+                label="worker.tf", path=path, pattern=TASK_DEFINITION_ENV_RE
+            )
+
+            self.assertEqual(source.declared(), {"FOO"})
 
 
 class ReconcileTests(TestCase):
@@ -115,10 +150,10 @@ class ReconcileTests(TestCase):
         self.assertTrue(ok)
 
 
-class RegressionAgainstRealUserDataTests(TestCase):
-    """驗收條件：對現行機器開機腳本的對帳結果，改動前後必須完全一致。"""
+class UserDataSourceStillDefinedTests(TestCase):
+    """user_data.sh.tftpl 仍是 API 的部署腳本（06 才移除），這個來源本身要繼續能用。"""
 
-    def test_default_source_still_points_at_user_data_template(self):
+    def test_user_data_source_still_points_at_the_boot_script(self):
         self.assertEqual(USER_DATA_SOURCE.label, "infra/user_data.sh.tftpl")
         self.assertTrue(USER_DATA_SOURCE.path.name == "user_data.sh.tftpl")
 
@@ -126,6 +161,22 @@ class RegressionAgainstRealUserDataTests(TestCase):
         from scripts.check_env_parity import ROOT
 
         self.assertEqual(USER_DATA_SOURCE.label, str(USER_DATA_SOURCE.path.relative_to(ROOT)))
+
+
+class RegressionAgainstRealWorkerTaskDefinitionTests(TestCase):
+    """驗收條件（05）：對帳的預設來源已換成 Worker 的 ECS task definition。"""
+
+    def test_default_source_points_at_worker_task_definition(self):
+        self.assertEqual(WORKER_TASK_DEFINITION_SOURCE.label, "infra/worker.tf")
+        self.assertTrue(WORKER_TASK_DEFINITION_SOURCE.path.name == "worker.tf")
+
+    def test_label_is_derived_from_path_and_cannot_drift_from_it(self):
+        from scripts.check_env_parity import ROOT
+
+        self.assertEqual(
+            WORKER_TASK_DEFINITION_SOURCE.label,
+            str(WORKER_TASK_DEFINITION_SOURCE.path.relative_to(ROOT)),
+        )
 
     def test_real_repository_env_contract_is_consistent(self):
         from scripts.check_env_parity import ENV_EXAMPLE, main

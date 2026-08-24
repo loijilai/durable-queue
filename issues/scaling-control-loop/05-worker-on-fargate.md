@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 05 — Worker 跑上 Fargate
 
@@ -20,12 +20,12 @@ Task 規格需要明確涵蓋 CPU 與暫存磁碟，不能只想著記憶體：�
 
 **Blocked by:** 01, 03
 
-- [ ] Worker 以容器編排的 service 形式運行，容量固定
-- [ ] 透過既有 API 送出的 Job 由該 service 取走並抵達終態
-- [ ] 真實佇列與 DLQ 建立，投遞次數有上限
-- [ ] Worker 的 Celery 併發數為 1
-- [ ] Task 規格明確宣告 CPU 與暫存磁碟，且其數值可回溯到 02 的量測
-- [ ] Worker 的權限為最小必要，且不再依賴虛擬機的身分
-- [ ] 環境變數對帳檢查指向新的設定宣告來源（使用 01 建立的替換點）
-- [ ] 尚未建立任何 scaling policy
-- [ ] `./scripts/verify.sh full` 通過
+- [x] Worker 以容器編排的 service 形式運行，容量固定
+- [x] 透過既有 API 送出的 Job 由該 service 取走並抵達終態
+- [x] 真實佇列與 DLQ 建立，投遞次數有上限
+- [x] Worker 的 Celery 併發數為 1
+- [x] Task 規格明確宣告 CPU 與暫存磁碟，且其數值可回溯到 02 的量測
+- [x] Worker 的權限為最小必要，且不再依賴虛擬機的身分
+- [x] 環境變數對帳檢查指向新的設定宣告來源（使用 01 建立的替換點）
+- [x] 尚未建立任何 scaling policy
+- [x] `./scripts/verify.sh full` 通過

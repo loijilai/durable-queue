@@ -126,14 +126,17 @@ jobs:
           terraform init
           terraform apply -auto-approve -var="image_tag=$IMAGE_TAG"
 
-      - name: Roll ASGs
+      - name: Roll API ASG
         run: |
-          roll() {
-            aws autoscaling start-instance-refresh \
-              --region "$AWS_REGION" \
-              --auto-scaling-group-name "$1" \
-              --preferences "$2"
-          }
+          aws autoscaling start-instance-refresh \
+            --region "$AWS_REGION" \
+            --auto-scaling-group-name durable-queue-api \
+            --preferences '{"MinHealthyPercentage":50,"InstanceWarmup":15}'
 
-          roll durable-queue-api '{"MinHealthyPercentage":50,"InstanceWarmup":15}'
-          roll durable-queue-worker '{"MinHealthyPercentage":0,"InstanceWarmup":0}'
+      - name: Deploy worker service
+        run: |
+          aws ecs update-service \
+            --region "$AWS_REGION" \
+            --cluster durable-queue \
+            --service durable-queue-worker \
+            --force-new-deployment

@@ -11,9 +11,11 @@
   部署來源裡多餘的宣告
       → 程式碼從來不讀 = 死設定，一併報出來
 
-部署來源（目前是機器開機腳本 infra/user_data.sh.tftpl）是可替換的 DeploymentSource：
-換掉它指到的路徑和解析規則，就能改對帳去對別的部署宣告（例如 ECS task
-definition），不必碰其餘的對帳邏輯。
+部署來源是可替換的 DeploymentSource：換掉它指到的路徑和解析規則，就能改對帳去對
+別的部署宣告，不必碰其餘的對帳邏輯。05 把預設來源從機器開機腳本
+（infra/user_data.sh.tftpl）換成 Worker 的 ECS task definition
+（infra/worker.tf 的 container_definitions），因為那份腳本已不再是 Worker 實際
+的部署宣告來源。
 """
 
 from __future__ import annotations
@@ -31,6 +33,10 @@ REQUIRED_RE = re.compile(r'os\.environ\[\s*"([A-Z_][A-Z0-9_]*)"\s*\]')
 OPTIONAL_RE = re.compile(r'os\.environ\.get\(\s*"([A-Z_][A-Z0-9_]*)"')
 ENV_KEY_RE = re.compile(r"^([A-Z_][A-Z0-9_]*)=", re.MULTILINE)
 DOCKER_ENV_RE = re.compile(r"-e\s+([A-Z_][A-Z0-9_]*)=")
+# ECS task definition 是 HCL（container_definitions = jsonencode(...)），不是
+# 字面 JSON，所以配對的是 `name = "FOO"` 而不是 `"name": "FOO"`。只認全大寫
+# 加底線，天然排除同一個檔案裡一堆小寫連字號的 resource/container 名稱。
+TASK_DEFINITION_ENV_RE = re.compile(r'name\s*=\s*"([A-Z_][A-Z0-9_]*)"')
 
 
 @dataclass(frozen=True)
@@ -50,6 +56,16 @@ USER_DATA_SOURCE = DeploymentSource(
     label=str(_USER_DATA_PATH.relative_to(ROOT)),
     path=_USER_DATA_PATH,
     pattern=DOCKER_ENV_RE,
+)
+
+# Worker 不再是機器開機腳本，是 ECS/Fargate 的 task definition（05）。API 仍在
+# EC2 上，但兩個角色共用同一份 settings.py，需要的環境變數集合完全相同，所以
+# 對帳只需要盯著其中一份部署宣告。
+_WORKER_TASK_DEFINITION_PATH = ROOT / "infra" / "worker.tf"
+WORKER_TASK_DEFINITION_SOURCE = DeploymentSource(
+    label=str(_WORKER_TASK_DEFINITION_PATH.relative_to(ROOT)),
+    path=_WORKER_TASK_DEFINITION_PATH,
+    pattern=TASK_DEFINITION_ENV_RE,
 )
 
 
@@ -106,7 +122,7 @@ def reconcile(
     return ok
 
 
-def main(deployment_source: DeploymentSource = USER_DATA_SOURCE) -> int:
+def main(deployment_source: DeploymentSource = WORKER_TASK_DEFINITION_SOURCE) -> int:
     required, optional = scan_code()
     documented = set(ENV_KEY_RE.findall(ENV_EXAMPLE.read_text(encoding="utf-8")))
     ok = reconcile(required, optional, documented, deployment_source)

@@ -1,10 +1,15 @@
 locals {
-  # 前端部署在 Vercel, api 和 worker 兩個 launch template 都要用到
+  # 前端部署在 Vercel, api 這個 launch template 和 worker 的 task definition 都要用到
   frontend_url              = "https://app.loijilai.site"
   google_redirect_uri       = "https://durable-queue.loijilai.site/api/auth/google/callback/"
   transcriber               = "fake"
   transcribe_seconds        = 1
   celery_visibility_timeout = 3600
+
+  # SQS 取代 Redis：不帶 host/port，靠 IAM role（EC2 instance profile /
+  # ECS task role）的預設憑證鏈解析佇列，佇列名稱固定為 "celery"（見
+  # queue.tf）。API 和 Worker 共用同一個值 —— 兩邊必須連到同一個佇列。
+  celery_broker_url = "sqs://"
 }
 
 
@@ -53,6 +58,26 @@ resource "aws_iam_role_policy" "read_db_secret" {
         Resource = data.aws_ecr_repository.registry.arn
       }
     ]
+  })
+}
+
+# ── Permission policy：API 透過 tasks.execute_job.delay() 送出 Job，
+#    只准對 celery 這一個佇列發布訊息（不含 Receive/Delete/ChangeVisibility
+#    —— 那是 Worker 的權限，API 從不消費自己送出的訊息）──────────────
+resource "aws_iam_role_policy" "publish_to_celery_queue" {
+  name = "publish-to-celery-queue"
+  role = aws_iam_role.ec2.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "sqs:GetQueueUrl",
+        "sqs:SendMessage"
+      ]
+      Resource = aws_sqs_queue.celery.arn
+    }]
   })
 }
 
@@ -108,7 +133,7 @@ resource "aws_launch_template" "api" {
     db_user                   = aws_db_instance.postgres.username
     db_host                   = aws_db_instance.postgres.address
     db_port                   = aws_db_instance.postgres.port
-    celery_broker_url         = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
+    celery_broker_url         = local.celery_broker_url
     celery_visibility_timeout = local.celery_visibility_timeout
     transcriber               = local.transcriber
     transcribe_seconds        = local.transcribe_seconds
@@ -123,51 +148,12 @@ resource "aws_launch_template" "api" {
   }
 }
 
-# ── worker ───────────────────────────────────────────────────────────
-resource "aws_launch_template" "worker" {
-  name          = "durable-queue-worker"
-  image_id      = data.aws_ssm_parameter.al2023_ami.value
-  instance_type = "t3.micro"
-
-  iam_instance_profile {
-    name = aws_iam_instance_profile.ec2.name
-  }
-
-  vpc_security_group_ids = [aws_security_group.worker.id]
-
-  # user_data：同一份模板，只有 run_command 換成 celery。
-  user_data = base64encode(templatefile("${path.module}/user_data.sh.tftpl", {
-    region        = "ap-northeast-1"
-    registry      = split("/", data.aws_ecr_repository.registry.repository_url)[0]
-    image         = "${data.aws_ecr_repository.registry.repository_url}:${var.image_tag}"
-    db_secret_id  = aws_db_instance.postgres.master_user_secret[0].secret_arn
-    app_secret_id = data.aws_secretsmanager_secret.app.arn
-
-    # ── 非機密、Terraform 注入的 endpoint / config ──
-    db_name                   = aws_db_instance.postgres.db_name
-    db_user                   = aws_db_instance.postgres.username
-    db_host                   = aws_db_instance.postgres.address
-    db_port                   = aws_db_instance.postgres.port
-    celery_broker_url         = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:6379/0"
-    celery_visibility_timeout = local.celery_visibility_timeout
-    transcriber               = local.transcriber
-    transcribe_seconds        = local.transcribe_seconds
-    google_redirect_uri       = local.google_redirect_uri
-    frontend_url              = local.frontend_url
-    run_command               = "celery -A durable_queue worker -l info"
-  }))
-
-  tag_specifications {
-    resource_type = "instance"
-    tags          = { Name = "durable-queue-worker" }
-  }
-}
-
+# worker 已不再是 launch template + ASG，見 worker.tf 的 ECS/Fargate service。
 
 # =====================================================================
-# ASG ×2（api / worker）
+# ASG（api）
 # ---------------------------------------------------------------------
-# 跨 2 AZ 的 private subnet 分散；每個 ASG 綁自己的 launch template。
+# 跨 2 AZ 的 private subnet 分散。
 # =====================================================================
 
 # ── api ──────────────────────────────────────────────────────────────
@@ -195,31 +181,6 @@ resource "aws_autoscaling_group" "api" {
   tag {
     key                 = "Name"
     value               = "durable-queue-api"
-    propagate_at_launch = true
-  }
-}
-
-# ── worker ───────────────────────────────────────────────────────────
-resource "aws_autoscaling_group" "worker" {
-  name = "durable-queue-worker"
-
-  vpc_zone_identifier = [for subnet in aws_subnet.private : subnet.id]
-
-  # HA
-  min_size         = 2
-  max_size         = 2
-  desired_capacity = 2
-
-  launch_template {
-    id      = aws_launch_template.worker.id
-    version = "$Latest"
-  }
-
-  # worker 不接流量，沒有 target group。
-
-  tag {
-    key                 = "Name"
-    value               = "durable-queue-worker"
     propagate_at_launch = true
   }
 }
