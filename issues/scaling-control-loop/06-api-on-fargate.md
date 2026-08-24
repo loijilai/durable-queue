@@ -31,5 +31,5 @@ API 的容量固定，**不設 scaling policy**：沒有任何量測指出需要
       05 已把檢查換指向新的設定宣告來源，這些留在原地就是死碼
 - [x] ElastiCache 自基礎設施程式碼中刪除
 - [x] API service 沒有 scaling policy
-- [ ] 端到端可用：登入、送出 Job、查詢狀態、重試皆正常
+- [x] 端到端可用：登入、送出 Job、查詢狀態、重試皆正常
 - [x] `./scripts/verify.sh full` 通過
