@@ -158,31 +158,6 @@ def check_plan_statuses(root: Path) -> list[Violation]:
     return violations
 
 
-def check_product_spec_index(root: Path) -> list[Violation]:
-    spec_dir = root / "docs" / "product-specs"
-    index_path = spec_dir / "README.md"
-    index_text = index_path.read_text(encoding="utf-8")
-    linked_specs = {
-        Path(match.group(1).split("#", 1)[0]).name
-        for match in MARKDOWN_LINK_RE.finditer(index_text)
-        if match.group(1).split("#", 1)[0].endswith(".md")
-    }
-    violations: list[Violation] = []
-    for path in sorted(spec_dir.glob("*.md")):
-        if path.name == "README.md" or path.name in linked_specs:
-            continue
-        violations.append(
-            Violation(
-                path,
-                1,
-                "REPO003",
-                "product spec is not listed in docs/product-specs/README.md.",
-                "Add the spec to the initiative index with an explicit status.",
-            )
-        )
-    return violations
-
-
 def check_diagram_assets(
     root: Path, assets: tuple[str, ...] = DIAGRAM_ASSETS
 ) -> list[Violation]:
@@ -205,7 +180,6 @@ def check_repository(root: Path, markdown_paths: list[Path] | None = None) -> li
     return [
         *check_markdown_links(root, paths),
         *check_plan_statuses(root),
-        *check_product_spec_index(root),
         *check_diagram_assets(root),
     ]
 

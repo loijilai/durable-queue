@@ -16,12 +16,10 @@ services:
       - "25432:5432"
 
 
-  redis:
-    image: redis:7
-    volumes:
-      - redisdata:/data
+  sqs:
+    image: softwaremill/elasticmq-native:1.6.10
     ports: # for development
-      - "26379:6379"
+      - "29324:9324"
 
   api:
     build: . # build context is docker-compose.yml file location
@@ -31,13 +29,12 @@ services:
     env_file:
       - .env # load .env at runtime, not COPY into image
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CELERY_BROKER_URL=sqs://x:x@sqs:9324
       - POSTGRES_HOST=postgres
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
+      sqs:
         condition: service_started
 
   worker:
@@ -46,15 +43,13 @@ services:
     env_file:
       - .env
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CELERY_BROKER_URL=sqs://x:x@sqs:9324
       - POSTGRES_HOST=postgres
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
+      sqs:
         condition: service_started
 
 volumes:
   pgdata:
-  redisdata:

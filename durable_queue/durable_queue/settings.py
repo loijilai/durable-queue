@@ -150,13 +150,57 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # 且 .env.example 成為唯一的設定清單，不用回頭讀 settings.py 找隱藏預設值。
 CELERY_BROKER_URL = os.environ["CELERY_BROKER_URL"]
 
-CELERY_RESULT_BACKEND = os.environ["CELERY_RESULT_BACKEND"]
+# Result backend 刪除而非遷移：Job 狀態的真相在 Postgres，從來沒有人讀取這個設定。
+# 不設定 CELERY_RESULT_BACKEND 即是明確關閉結果儲存（Celery 預設 result_backend=None）。
 
 CELERY_TIMEZONE = TIME_ZONE
 
 # 不變式：visibility_timeout 必須 > task 最長執行時間，否則正常 job 被誤判死亡而重送
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(os.environ["CELERY_VISIBILITY_TIMEOUT"]),
+    # SQS 的 region 是連線層設定，不是容量決策；本機與正式環境目前共用同一個值。
+    # 對本機的 ElasticMQ 而言這個值不受檢查，但要跟 infra/shared.tf 的部署區域一致，
+    # 才不會在正式環境接上真實 SQS 時才發現兜不起來。
+    "region": "ap-northeast-1",
+}
+
+# 指標正確性的前提：預取的訊息會轉為不可見，Backlog 會顯示成已消化，而工作其實只是
+# 移動到一個觀測不到的地方。之後每一個容量訊號都建立在這個設定上。
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+# Celery 預設會接管 root logger、換上自己的 formatter，蓋掉上面設定的 JSON 輸出。
+# 關掉接管，讓 worker 進程沿用 Django 這份 LOGGING 設定。
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+
+
+# Structured logging
+# 每一行 JSON 帶 job id（由 jobs.observability 透過 task_prerun/task_postrun signal
+# 寫入 contextvar，不需要每個呼叫點自己傳遞）。容器日誌交由容器平台原生的日誌驅動
+# 送出，這裡只負責讓 stdout 本身是結構化的一行 JSON。
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "job_id": {
+            "()": "durable_queue.logging_context.JobIdFilter",
+        },
+    },
+    "formatters": {
+        "json": {
+            "()": "durable_queue.logging_context.JsonFormatter",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "filters": ["job_id"],
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
 }
 
 

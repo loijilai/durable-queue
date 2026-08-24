@@ -144,8 +144,7 @@ export_test_environment() {
   export TRANSCRIBE_SECONDS="0"
   export CELERY_VISIBILITY_TIMEOUT="3600"
   export FRONTEND_URL="http://test.example"
-  export CELERY_BROKER_URL="redis://localhost:6379/0"
-  export CELERY_RESULT_BACKEND="redis://localhost:6379/1"
+  export CELERY_BROKER_URL="sqs://x:x@localhost:9324"
   export GOOGLE_CLIENT_ID="verification.apps.googleusercontent.com"
   export GOOGLE_CLIENT_SECRET="verification-client-secret"
   export GOOGLE_REDIRECT_URI="http://localhost:8000/api/auth/google/callback"
@@ -208,7 +207,7 @@ use_external_postgres() {
 run_quick() {
   export_test_environment
   run "Check environment contract" python3 "$ROOT_DIR/scripts/check_env_parity.py"
-  run "Test repository checkers" python3 -m unittest discover -s "$ROOT_DIR/scripts/tests" -v
+  run "Test repository checkers" "$PYTHON_BIN" -m unittest discover -s "$ROOT_DIR/scripts/tests" -v
   run "Check architecture boundaries" python3 "$ROOT_DIR/scripts/check_architecture.py"
   run "Check repository knowledge contract" python3 "$ROOT_DIR/scripts/check_repo_contract.py"
   run "Run Django system checks" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" check

@@ -84,13 +84,20 @@ class RealTranscribeSuccessTests(TestCase):
         mock_openai_cls.return_value = mock_client
 
         # Act
-        result = transcribers.real_transcribe(self.VIDEO_URL)
+        with self.assertLogs("jobs.transcribers", level="INFO") as captured:
+            result = transcribers.real_transcribe(self.VIDEO_URL)
 
         # Assert
         self.assertEqual(result, "first second third")
         self.assertEqual(mock_client.audio.transcriptions.create.call_count, 3)
         self.assertEqual(len(recorded_tmp_dirs), 1)
         self.assertFalse(os.path.exists(recorded_tmp_dirs[0]))
+
+        stages = {record.stage: record.duration_seconds for record in captured.records}
+        self.assertEqual(set(stages), {"download", "reencode", "transcribe"})
+        for duration in stages.values():
+            self.assertIsInstance(duration, float)
+            self.assertGreaterEqual(duration, 0)
 
     @patch("openai.OpenAI")
     @patch("jobs.transcribers.subprocess.run")
@@ -434,6 +441,26 @@ class OpenAIErrorMappingTests(TestCase):
         with self.assertRaises(transcribers.TranscriptionConfigurationError) as ctx:
             transcribers.real_transcribe(self.VIDEO_URL)
         self.assertNotIn("sk-secret", str(ctx.exception))
+
+
+class FakeTranscribeStageLoggingTests(TestCase):
+    """fake_transcribe is what the local stack runs by default
+    (TRANSCRIBER=fake in .env.example), so it must emit the same three
+    stage-duration log lines real_transcribe does."""
+
+    VIDEO_URL = "https://www.youtube.com/watch?v=test123"
+
+    def test_emits_download_reencode_transcribe_stage_durations(self):
+        with patch.dict(os.environ, {"TRANSCRIBE_SECONDS": "0"}):
+            with self.assertLogs("jobs.transcribers", level="INFO") as captured:
+                result = transcribers.fake_transcribe(self.VIDEO_URL)
+
+        self.assertEqual(result, "This is a test script")
+        stages = [record.stage for record in captured.records]
+        self.assertEqual(stages, ["download", "reencode", "transcribe"])
+        for record in captured.records:
+            self.assertIsInstance(record.duration_seconds, float)
+            self.assertGreaterEqual(record.duration_seconds, 0)
 
 
 class GetTranscriberSelectionTests(TestCase):

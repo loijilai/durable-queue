@@ -147,3 +147,95 @@ class ExecuteJobTaskTests(TestCase):
         mock_transcribe.assert_not_called()
         self.assertEqual(job.status, TranscriptionJob.FAILED)
         self.assertEqual(job.error, self.ERROR)
+
+
+class QueueWaitLoggingTests(TestCase):
+    """驗收：Worker 取得 Job 時輸出等待時間欄位，發出掛在 task 生命週期 signal
+    上，故須經過 .apply() 的完整 Celery tracer 路徑（見 jobs/observability.py）。"""
+
+    VALID_URL = "https://www.youtube.com/watch?v=test123"
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="queue-wait-tester", password="x")
+
+    def test_worker_pickup_logs_queue_wait_with_job_id(self):
+        # Arrange
+        job = TranscriptionJob.objects.create(
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+        )
+
+        # Act
+        with self.assertLogs("jobs.observability", level="INFO") as captured:
+            execute_job.apply(args=[job.id])
+
+        # Assert
+        [record] = captured.records
+        self.assertEqual(record.job_id, job.id)
+        self.assertIsInstance(record.queue_wait_seconds, float)
+        self.assertGreaterEqual(record.queue_wait_seconds, 0)
+
+
+class FailureClassificationLoggingTests(TestCase):
+    """驗收：失敗記錄其分類原因，可據以區分下游節流/暫時性錯誤與輸入問題。"""
+
+    VALID_URL = "https://www.youtube.com/watch?v=test123"
+    ERROR = "This is a test error message"
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="failure-log-tester", password="x")
+
+    @patch("jobs.transcribers.fake_transcribe", side_effect=InvalidMediaError(ERROR))
+    def test_permanent_failure_is_classified_as_permanent_input(self, mock_transcribe):
+        # Arrange
+        job = TranscriptionJob.objects.create(
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+        )
+
+        # Act
+        with self.assertLogs("jobs.tasks", level="ERROR") as captured:
+            execute_job.apply(args=[job.id])
+
+        # Assert
+        [record] = captured.records
+        self.assertEqual(record.job_id, job.id)
+        self.assertEqual(record.error_type, "InvalidMediaError")
+        self.assertEqual(record.failure_reason, "permanent_input")
+
+    @patch(
+        "jobs.transcribers.fake_transcribe",
+        side_effect=TranscriptionTimeoutError(ERROR),
+    )
+    def test_retryable_transcription_failure_is_classified_as_downstream_retryable(
+        self, mock_transcribe
+    ):
+        # Arrange
+        job = TranscriptionJob.objects.create(
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+        )
+
+        # Act
+        with self.assertLogs("jobs.tasks", level="ERROR") as captured:
+            execute_job.apply(args=[job.id])
+
+        # Assert
+        [record] = captured.records
+        self.assertEqual(record.failure_reason, "downstream_retryable")
+
+    @patch("jobs.transcribers.fake_transcribe", side_effect=ConnectionError(ERROR))
+    def test_unrecognized_exception_is_classified_as_unclassified(
+        self, mock_transcribe
+    ):
+        # Arrange
+        job = TranscriptionJob.objects.create(
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.PENDING
+        )
+
+        # Act
+        with self.assertLogs("jobs.tasks", level="ERROR") as captured:
+            execute_job.apply(args=[job.id])
+
+        # Assert
+        [record] = captured.records
+        self.assertEqual(record.failure_reason, "unclassified")

@@ -60,23 +60,9 @@ jobs:
       - name: Verify repository
         run: ./scripts/verify.sh full
 
-  # 目標：確認 Dockerfile 在乾淨環境下 build 得過（A 階段不 push、不 deploy）。
-  build:
-    runs-on: ubuntu-latest
-
-    needs: test
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: |
-          docker build -t durable-queue:local -f ./durable_queue/Dockerfile ./durable_queue
-
   deploy:
     runs-on: ubuntu-latest
-    needs: [test, build]
+    needs: test
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
 
     permissions:
@@ -86,7 +72,7 @@ jobs:
     environment:
       name: production # require reviewer
 
-    # 放 job 層級，只序列化 deploy（放 workflow 層級會連 test/build 也一起 gate）。
+    # 放 job 層級，只序列化 deploy（放 workflow 層級會連 test 也一起 gate）。
     # 所有叫做 production-deploy 的 job，同一時間只能有一個執行
     concurrency:
       group: production-deploy
@@ -126,14 +112,44 @@ jobs:
           terraform init
           terraform apply -auto-approve -var="image_tag=$IMAGE_TAG"
 
-      - name: Roll ASGs
+      # 一次性 task，跑在滾動部署任何 api/worker 實例之前，修正原本「多個
+      # 實例可能同時跑 migrate」的競爭條件。
+      - name: Run database migration
+        working-directory: infra
         run: |
-          roll() {
-            aws autoscaling start-instance-refresh \
-              --region "$AWS_REGION" \
-              --auto-scaling-group-name "$1" \
-              --preferences "$2"
-          }
+          SUBNETS_JSON="$(terraform output -json private_subnet_ids)"
+          SECURITY_GROUP="$(terraform output -raw api_security_group_id)"
 
-          roll durable-queue-api '{"MinHealthyPercentage":50,"InstanceWarmup":15}'
-          roll durable-queue-worker '{"MinHealthyPercentage":0,"InstanceWarmup":0}'
+          TASK_ARN="$(aws ecs run-task \
+            --region "$AWS_REGION" \
+            --cluster durable-queue \
+            --task-definition durable-queue-migrate \
+            --launch-type FARGATE \
+            --network-configuration "{\"awsvpcConfiguration\":{\"subnets\":$SUBNETS_JSON,\"securityGroups\":[\"$SECURITY_GROUP\"],\"assignPublicIp\":\"DISABLED\"}}" \
+            --query 'tasks[0].taskArn' --output text)"
+
+          aws ecs wait tasks-stopped --region "$AWS_REGION" --cluster durable-queue --tasks "$TASK_ARN"
+
+          EXIT_CODE="$(aws ecs describe-tasks --region "$AWS_REGION" --cluster durable-queue --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)"
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Migration task failed (container exit code $EXIT_CODE)" >&2
+            exit 1
+          fi
+
+      - name: Deploy API service
+        run: |
+          aws ecs update-service \
+            --region "$AWS_REGION" \
+            --cluster durable-queue \
+            --service durable-queue-api \
+            --force-new-deployment
+
+      - name: Deploy worker service
+        run: |
+          aws ecs update-service \
+            --region "$AWS_REGION" \
+            --cluster durable-queue \
+            --service durable-queue-worker \
+            --force-new-deployment

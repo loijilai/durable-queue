@@ -53,18 +53,6 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "arn:aws:ecr:ap-northeast-1:461346075470:repository/durable-queue"
       },
       {
-        Sid    = "AsgRefresh"
-        Effect = "Allow"
-        Action = [
-          "autoscaling:StartInstanceRefresh",
-          "autoscaling:DescribeInstanceRefreshes"
-        ]
-        Resource = [
-          "arn:aws:autoscaling:ap-northeast-1:461346075470:autoScalingGroup:*:autoScalingGroupName/durable-queue-api",
-          "arn:aws:autoscaling:ap-northeast-1:461346075470:autoScalingGroup:*:autoScalingGroupName/durable-queue-worker"
-        ]
-      },
-      {
         Sid      = "TfStateList"
         Effect   = "Allow"
         Action   = "s3:ListBucket"
@@ -85,11 +73,8 @@ resource "aws_iam_role_policy" "github_actions" {
         Effect = "Allow"
         Action = [
           "ec2:Describe*",
-          "autoscaling:Describe*",
           "rds:Describe*",
           "rds:ListTagsForResource",
-          "elasticache:Describe*",
-          "elasticache:ListTagsForResource",
           "elasticloadbalancing:Describe*",
           "route53:Get*",
           "route53:List*",
@@ -107,22 +92,135 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
-        Sid    = "TfWriteLaunchTemplate"
+        # 05 把 worker、06 把 API 都換成 ECS/Fargate：task definition 每次
+        # `image_tag` 換值都要註冊新的 revision、讓 service 指過去，這是每次
+        # deploy 都會觸發的 terraform apply 的一部分，是常態權限。RunTask /
+        # DescribeTasks 給部署流程執行一次性的資料庫遷移 task 並等它跑完用。
+        Sid    = "TfWriteEcs"
         Effect = "Allow"
         Action = [
-          "ec2:CreateLaunchTemplateVersion",
-          "ec2:ModifyLaunchTemplate"
+          "ecs:CreateCluster",
+          "ecs:DeleteCluster",
+          "ecs:DescribeClusters",
+          "ecs:RegisterTaskDefinition",
+          "ecs:DeregisterTaskDefinition",
+          "ecs:DescribeTaskDefinition",
+          "ecs:CreateService",
+          "ecs:DeleteService",
+          "ecs:UpdateService",
+          "ecs:DescribeServices",
+          "ecs:RunTask",
+          "ecs:DescribeTasks",
+          "ecs:TagResource",
+          "ecs:ListTagsForResource"
         ]
-        Resource = "*"
+        Resource = "*" # ECS 對 task-definition/cluster/service/task 的讀取類 API 多半不支援資源層級限制
       },
       {
-        Sid      = "TfPassEc2Role"
-        Effect   = "Allow"
-        Action   = "iam:PassRole"
-        Resource = "arn:aws:iam::461346075470:role/durable-queue-ec2"
+        Sid    = "TfWriteQueue"
+        Effect = "Allow"
+        Action = [
+          "sqs:CreateQueue",
+          "sqs:DeleteQueue",
+          "sqs:GetQueueAttributes",
+          "sqs:SetQueueAttributes",
+          "sqs:TagQueue",
+          "sqs:ListQueueTags"
+        ]
+        Resource = [
+          "arn:aws:sqs:ap-northeast-1:461346075470:celery",
+          "arn:aws:sqs:ap-northeast-1:461346075470:celery-dlq"
+        ]
+      },
+      {
+        Sid    = "TfWriteWorkerLogGroup"
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:DeleteLogGroup",
+          "logs:PutRetentionPolicy",
+          "logs:DescribeLogGroups",
+          "logs:ListTagsForResource",
+          "logs:TagResource"
+        ]
+        Resource = "arn:aws:logs:ap-northeast-1:461346075470:log-group:/ecs/durable-queue-worker*"
+      },
+      {
+        Sid    = "TfWriteWorkerRoles"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:GetRolePolicy",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+          "iam:TagRole"
+        ]
+        Resource = [
+          "arn:aws:iam::461346075470:role/durable-queue-worker-execution",
+          "arn:aws:iam::461346075470:role/durable-queue-worker-task"
+        ]
+      },
+      {
+        Sid    = "TfPassWorkerRoles"
+        Effect = "Allow"
+        Action = "iam:PassRole"
+        Resource = [
+          "arn:aws:iam::461346075470:role/durable-queue-worker-execution",
+          "arn:aws:iam::461346075470:role/durable-queue-worker-task"
+        ]
         Condition = {
           StringEquals = {
-            "iam:PassedToService" = "ec2.amazonaws.com"
+            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+          }
+        }
+      },
+      {
+        # 06：API 也搬上 Fargate，跟 TfWriteWorkerLogGroup 同構。
+        Sid    = "TfWriteApiLogGroup"
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:DeleteLogGroup",
+          "logs:PutRetentionPolicy",
+          "logs:DescribeLogGroups",
+          "logs:ListTagsForResource",
+          "logs:TagResource"
+        ]
+        Resource = "arn:aws:logs:ap-northeast-1:461346075470:log-group:/ecs/durable-queue-api*"
+      },
+      {
+        Sid    = "TfWriteApiRoles"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:GetRolePolicy",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+          "iam:TagRole"
+        ]
+        Resource = [
+          "arn:aws:iam::461346075470:role/durable-queue-api-execution",
+          "arn:aws:iam::461346075470:role/durable-queue-api-task"
+        ]
+      },
+      {
+        # migrate task 重用 api-execution role，不需要額外的 PassRole 條目。
+        Sid    = "TfPassApiRoles"
+        Effect = "Allow"
+        Action = "iam:PassRole"
+        Resource = [
+          "arn:aws:iam::461346075470:role/durable-queue-api-execution",
+          "arn:aws:iam::461346075470:role/durable-queue-api-task"
+        ]
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
           }
         }
       }

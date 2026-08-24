@@ -1,8 +1,12 @@
+import logging
 import os
 import shutil
 import subprocess
 import tempfile
 import time
+from contextlib import contextmanager
+
+logger = logging.getLogger(__name__)
 
 # Default chunk length: at 64kbps mono this is ~9.6MB/chunk, comfortably
 # under OpenAI's 25MB per-request limit (~2.5x margin).
@@ -46,7 +50,13 @@ class TranscriptionConfigurationError(TranscriptionPermanentError):
 
 
 def fake_transcribe(video_url):
-    time.sleep(int(os.environ["TRANSCRIBE_SECONDS"]))
+    # Split evenly across the three named stages so the sum still matches
+    # TRANSCRIBE_SECONDS exactly — burst/capacity experiments (see issue 11)
+    # depend on that total, not on how it's divided.
+    portion_seconds = int(os.environ["TRANSCRIBE_SECONDS"]) / 3
+    for stage in ("download", "reencode", "transcribe"):
+        with _stage_timer(stage):
+            time.sleep(portion_seconds)
     return "This is a test script"
 
 
@@ -75,6 +85,18 @@ def _classify_download_error(exc):
     if any(marker in message for marker in _CONNECTION_MARKERS):
         return TranscriptionConnectionError(str(exc))
     return InvalidMediaError(str(exc))
+
+
+@contextmanager
+def _stage_timer(stage):
+    """Logs the stage's duration on success; a failure inside the block
+    propagates before the log line, matching how the caller learns of it."""
+    start = time.monotonic()
+    yield
+    logger.info(
+        "transcription stage completed",
+        extra={"stage": stage, "duration_seconds": time.monotonic() - start},
+    )
 
 
 def _download_audio(video_url, tmp_dir, timeout_seconds):
@@ -216,7 +238,8 @@ def real_transcribe(video_url):
 
     tmp_dir = tempfile.mkdtemp(prefix="durable-queue-transcribe-")
     try:
-        audio_path, duration = _download_audio(video_url, tmp_dir, timeout_seconds)
+        with _stage_timer("download"):
+            audio_path, duration = _download_audio(video_url, tmp_dir, timeout_seconds)
 
         if duration is not None and duration > max_duration_seconds:
             raise PermanentInputError(
@@ -224,16 +247,18 @@ def real_transcribe(video_url):
                 f"{max_duration_seconds}s."
             )
 
-        chunk_paths = _split_into_chunks(audio_path, tmp_dir, chunk_seconds)
+        with _stage_timer("reencode"):
+            chunk_paths = _split_into_chunks(audio_path, tmp_dir, chunk_seconds)
 
         # All-or-nothing: the first chunk that exhausts its retries or fails
         # permanently raises out of this function with no partial transcript
         # persisted, per the accepted job-model constraint (single transcript
         # field, no new state).
-        transcripts = [
-            _transcribe_chunk_with_retry(chunk_path, timeout_seconds)
-            for chunk_path in chunk_paths
-        ]
+        with _stage_timer("transcribe"):
+            transcripts = [
+                _transcribe_chunk_with_retry(chunk_path, timeout_seconds)
+                for chunk_path in chunk_paths
+            ]
         return " ".join(transcripts)
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)

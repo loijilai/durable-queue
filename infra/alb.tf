@@ -16,7 +16,7 @@ resource "aws_lb_target_group" "api" {
   port        = 8000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
-  target_type = "instance"
+  target_type = "ip" # Fargate awsvpc 網路模式：目標是 ENI 的 IP，不是 EC2 instance
 
   health_check {
     path                = "/health/"

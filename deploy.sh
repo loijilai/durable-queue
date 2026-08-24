@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 # =====================================================================
-# deploy.sh — 一鍵部署：terraform apply → build+push → 灌 secret → 滾 ASG
-# ---------------------------------------------------------------------
-# 首批 instance 若因 image/secret 未就緒而開機失敗，
-# 最後的 instance refresh 會用已 push 的 image + 已灌的 secret 換成正常的。
+# deploy.sh — 一鍵部署：terraform apply → build+push → 灌 secret →
+#             跑一次性 migrate task → 滾 api/worker 兩個 Fargate service
 # =====================================================================
 set -euo pipefail
 
 REGION="ap-northeast-1"
 ECR_REPO="durable-queue"
 APP_SECRET_ID="durable-queue-app"
-ASGS=("durable-queue-api" "durable-queue-worker")
+ECS_CLUSTER="durable-queue"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_CONTEXT="${ROOT}/durable_queue"
@@ -36,11 +34,28 @@ aws secretsmanager put-secret-value --region "$REGION" --secret-id "$APP_SECRET_
     --arg cs  "$(get_env GOOGLE_CLIENT_SECRET)" \
     '{secret_key: $sk, google_client_id: $cid, google_client_secret: $cs}')" >/dev/null
 
-# ── 4. 滾動 ASG（新 instance 重跑 user_data → pull 新 image + 讀 secret）
-for asg in "${ASGS[@]}"; do
-  aws autoscaling start-instance-refresh --region "$REGION" \
-    --auto-scaling-group-name "$asg" \
-    --preferences '{"MinHealthyPercentage":0}' >/dev/null
-done
+# ── 4. 資料庫遷移：獨立的一次性 task，跑在滾動部署 api/worker 之前 ──────
+SUBNETS_JSON="$(terraform -chdir="${ROOT}/infra" output -json private_subnet_ids)"
+SECURITY_GROUP="$(terraform -chdir="${ROOT}/infra" output -raw api_security_group_id)"
+
+TASK_ARN="$(aws ecs run-task --region "$REGION" --cluster "$ECS_CLUSTER" \
+  --task-definition durable-queue-migrate --launch-type FARGATE \
+  --network-configuration "{\"awsvpcConfiguration\":{\"subnets\":$SUBNETS_JSON,\"securityGroups\":[\"$SECURITY_GROUP\"],\"assignPublicIp\":\"DISABLED\"}}" \
+  --query 'tasks[0].taskArn' --output text)"
+
+aws ecs wait tasks-stopped --region "$REGION" --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
+
+EXIT_CODE="$(aws ecs describe-tasks --region "$REGION" --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" \
+  --query 'tasks[0].containers[0].exitCode' --output text)"
+[ "$EXIT_CODE" = "0" ] || { echo "Migration task failed (exit code $EXIT_CODE)" >&2; exit 1; }
+
+# ── 5. 讓 api / worker 兩個 Fargate service 抓新 image ──────────────────
+aws ecs update-service --region "$REGION" \
+  --cluster "$ECS_CLUSTER" --service durable-queue-api \
+  --force-new-deployment >/dev/null
+
+aws ecs update-service --region "$REGION" \
+  --cluster "$ECS_CLUSTER" --service durable-queue-worker \
+  --force-new-deployment >/dev/null
 
 echo "✓ done."
