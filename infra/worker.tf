@@ -104,18 +104,30 @@ resource "aws_iam_role_policy" "worker_task_sqs" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "sqs:GetQueueUrl",
-        "sqs:GetQueueAttributes",
-        "sqs:ReceiveMessage",
-        "sqs:DeleteMessage",
-        "sqs:ChangeMessageVisibility",
-        "sqs:SendMessage"
-      ]
-      Resource = aws_sqs_queue.celery.arn
-    }]
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:GetQueueUrl",
+          "sqs:GetQueueAttributes",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:ChangeMessageVisibility",
+          "sqs:SendMessage"
+        ]
+        Resource = aws_sqs_queue.celery.arn
+      },
+      {
+        # kombu 的 SQS transport 建連線時一定會呼叫 ListQueues 把佇列名稱
+        # 解析成 URL（因為 queue.tf 刻意不用 predefined_queue_urls，見那邊
+        # 註解）。這是帳號層級的列出型 API，不支援綁在單一佇列 ARN 上，只能
+        # 跟 logs:DescribeLogGroups 一樣獨立用 Resource = "*"（實測過：沒
+        # 這條，worker 連 broker 都連不上，Unrecoverable error 直接掛掉）。
+        Effect   = "Allow"
+        Action   = "sqs:ListQueues"
+        Resource = "*"
+      }
+    ]
   })
 }
 
