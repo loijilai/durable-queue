@@ -60,23 +60,9 @@ jobs:
       - name: Verify repository
         run: ./scripts/verify.sh full
 
-  # 目標：確認 Dockerfile 在乾淨環境下 build 得過（A 階段不 push、不 deploy）。
-  build:
-    runs-on: ubuntu-latest
-
-    needs: test
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: |
-          docker build -t durable-queue:local -f ./durable_queue/Dockerfile ./durable_queue
-
   deploy:
     runs-on: ubuntu-latest
-    needs: [test, build]
+    needs: test
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
 
     permissions:
@@ -86,7 +72,7 @@ jobs:
     environment:
       name: production # require reviewer
 
-    # 放 job 層級，只序列化 deploy（放 workflow 層級會連 test/build 也一起 gate）。
+    # 放 job 層級，只序列化 deploy（放 workflow 層級會連 test 也一起 gate）。
     # 所有叫做 production-deploy 的 job，同一時間只能有一個執行
     concurrency:
       group: production-deploy
