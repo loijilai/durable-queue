@@ -94,9 +94,116 @@ resource "aws_iam_role_policy" "github_actions" {
           "ecr:ListTagsForResource",
           "ssm:GetParameter",
           "iam:Get*",
-          "iam:List*"
+          "iam:List*",
+          # logs:DescribeLogGroups 是帳號層級的列出型 API，不接受
+          # resource-level 限制（曾實測：綁定單一 log-group ARN 一樣被拒），
+          # 只能放這裡跟其他 Describe* 一起用 Resource = "*"。
+          "logs:DescribeLogGroups"
         ]
         Resource = "*"
+      },
+      {
+        # 這個帳號裡 network.tf / alb.tf / acm.tf / route53.tf / database.tf
+        # 宣告的 VPC、ALB、ACM 憑證、RDS 從未被真的 apply 過一次——CD role
+        # 原本只有 Describe，這裡補上把整套基礎網路 + 邊界資源「從零建出來」
+        # 所需的建立/修改/刪除權限，讓 CI 能一次跑完 terraform apply，不用
+        # 另外用本機身分先手動 bootstrap 一次。
+        Sid    = "TfWriteFoundationalInfra"
+        Effect = "Allow"
+        Action = [
+          # VPC / 子網路 / 路由 / 網路閘道
+          "ec2:CreateVpc",
+          "ec2:DeleteVpc",
+          "ec2:ModifyVpcAttribute",
+          "ec2:CreateSubnet",
+          "ec2:DeleteSubnet",
+          "ec2:ModifySubnetAttribute",
+          "ec2:CreateInternetGateway",
+          "ec2:DeleteInternetGateway",
+          "ec2:AttachInternetGateway",
+          "ec2:DetachInternetGateway",
+          "ec2:CreateNatGateway",
+          "ec2:DeleteNatGateway",
+          "ec2:AllocateAddress",
+          "ec2:ReleaseAddress",
+          "ec2:AssociateAddress",
+          "ec2:DisassociateAddress",
+          "ec2:CreateRouteTable",
+          "ec2:DeleteRouteTable",
+          "ec2:CreateRoute",
+          "ec2:DeleteRoute",
+          "ec2:ReplaceRoute",
+          "ec2:AssociateRouteTable",
+          "ec2:DisassociateRouteTable",
+          "ec2:ReplaceRouteTableAssociation",
+          "ec2:CreateTags",
+          "ec2:DeleteTags",
+          # Security group：建立/刪除群組本身，以及群組上掛的 ingress/egress rule
+          "ec2:CreateSecurityGroup",
+          "ec2:DeleteSecurityGroup",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress",
+          "ec2:ModifySecurityGroupRules",
+          "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+          "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
+          # ALB：load balancer / target group / listener
+          "elasticloadbalancing:CreateLoadBalancer",
+          "elasticloadbalancing:DeleteLoadBalancer",
+          "elasticloadbalancing:ModifyLoadBalancerAttributes",
+          "elasticloadbalancing:SetSecurityGroups",
+          "elasticloadbalancing:SetSubnets",
+          "elasticloadbalancing:CreateTargetGroup",
+          "elasticloadbalancing:DeleteTargetGroup",
+          "elasticloadbalancing:ModifyTargetGroup",
+          "elasticloadbalancing:ModifyTargetGroupAttributes",
+          "elasticloadbalancing:RegisterTargets",
+          "elasticloadbalancing:DeregisterTargets",
+          "elasticloadbalancing:CreateListener",
+          "elasticloadbalancing:DeleteListener",
+          "elasticloadbalancing:ModifyListener",
+          "elasticloadbalancing:AddTags",
+          "elasticloadbalancing:RemoveTags",
+          # ACM：申請憑證、DNS 驗證、換新
+          "acm:RequestCertificate",
+          "acm:DeleteCertificate",
+          "acm:AddTagsToCertificate",
+          "acm:RemoveTagsFromCertificate",
+          "acm:RenewCertificate",
+          "acm:UpdateCertificateOptions",
+          # Route53：ACM 驗證用的 CNAME + app 的 alias A record
+          "route53:ChangeResourceRecordSets",
+          "route53:GetChange",
+          # RDS：instance + subnet group
+          "rds:CreateDBInstance",
+          "rds:DeleteDBInstance",
+          "rds:ModifyDBInstance",
+          "rds:CreateDBSubnetGroup",
+          "rds:DeleteDBSubnetGroup",
+          "rds:ModifyDBSubnetGroup",
+          "rds:AddTagsToResource",
+          "rds:RemoveTagsFromResource"
+        ]
+        Resource = "*" # 這些服務的建立類 API 大多不支援有意義的 resource-level 限制（建立當下還沒有 ARN 可綁）
+      },
+      {
+        # ALB/RDS 在這個帳號是第一次真的建立：兩者都會讓 AWS 視需要自動建立
+        # service-linked role（AWSServiceRoleForElasticLoadBalancing /
+        # AWSServiceRoleForRDS）。如果帳號裡已經存在就是 no-op，不存在的話
+        # 沒有這個權限 apply 會直接卡住。
+        Sid      = "TfCreateServiceLinkedRoles"
+        Effect   = "Allow"
+        Action   = "iam:CreateServiceLinkedRole"
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "iam:AWSServiceName" = [
+              "elasticloadbalancing.amazonaws.com",
+              "rds.amazonaws.com"
+            ]
+          }
+        }
       },
       {
         # 05 把 worker、06 把 API 都換成 ECS/Fargate：task definition 每次
@@ -140,13 +247,14 @@ resource "aws_iam_role_policy" "github_actions" {
         ]
       },
       {
+        # DescribeLogGroups 不放這裡——它是帳號層級 API，見上面 TfRefreshRead
+        # 的註解，已經用 Resource = "*" 開放過了。
         Sid    = "TfWriteWorkerLogGroup"
         Effect = "Allow"
         Action = [
           "logs:CreateLogGroup",
           "logs:DeleteLogGroup",
           "logs:PutRetentionPolicy",
-          "logs:DescribeLogGroups",
           "logs:ListTagsForResource",
           "logs:TagResource"
         ]
@@ -192,7 +300,6 @@ resource "aws_iam_role_policy" "github_actions" {
           "logs:CreateLogGroup",
           "logs:DeleteLogGroup",
           "logs:PutRetentionPolicy",
-          "logs:DescribeLogGroups",
           "logs:ListTagsForResource",
           "logs:TagResource"
         ]
