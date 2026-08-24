@@ -17,8 +17,15 @@ resource "aws_iam_role" "github_actions" {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
+        # ci-cd.yml 的 deploy job 掛了 `environment: production`：一旦 job 綁定
+        # environment，GitHub 簽發的 OIDC token 的 sub claim 會變成
+        # `repo:OWNER/REPO:environment:NAME`，不再是 `ref:refs/heads/*`。只允許
+        # 後者會讓 AssumeRoleWithWebIdentity 在核准 production 部署後才發現被拒絕。
         StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:loijilai/durable-queue:ref:refs/heads/*"
+          "token.actions.githubusercontent.com:sub" = [
+            "repo:loijilai/durable-queue:ref:refs/heads/*",
+            "repo:loijilai/durable-queue:environment:production"
+          ]
         }
       }
     }]
