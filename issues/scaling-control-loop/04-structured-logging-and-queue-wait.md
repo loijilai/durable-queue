@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 04 — Structured logging 與 Queue Wait 的發出
 
@@ -20,10 +20,10 @@ Status: open
 
 **Blocked by:** None — can start immediately.
 
-- [ ] 應用程式日誌為 JSON 結構化輸出，每行帶 job id
-- [ ] Worker 取得 Job 時輸出等待時間欄位，且有測試斷言該行的發出與其內容
-- [ ] 下載、重新編碼、轉錄三個階段各自輸出耗時
-- [ ] 失敗記錄其分類原因，可據以區分下游節流與輸入問題
-- [ ] 應用程式未呼叫任何 metric 發布介面
-- [ ] 在本機 stack 的日誌輸出中可實際觀察到上述所有欄位
-- [ ] `./scripts/verify.sh full` 通過
+- [x] 應用程式日誌為 JSON 結構化輸出，每行帶 job id
+- [x] Worker 取得 Job 時輸出等待時間欄位，且有測試斷言該行的發出與其內容
+- [x] 下載、重新編碼、轉錄三個階段各自輸出耗時
+- [x] 失敗記錄其分類原因，可據以區分下游節流與輸入問題
+- [x] 應用程式未呼叫任何 metric 發布介面
+- [x] 在本機 stack 的日誌輸出中可實際觀察到上述所有欄位
+- [x] `./scripts/verify.sh full` 通過

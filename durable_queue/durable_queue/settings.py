@@ -168,6 +168,41 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 # 移動到一個觀測不到的地方。之後每一個容量訊號都建立在這個設定上。
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
+# Celery 預設會接管 root logger、換上自己的 formatter，蓋掉上面設定的 JSON 輸出。
+# 關掉接管，讓 worker 進程沿用 Django 這份 LOGGING 設定。
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+
+
+# Structured logging
+# 每一行 JSON 帶 job id（由 jobs.observability 透過 task_prerun/task_postrun signal
+# 寫入 contextvar，不需要每個呼叫點自己傳遞）。容器日誌交由容器平台原生的日誌驅動
+# 送出，這裡只負責讓 stdout 本身是結構化的一行 JSON。
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "job_id": {
+            "()": "durable_queue.logging_context.JobIdFilter",
+        },
+    },
+    "formatters": {
+        "json": {
+            "()": "durable_queue.logging_context.JsonFormatter",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "filters": ["job_id"],
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}
+
 
 # drf-spectacular (OpenAPI schema)
 

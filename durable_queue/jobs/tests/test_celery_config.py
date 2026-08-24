@@ -22,3 +22,7 @@ class CeleryConfigTests(TestCase):
             int(os.environ["CELERY_VISIBILITY_TIMEOUT"]),
         )
         self.assertIn("region", app.conf.broker_transport_options)
+
+    def test_worker_does_not_hijack_root_logger(self):
+        # Celery 預設會接管 root logger、蓋掉 Django LOGGING 設定的 JSON formatter。
+        self.assertFalse(app.conf.worker_hijack_root_logger)
