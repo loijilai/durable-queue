@@ -206,6 +206,22 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
+        # 光有 KMS 權限還不夠：CreateDBInstance 本身也要幫你在 Secrets
+        # Manager 建立那份 secret，呼叫端要有 CreateSecret（實測過，KMS 補
+        # 完之後換這個擋下來）。RDS-managed secret 的命名固定是
+        # `rds!db-<resource-id>` 這個前綴，resource-id 建立當下還不知道，
+        # 所以用前綴當 Resource pattern，比整個帳號 Resource = "*" 窄。
+        Sid    = "TfManagedSecretSecretsManager"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:CreateSecret",
+          "secretsmanager:DeleteSecret",
+          "secretsmanager:TagResource",
+          "secretsmanager:PutSecretValue"
+        ]
+        Resource = "arn:aws:secretsmanager:ap-northeast-1:461346075470:secret:rds!db-*"
+      },
+      {
         # ALB/RDS 在這個帳號是第一次真的建立：兩者都會讓 AWS 視需要自動建立
         # service-linked role（AWSServiceRoleForElasticLoadBalancing /
         # AWSServiceRoleForRDS）。如果帳號裡已經存在就是 no-op，不存在的話
