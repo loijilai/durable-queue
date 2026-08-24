@@ -114,6 +114,12 @@ resource "aws_iam_role_policy" "api_task_sqs" {
         Effect = "Allow"
         Action = [
           "sqs:GetQueueUrl",
+          # kombu 發佈訊息前一定會呼叫 maybe_declare → queue_declare，內部
+          # 呼叫 GetQueueAttributes 查佇列狀態（實測過：沒這條，POST
+          # /api/jobs/ 直接 500，AccessDenied on sqs:getqueueattributes）。
+          # worker.tf 的 worker_task_sqs 本來就有這條（因為它還要
+          # ReceiveMessage 前查屬性），這裡漏掉是疏忽，不是刻意省略。
+          "sqs:GetQueueAttributes",
           "sqs:SendMessage"
         ]
         Resource = aws_sqs_queue.celery.arn
