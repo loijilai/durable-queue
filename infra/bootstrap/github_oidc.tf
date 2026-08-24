@@ -188,6 +188,24 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*" # 這些服務的建立類 API 大多不支援有意義的 resource-level 限制（建立當下還沒有 ARN 可綁）
       },
       {
+        # aws_db_instance.postgres 用 manage_master_user_password = true，
+        # RDS 會用預設的 AWS managed key（alias/aws/secretsmanager）加密它
+        # 自動建立的那份 secret。呼叫端需要 kms:CreateGrant 讓 RDS/Secrets
+        # Manager 服務拿到用這把 key 的授權，否則 CreateDBInstance 在
+        # KMSKeyNotAccessibleFault 這步直接失敗（實測過）。key 是帳號預設、
+        # 不是 Terraform 管理的資源，建立當下沒有具體 ARN 可綁，跟其餘
+        # foundational 權限一樣用 Resource = "*"。
+        Sid    = "TfManagedSecretKms"
+        Effect = "Allow"
+        Action = [
+          "kms:DescribeKey",
+          "kms:CreateGrant",
+          "kms:ListGrants",
+          "kms:RevokeGrant"
+        ]
+        Resource = "*"
+      },
+      {
         # ALB/RDS 在這個帳號是第一次真的建立：兩者都會讓 AWS 視需要自動建立
         # service-linked role（AWSServiceRoleForElasticLoadBalancing /
         # AWSServiceRoleForRDS）。如果帳號裡已經存在就是 no-op，不存在的話
