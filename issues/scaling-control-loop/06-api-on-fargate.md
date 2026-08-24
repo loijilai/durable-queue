@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 06 — API 跑上 Fargate
 
@@ -22,14 +22,14 @@ API 的容量固定，**不設 scaling policy**：沒有任何量測指出需要
 
 **Blocked by:** 05
 
-- [ ] 公開端點由容器編排上的 service 提供，容量固定
-- [ ] 資料庫遷移為獨立的一次性 task，不在任何服務的啟動指令中
-- [ ] API 與 Worker 共用同一份映像，僅啟動指令不同
-- [ ] Auto Scaling Group、launch template、機器開機腳本自基礎設施程式碼中刪除
-- [ ] `check_env_parity.py` 裡對應舊機器開機腳本的死程式碼一併移除（`DOCKER_ENV_RE`、
+- [x] 公開端點由容器編排上的 service 提供，容量固定
+- [x] 資料庫遷移為獨立的一次性 task，不在任何服務的啟動指令中
+- [x] API 與 Worker 共用同一份映像，僅啟動指令不同
+- [x] Auto Scaling Group、launch template、機器開機腳本自基礎設施程式碼中刪除
+- [x] `check_env_parity.py` 裡對應舊機器開機腳本的死程式碼一併移除（`DOCKER_ENV_RE`、
       指向 `user_data.sh.tftpl` 的 `USER_DATA_SOURCE` 等，連同引用它們的既有測試）——
       05 已把檢查換指向新的設定宣告來源，這些留在原地就是死碼
-- [ ] ElastiCache 自基礎設施程式碼中刪除
-- [ ] API service 沒有 scaling policy
+- [x] ElastiCache 自基礎設施程式碼中刪除
+- [x] API service 沒有 scaling policy
 - [ ] 端到端可用：登入、送出 Job、查詢狀態、重試皆正常
-- [ ] `./scripts/verify.sh full` 通過
+- [x] `./scripts/verify.sh full` 通過

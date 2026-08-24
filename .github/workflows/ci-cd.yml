@@ -126,12 +126,39 @@ jobs:
           terraform init
           terraform apply -auto-approve -var="image_tag=$IMAGE_TAG"
 
-      - name: Roll API ASG
+      # 一次性 task，跑在滾動部署任何 api/worker 實例之前，修正原本「多個
+      # 實例可能同時跑 migrate」的競爭條件。
+      - name: Run database migration
+        working-directory: infra
         run: |
-          aws autoscaling start-instance-refresh \
+          SUBNETS_JSON="$(terraform output -json private_subnet_ids)"
+          SECURITY_GROUP="$(terraform output -raw api_security_group_id)"
+
+          TASK_ARN="$(aws ecs run-task \
             --region "$AWS_REGION" \
-            --auto-scaling-group-name durable-queue-api \
-            --preferences '{"MinHealthyPercentage":50,"InstanceWarmup":15}'
+            --cluster durable-queue \
+            --task-definition durable-queue-migrate \
+            --launch-type FARGATE \
+            --network-configuration "{\"awsvpcConfiguration\":{\"subnets\":$SUBNETS_JSON,\"securityGroups\":[\"$SECURITY_GROUP\"],\"assignPublicIp\":\"DISABLED\"}}" \
+            --query 'tasks[0].taskArn' --output text)"
+
+          aws ecs wait tasks-stopped --region "$AWS_REGION" --cluster durable-queue --tasks "$TASK_ARN"
+
+          EXIT_CODE="$(aws ecs describe-tasks --region "$AWS_REGION" --cluster durable-queue --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)"
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Migration task failed (container exit code $EXIT_CODE)" >&2
+            exit 1
+          fi
+
+      - name: Deploy API service
+        run: |
+          aws ecs update-service \
+            --region "$AWS_REGION" \
+            --cluster durable-queue \
+            --service durable-queue-api \
+            --force-new-deployment
 
       - name: Deploy worker service
         run: |

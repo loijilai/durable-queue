@@ -36,32 +36,3 @@ resource "aws_db_instance" "postgres" {
 
   tags = { Name = "durable-queue-postgres" }
 }
-
-
-# ── ElastiCache：subnet group ────────────────────────────────────────
-resource "aws_elasticache_subnet_group" "main" {
-  name = "durable-queue-cache"
-
-  subnet_ids = [for subnet in aws_subnet.private : subnet.id]
-
-  tags = { Name = "durable-queue-cache" }
-}
-
-
-# ── ElastiCache：Redis ───────────────────────────────────────────────
-# v1 單節點（num_cache_nodes = 1）。HA（replica 跨 AZ）先不做。
-resource "aws_elasticache_cluster" "redis" {
-  cluster_id = "durable-queue-redis"
-
-  engine          = "redis"
-  engine_version  = "7.0"
-  node_type       = "cache.t4g.micro"
-  num_cache_nodes = 1
-  port            = 6379
-
-  # ── 網路 / 授權 ──
-  subnet_group_name  = aws_elasticache_subnet_group.main.name
-  security_group_ids = [aws_security_group.redis.id]
-
-  tags = { Name = "durable-queue-redis" }
-}

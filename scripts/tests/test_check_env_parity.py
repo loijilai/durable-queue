@@ -4,13 +4,14 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from scripts.check_env_parity import (
-    DOCKER_ENV_RE,
     TASK_DEFINITION_ENV_RE,
-    USER_DATA_SOURCE,
     WORKER_TASK_DEFINITION_SOURCE,
     DeploymentSource,
     reconcile,
 )
+
+# 泛用的假格式，只給 ReconcileTests 用來驗證對帳邏輯本身，不綁定任何真實部署來源。
+FAKE_DEPLOYED_RE = re.compile(r"-e\s+([A-Z_][A-Z0-9_]*)=")
 
 
 class DeploymentSourceTests(TestCase):
@@ -28,14 +29,6 @@ class DeploymentSourceTests(TestCase):
                 path=path,
                 pattern=re.compile(r'"name":\s*"([A-Z_][A-Z0-9_]*)"'),
             )
-
-            self.assertEqual(source.declared(), {"FOO", "BAR"})
-
-    def test_declared_with_docker_env_pattern_matches_user_data_style(self):
-        with TemporaryDirectory() as directory:
-            path = Path(directory) / "user_data.sh.tftpl"
-            path.write_text("docker run -e FOO=1 -e BAR=$${BAR}\n", encoding="utf-8")
-            source = DeploymentSource(label="user_data", path=path, pattern=DOCKER_ENV_RE)
 
             self.assertEqual(source.declared(), {"FOO", "BAR"})
 
@@ -79,7 +72,7 @@ class ReconcileTests(TestCase):
     def make_source(self, directory: str, contents: str) -> DeploymentSource:
         path = Path(directory) / "deployed.txt"
         path.write_text(contents, encoding="utf-8")
-        return DeploymentSource(label="fake-source", path=path, pattern=DOCKER_ENV_RE)
+        return DeploymentSource(label="fake-source", path=path, pattern=FAKE_DEPLOYED_RE)
 
     def test_passes_when_all_three_lists_agree(self):
         with TemporaryDirectory() as directory:
@@ -148,19 +141,6 @@ class ReconcileTests(TestCase):
             )
 
         self.assertTrue(ok)
-
-
-class UserDataSourceStillDefinedTests(TestCase):
-    """user_data.sh.tftpl 仍是 API 的部署腳本（06 才移除），這個來源本身要繼續能用。"""
-
-    def test_user_data_source_still_points_at_the_boot_script(self):
-        self.assertEqual(USER_DATA_SOURCE.label, "infra/user_data.sh.tftpl")
-        self.assertTrue(USER_DATA_SOURCE.path.name == "user_data.sh.tftpl")
-
-    def test_label_is_derived_from_path_and_cannot_drift_from_it(self):
-        from scripts.check_env_parity import ROOT
-
-        self.assertEqual(USER_DATA_SOURCE.label, str(USER_DATA_SOURCE.path.relative_to(ROOT)))
 
 
 class RegressionAgainstRealWorkerTaskDefinitionTests(TestCase):
