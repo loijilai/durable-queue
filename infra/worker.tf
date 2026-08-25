@@ -4,7 +4,9 @@
 # 取代原本「開一台 EC2、跑 user_data.sh 裡的 celery worker」的 launch
 # template + ASG。API 仍留在 EC2 上（06 才動它）—— 這個混合狀態是刻意的。
 #
-# 容量此時固定（desired_count，不設 scaling policy，那是 07 的事）。
+# 容量由 07（worker_autoscaling.tf）的 step scaling policy 驅動；這裡只
+# 宣告 service 本身，desired_count 的初始值等於 scaling policy 的最小
+# 容量，實際值之後交給 Application Auto Scaling 管理。
 # Celery concurrency 設為 1：放棄多工的成本效率，換取容量訊號的物理
 # 意義 —— 不可見訊息數精確等於 In-flight Job 數。
 # =====================================================================
@@ -202,13 +204,21 @@ resource "aws_ecs_service" "worker" {
   task_definition = aws_ecs_task_definition.worker.arn
   launch_type     = "FARGATE"
 
-  # 固定容量，對應原本 worker ASG 的 min=max=desired=2。尚未建立任何
-  # scaling policy —— 那是 07 的事。
-  desired_count = 2
+  # 初始值等於 worker_autoscaling.tf 的最小容量；之後由 step scaling
+  # policy 改變，Terraform 不應該把它改回來（見下面的 lifecycle block）。
+  desired_count = 1
 
   network_configuration {
     subnets          = [for subnet in aws_subnet.private : subnet.id]
     security_groups  = [aws_security_group.worker.id]
     assign_public_ip = false
+  }
+
+  # desired_count 之後由 Application Auto Scaling（worker_autoscaling.tf）
+  # 依 Backlog / In-flight Job 改變。忽略它的漂移，否則下一次
+  # `terraform apply` 會把 scaling policy 剛設定好的容量改回這裡宣告的
+  # 初始值，兩者互相打架。
+  lifecycle {
+    ignore_changes = [desired_count]
   }
 }
