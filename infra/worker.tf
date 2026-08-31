@@ -2,7 +2,7 @@
 # Worker：ECS/Fargate service
 # ---------------------------------------------------------------------
 # 取代原本「開一台 EC2、跑 user_data.sh 裡的 celery worker」的 launch
-# template + ASG。API 仍留在 EC2 上（06 才動它）—— 這個混合狀態是刻意的。
+# template + ASG。API 現在也在 ECS/Fargate 上（見 api.tf）。
 #
 # 容量由 07（worker_autoscaling.tf）的 step scaling policy 驅動；這裡只
 # 宣告 service 本身，desired_count 的初始值等於 scaling policy 的最小
@@ -216,6 +216,12 @@ resource "aws_ecs_service" "worker" {
   # 初始值等於 worker_autoscaling.tf 的最小容量；之後由 step scaling
   # policy 改變，Terraform 不應該把它改回來（見下面的 lifecycle block）。
   desired_count = 1
+
+  # 09：跟 api.tf 同構的零停機設定——即使 desired_count 之後被 step
+  # scaling 改成別的值，min=100%/max=200% 仍保證滾動更新時舊任務數不掉到
+  # 更新前的水位以下。
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
 
   network_configuration {
     subnets          = [for subnet in aws_subnet.private : subnet.id]
