@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 08 — Dashboard、alarm 與 Queue Wait metric filter
 
@@ -23,10 +23,10 @@ observability 不應該為了我們很少問的問題累積常駐成本。
 
 **Blocked by:** 04, 05
 
-- [ ] Queue Wait 由 log 欄位經 metric filter 導出，非由應用程式發送
-- [ ] 單一 dashboard 呈現 Backlog、In-flight Job、Worker 數量、Queue Wait 於同一時間軸
-- [ ] 「最舊未完成 Job 年齡」亦呈現，且其標示反映它包含已執行時間
-- [ ] 單一 alarm 建立於最舊未完成 Job 年齡之上
-- [ ] 執行階段耗時的分解可用臨機查詢取得，且該查詢被記錄下來以便重複使用
-- [ ] 未建立任何預先聚合的階段耗時 metric
-- [ ] `./scripts/verify.sh full` 通過
+- [x] Queue Wait 由 log 欄位經 metric filter 導出，非由應用程式發送
+- [x] 單一 dashboard 呈現 Backlog、In-flight Job、Worker 數量、Queue Wait 於同一時間軸
+- [x] 「最舊未完成 Job 年齡」亦呈現，且其標示反映它包含已執行時間
+- [x] 單一 alarm 建立於最舊未完成 Job 年齡之上
+- [x] 執行階段耗時的分解可用臨機查詢取得，且該查詢被記錄下來以便重複使用
+- [x] 未建立任何預先聚合的階段耗時 metric
+- [x] `./scripts/verify.sh full` 通過

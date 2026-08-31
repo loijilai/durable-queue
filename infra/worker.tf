@@ -13,6 +13,15 @@
 
 resource "aws_ecs_cluster" "main" {
   name = "durable-queue"
+
+  # Worker 數量在 dashboard 上沒有其他免費的來源：ECS 預設只發布
+  # CPU/MemoryUtilization，RunningTaskCount 只存在於 Container Insights
+  # 底下的 ECS/ContainerInsights namespace。開啟它是受管服務內建指標的
+  # 一部分（ADR-0007），不是應用程式發送的 metric。
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 }
 
 resource "aws_cloudwatch_log_group" "worker" {
