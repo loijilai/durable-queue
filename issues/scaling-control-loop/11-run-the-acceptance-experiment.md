@@ -1,4 +1,4 @@
-Status: open
+Status: open (實驗已執行，六條通過條件全數通過；錄影、真實轉錄的分離驗證、基礎設施銷毀未完成 — see checklist)
 
 # 11 — 執行驗收實驗並擷取證據
 
