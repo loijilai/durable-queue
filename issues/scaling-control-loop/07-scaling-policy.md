@@ -1,4 +1,4 @@
-Status: open (infra + derivations done; real-AWS burst observation still pending — see checklist)
+Status: done
 
 # 07 — Scaling policy
 
@@ -32,7 +32,9 @@ Job 被投遞給第二個 Worker，太長會拉長 Worker 猝死後的復原時�
 - [x] 縮容條件同時檢查 Backlog 與 In-flight Job 兩者皆低
 - [x] Scaling Ceiling 的數值可回溯到寫下來的下游容量限制
 - [x] visibility timeout 的數值可回溯到 02 的量測
-- [ ] 手動送出一小批 Job 可觀察到容量上升，消化後觀察到容量縮回
+- [x] 手動送出一小批 Job 可觀察到容量上升，消化後觀察到容量縮回
+      （11 的驗收實驗：250 份 burst，Worker 1 → 17 → 1，證據見
+      `11-acceptance-experiment-results.md`）
 - [x] 縮容過程中沒有 In-flight Job 被中止（縮容 alarm 只在 Backlog+In-flight
       精確為 0 時觸發，機制上排除了砍到執行中 Job 的可能）
 - [x] 每個參數的推導依據記錄在此 feature 目錄中（見
