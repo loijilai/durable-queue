@@ -59,16 +59,17 @@ available memory」）。1 GiB 機型的實測預設值落在 80–90 這個範�
 
 保留 2 + 1 + 10 = 13，剩餘預算 80 − 13 = 67 個連線可以分給 Worker。Worker 沒
 有連線池（Django 預設 `CONN_MAX_AGE=0`），每個 task 至多同時佔用 1 個連線，
-因此這個限制本身允許到 67 個 Worker——遠高於下面轉錄 API 的限制，不是這裡的
-瓶頸。
+因此這個限制本身允許到 67 個 Worker。
 
 ### 限制二：轉錄 API（OpenAI Whisper）rate limit
 
-OpenAI 平台文件公開的 Tier 1 預設值：audio 端點（含 whisper-1 轉錄）
-**50 RPM**（requests per minute），與其他端點的限制池分開計算。這是帳號
-tier 相關的數字，會隨帳號用量歷史與 OpenAI 政策變動，部署前應在
-platform.openai.com → Settings → Limits 核對實際值；50 RPM 是這裡計算的
-輸入，不是本專案能控制的常數。
+在 platform.openai.com → Settings → Limits 核對本帳號的實際值：audio 端點
+**500 RPM**（requests per minute），與其他端點的限制池分開計算。
+
+先前這裡引用的是 OpenAI 文件的 Tier 1 預設值 50 RPM，並註明「這是帳號 tier
+相關的數字…部署前應核對實際值；50 RPM 是這裡計算的輸入，不是本專案能控制的
+常數」。核對後實值為 500 RPM，因此下面的結論隨之改變——這個修訂做得到，正是
+因為當初把它記成一個有出處的輸入，而不是一個常數。
 
 請求頻率的計算依據 02 的 phase share（同一份量測結果文件）：
 
@@ -80,21 +81,35 @@ platform.openai.com → Settings → Limits 核對實際值；50 RPM 是這裡�
 Worker，穩態下每 23.4s 發出一次請求 → 每個 Worker ≈ 60/23.4 ≈ 2.56 RPM。
 
 N 個 Worker 同時都在跑最長的 Job（最壞情況）時，聚合請求率 ≈ N × 2.56 RPM。
-要求這個值不超過 Tier 1 限制的一半（保留一倍餘裕給分段重試與非均勻到達）：
+要求這個值不超過限制的一半（保留一倍餘裕給分段重試與非均勻到達）：
 
 ```
-N × 2.56 ≤ 25   →   N ≤ 9.8
+N × 2.56 ≤ 250   →   N ≤ 97.6
 ```
+
+### 不是限制：Fargate On-Demand vCPU 配額
+
+ap-northeast-1 的實際配額為 30 vCPU（`service-quotas get-service-quota
+--service-code fargate --quota-code L-3032A538`）。Worker 每個 1 vCPU、API
+兩個各 0.5 vCPU，實務上最多約 28 個 Worker。
+
+**這個數字不進 Scaling Ceiling。** Ceiling 的意義是「成長要停在傷到下游之前」；
+配額是行政限制，可申請調高，碰到它該做的是提工單，而不是讓它決定設計。記在
+這裡只是為了讓容量長不上去時，能立刻分辨是設計在擋還是配額在擋。
 
 ### 取值
 
-兩個限制分別允許到 67（資料庫）與 9（轉錄 API，N ≤ 9.8 無條件捨去）；轉錄 API
-是遠低於資料庫限制的那一個，Scaling Ceiling 取 **9**：
+兩個下游限制分別允許到 67（資料庫連線）與 97（轉錄 API，N ≤ 97.6 無條件
+捨去）。取低者，Scaling Ceiling = **67**：
 
-- 9 × 2.56 ≈ 23.0 RPM，在 ≤ 25 RPM 的目標之內，仍保有一倍以上餘裕。
-- 9 個連線遠低於資料庫的 67 個預算（約 13%）。
+- 67 × 2.56 ≈ 172 RPM，在 ≤ 250 RPM 的目標之內。
+- 67 個連線用滿資料庫的連線預算，這正是它成為瓶頸的意思。
 
-超過 10 個 Worker 份的工作留在 Backlog 等待——這是刻意的：讓延遲上升去保護
+修訂記錄：先前此處取 9，輸入是 50 RPM 的 Tier 1 預設值。核對到實值 500 RPM
+後，瓶頸從轉錄 API 移到資料庫連線數，ceiling 由 9 改為 67。要讓 ceiling 再往
+上，下一步是資料庫（更大的 instance class 或連線代理），而不是 OpenAI。
+
+超過 67 個 Worker 份的工作留在 Backlog 等待——這是刻意的：讓延遲上升去保護
 下游，而不是讓資料庫或轉錄 API 因為容量衝過頭而失效。
 
 ## 擴容 / 縮容門檻

@@ -335,7 +335,7 @@ Execution Time ≈ a + b × video_duration
 - **通過條件**（執行前寫定）：
   1. burst 期間無 Job 被拒絕；
   2. Worker 數量在擴容門檻被觸發後上升；
-  3. Queue Wait 的峰值不超過既定門檻；
+  3. Queue Wait 在 burst 期間上升，並在 Backlog 歸零後回到 burst 前的基線；
   4. Backlog 回到零之後容量縮回；
   5. 縮容過程中沒有 In-flight Job 被中止；
   6. 全程無 Job 進入 dead-letter queue。
