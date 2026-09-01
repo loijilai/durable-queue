@@ -34,8 +34,8 @@ Excalidraw，這裡是同一個理由。
 
 - [x] 四節點成環，回到起點的那段箭頭在圖上看得出來
 - [x] 五格皆可 hover 預覽、點擊釘住，且鍵盤可達（focus 與 Enter/Space）
-- [x] 每一格切換時，圖旁的說明文字隨之更換
-- [x] 地板 1 與 Scaling Ceiling 67 以常駐標記呈現
+- [ ] 每一格切換時，圖旁的說明文字隨之更換 —— **未實作，見下方註記**
+- [ ] 地板 1 與 Scaling Ceiling 67 以常駐標記呈現 —— **已移除，見下方註記**
 - [x] 圖上文字使用 `CONTEXT.md` 的詞彙（Backlog、In-flight Job、Worker、Scaling Ceiling）
 - [x] `./scripts/verify.sh full` 通過
 
@@ -52,3 +52,21 @@ Excalidraw，這裡是同一個理由。
 `controlProps`、marker 的 `<defs>`、`nodeCls`/`edgeCls` 三處是同一個形狀。票面
 指定「走 `JobLifecycle.tsx` 那條路」，抽共用會動到首頁那個既有元件，超出這張票；
 第三張這種圖出現時就該抽。
+
+**交付後的修改：兩條驗收條件被推翻，這是決定不是遺漏。**
+
+圖做出來之後看實物，判斷是版面上的字太多、圖太小。因此：
+
+- **拿掉圖旁的說明欄**，整塊就是一張圖，圖拿到整個版面的寬度。五格仍然
+  hover 預覽、點擊釘住、鍵盤可達，只是點亮的是圖本身，不再換一段文字；
+  每一格的文字身分只留在 `aria-label` 裡給輔助技術。
+- **拿掉地板與 Scaling Ceiling 的常駐標記**，以及回程箭頭的三行標籤與
+  burst 的「in 6.1s · 0 rejected」。它們是這張圖上讀者最不需要的字。
+  回程箭頭本身仍然常駐上色，環還是看得出來是環。
+
+代價要寫明白：Scaling Ceiling 67 與地板 1 現在不在這一頁上。它們仍在
+`infra/worker_autoscaling.tf`，若之後要讓這一頁講到上限，得另找位置。
+
+- **alarm 點亮時轉紅**。`DESIGN.md` §2 把 Error Red 保留給 failed states，
+  這裡是刻意的偏離：alarm 是圖上唯一代表「某條線被越過」的節點，用紅色
+  讓它和另外三個常態節點分開。這是圖上的告警，不是某份 Job 的狀態。
