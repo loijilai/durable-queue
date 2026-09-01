@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 02 — 所有 excalidraw 圖資產改說 SQS
 
@@ -27,9 +27,11 @@ PNG 是原始檔的 render，不是獨立內容，所以跟原始檔在同一次
 
 **Blocked by:** None — can start immediately.
 
-- [ ] Durability 頁六張圖的 `Redis` 標籤改為 `SQS`，副標與其他文字不變
-- [ ] 六張對應的 `docs/diagrams/rendered/*.png` 重新產生，與原始檔一致
-- [ ] `5-two-submitters` 的 worker pool 標籤改說 ECS service，`scale 1 → 67` 不變
-- [ ] `5-scale-out.excalidraw` 未被修改
-- [ ] Durability 與 Scalability 兩頁在瀏覽器中渲染正常，圖上不再出現 Redis 或 ASG
-- [ ] `./scripts/verify.sh full` 通過
+- [x] Durability 頁六張圖的 `Redis` 標籤改為 `SQS`，副標與其他文字不變
+- [x] 六張對應的 `docs/diagrams/rendered/*.png` 重新產生，與原始檔一致
+      —— 實際只有五張：`2-2-worker-succeed-timeline` 從來沒有 PNG render，也不在
+      `check_repo_contract.py` 的宣告清單裡；補一張會是這張票沒授權的契約改動。
+- [x] `5-two-submitters` 的 worker pool 標籤改說 ECS service，`scale 1 → 67` 不變
+- [x] `5-scale-out.excalidraw` 未被修改
+- [x] Durability 與 Scalability 兩頁在瀏覽器中渲染正常，圖上不再出現 Redis 或 ASG
+- [x] `./scripts/verify.sh full` 通過
