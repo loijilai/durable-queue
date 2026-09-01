@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 10 — Burst 產生器
 
@@ -16,9 +16,14 @@ Status: open
 
 **Blocked by:** 03
 
-- [ ] 可對指定端點以固定併發送出指定數量的 Job
-- [ ] 輸出每一份 Job 的提交時間戳，供事後與容量變化對照
-- [ ] 未引入壓測框架
-- [ ] 命名與需求文件中的 Batch Submitter 角色一致
-- [ ] 可對本機 stack 執行，不需雲端憑證
-- [ ] `./scripts/verify.sh full` 通過
+- [x] 可對指定端點以固定併發送出指定數量的 Job——`scripts/batch_submitter.py`，
+      `--api-url`/`--count`/`--concurrency`，`ThreadPoolExecutor(max_workers=concurrency)`
+- [x] 輸出每一份 Job 的提交時間戳，供事後與容量變化對照——每筆結果記錄
+      `submitted_at`（送出請求前的當下，而非 Acceptance；Job 的 created_at 已由
+      伺服器端記錄，這裡要的是提交本身的時間軸，不與之重複）
+- [x] 未引入壓測框架——只用 `requests` + 標準庫 `concurrent.futures`
+- [x] 命名與需求文件中的 Batch Submitter 角色一致——檔名 `batch_submitter.py`，
+      CLI 說明文字亦稱其為 Batch Submitter
+- [x] 可對本機 stack 執行，不需雲端憑證——已針對本機 `docker compose` stack 實測：
+      註冊使用者、取得 JWT、送出 30 份 Job，全數 accepted 且落地資料庫
+- [x] `./scripts/verify.sh full` 通過

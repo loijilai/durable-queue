@@ -185,6 +185,12 @@ resource "aws_ecs_service" "api" {
   # 沒有量測指出需要它。
   desired_count = 2
 
+  # 09：滾動更新的零停機保證。min=100% 代表更新過程中，「先前版本」的
+  # 健康任務數不得低於 desired_count——新任務要先過 health check 才能
+  # 讓舊任務下線。max=200% 允許新舊任務短暫並存，讓 min=100% 有空間達成。
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+
   network_configuration {
     subnets          = [for subnet in aws_subnet.private : subnet.id]
     security_groups  = [aws_security_group.api.id]

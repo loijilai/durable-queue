@@ -138,6 +138,10 @@ jobs:
             exit 1
           fi
 
+      # force-new-deployment 只是排入滾動更新；service 本身的零停機保證
+      # 來自 infra/api.tf 的 deployment_minimum_healthy_percent 設定。
+      # `wait services-stable` 讓這步等到新任務全部通過 health check、
+      # 舊任務下線為止，部署失敗（新任務一直起不來）才會讓這步逾時失敗。
       - name: Deploy API service
         run: |
           aws ecs update-service \
@@ -146,6 +150,11 @@ jobs:
             --service durable-queue-api \
             --force-new-deployment
 
+          aws ecs wait services-stable \
+            --region "$AWS_REGION" \
+            --cluster durable-queue \
+            --services durable-queue-api
+
       - name: Deploy worker service
         run: |
           aws ecs update-service \
@@ -153,3 +162,8 @@ jobs:
             --cluster durable-queue \
             --service durable-queue-worker \
             --force-new-deployment
+
+          aws ecs wait services-stable \
+            --region "$AWS_REGION" \
+            --cluster durable-queue \
+            --services durable-queue-worker
