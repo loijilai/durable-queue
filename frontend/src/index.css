@@ -3356,6 +3356,16 @@ a {
   font-weight: 600;
 }
 
+/* 來源聲明：卡片之外的註腳，比 description 更小更淡，不跟它爭視線。 */
+.recording-provenance {
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--dust);
+  color: var(--slate);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 @media (max-width: 620px) {
   .recording-card {
     grid-template-columns: 1fr;

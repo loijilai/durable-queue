@@ -147,7 +147,7 @@ function Layout() {
               <span className="site-footer-note">
                 Django REST Framework · Celery
               </span>
-              <span className="site-footer-note">Postgres · Redis</span>
+              <span className="site-footer-note">Postgres · SQS</span>
               <span className="site-footer-note">
                 React · Vite · TypeScript
               </span>

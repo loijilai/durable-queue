@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 01 — 首頁的架構圖與技術棧改說 SQS + ECS/Fargate
 
@@ -27,13 +27,13 @@ CLOUD 層的 `AWS` 牌是同一套語彙。
 
 **Blocked by:** None — can start immediately.
 
-- [ ] 架構圖不再有 ElastiCache/Redis 與 Auto Scaling Group；運算層是 ECS/Fargate task，
+- [x] 架構圖不再有 ElastiCache/Redis 與 Auto Scaling Group；運算層是 ECS/Fargate task，
       SQS 畫在 VPC 之外、由 Worker 經 NAT Gateway 抵達
-- [ ] 架構圖的 alt 文字描述的是圖上實際畫的東西
-- [ ] ORCHESTRATION 層改說 ECS Fargate，其 detail 描述的是現行的滾動更新而非 instance
+- [x] 架構圖的 alt 文字描述的是圖上實際畫的東西
+- [x] ORCHESTRATION 層改說 ECS Fargate，其 detail 描述的是現行的滾動更新而非 instance
       refresh；`Kubernetes — next` 標記保留
-- [ ] APPLICATION 層以 `SQS` 字母牌取代 Redis 圖示
-- [ ] pipeline 第五個 stage 的標籤與 ORCHESTRATION 層用同一個詞
-- [ ] `RedisIcon` 與 registry 條目刪除，footer 不再出現 Redis
-- [ ] 全頁搜尋不到 Redis、EC2、ASG 或 Auto Scaling
-- [ ] `./scripts/verify.sh full` 通過
+- [x] APPLICATION 層以 `SQS` 字母牌取代 Redis 圖示
+- [x] pipeline 第五個 stage 的標籤與 ORCHESTRATION 層用同一個詞
+- [x] `RedisIcon` 與 registry 條目刪除，footer 不再出現 Redis
+- [x] 全頁搜尋不到 Redis、EC2、ASG 或 Auto Scaling
+- [x] `./scripts/verify.sh full` 通過

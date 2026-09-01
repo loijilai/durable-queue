@@ -23,17 +23,21 @@ function getYouTubeVideoId(url: string): string | null {
   }
 }
 
-// 預覽只抓靜態縮圖，不載入 YouTube iframe；第三方播放器要等使用者點擊後才開啟。
+/* 預覽只抓靜態縮圖，不載入 YouTube iframe；第三方播放器要等使用者點擊後才開啟。
+   provenance 與 description 是不同性質的資訊：description 說這支影片在演什麼，
+   provenance 說這份證據有多舊，所以放在卡片外、給它自己的視覺層級。不傳就不渲染。 */
 function RecordingSlot({
   url,
   title,
   description,
   slotHint,
+  provenance,
 }: {
   url: string;
   title: string;
   description: string;
   slotHint: string;
+  provenance?: string;
 }) {
   const videoId = getYouTubeVideoId(url);
 
@@ -74,6 +78,9 @@ function RecordingSlot({
         </a>
       ) : (
         <p className="recording-slot">Recording slot — {slotHint}</p>
+      )}
+      {provenance && (
+        <figcaption className="recording-provenance">{provenance}</figcaption>
       )}
     </figure>
   );
