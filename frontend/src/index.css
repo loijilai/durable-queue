@@ -2817,8 +2817,7 @@ a {
 }
 
 .scl-scenario p,
-.scl-evidence > p,
-.scl-shot figcaption {
+.scl-evidence > p {
   max-width: 68ch;
   color: var(--charcoal);
   line-height: 1.65;
@@ -2842,37 +2841,123 @@ a {
   }
 }
 
-/* ── 證據：驗收實驗的截圖 ─────────────────────────────────────
-   截圖是原圖照放，所以版面只能繞著它走：不裁、不套濾鏡，寬度給滿，
-   要補的話交給 figcaption。 */
-.scl-shot {
+/* ── 證據：驗收實驗的截圖（EvidenceCarousel） ─────────────────
+   截圖是原圖照放，所以版面只能繞著它走：不裁、不套濾鏡。四張的長寬比
+   各不相同，框因此吃固定比例、圖用 contain 擺進去 —— 換頁時版面不動，
+   是這一疊看起來像同一疊的唯一原因。 */
+.ev-carousel {
   margin: 28px 0 0;
 }
 
-/* 每張截圖先寫出它回答的是哪個問題 —— 兩張圖的差別在問題，不在畫面。 */
-.scl-shot-question {
-  margin: 0 0 12px;
-  color: var(--ink);
-  font-size: 17px;
-  font-weight: 600;
-}
-
-.scl-shot img {
-  display: block;
-  width: 100%;
-  height: auto;
+.ev-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
   border: 1.5px solid var(--dust);
   border-radius: 12px;
+  /* 截圖自己是白底，框跟著白，留白才不會看起來像沒對齊的邊。 */
+  background: var(--white);
 }
 
-/* 輔圖只有一格，撐滿整卡會把它放大到比主圖還顯眼；限寬讓它維持是輔圖。 */
-.scl-shot--aux img {
-  max-width: 520px;
+.ev-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.25s ease;
 }
 
-.scl-shot figcaption {
+.ev-slide.is-current {
+  opacity: 1;
+}
+
+/* 要點的是圖本身：兩塊透明的操作面壓在左右兩側，各佔三成寬。 */
+.ev-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.ev-zone--prev {
+  left: 0;
+  justify-content: flex-start;
+}
+
+.ev-zone--next {
+  right: 0;
+  justify-content: flex-end;
+}
+
+/* 箭頭平常是淡的，不跟圖搶；滑過去或用鍵盤走到才實體化。 */
+.ev-arrow {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(15 23 42 / 6%);
+  color: var(--slate);
+  font-size: 24px;
+  line-height: 1;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.ev-zone:hover .ev-arrow {
+  background: rgb(15 23 42 / 82%);
+  color: var(--white);
+}
+
+.ev-zone:focus-visible {
+  outline: none;
+}
+
+.ev-zone:focus-visible .ev-arrow {
+  background: var(--signal-orange);
+  color: var(--white);
+}
+
+.ev-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
   margin-top: 12px;
+}
+
+.ev-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--dust);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ev-dot.is-current {
+  background: var(--signal-orange);
+}
+
+/* 圖說會隨著圖換掉，長短不一 —— 給一個下限，換頁時底下的東西才不會跳。 */
+.ev-caption {
+  min-height: 108px;
+  margin-top: 12px;
+  max-width: 68ch;
+  color: var(--charcoal);
   font-size: 15px;
+  line-height: 1.65;
 }
 
 /* 主圖的圖說就是 legend：一條線一行，說明它是什麼，不說它發生了什麼。 */
