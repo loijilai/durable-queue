@@ -2109,130 +2109,6 @@ a {
   width: auto;
 }
 
-/* Scenario B — recorded evidence slot */
-.ha-recording {
-  margin: 24px 0 0;
-}
-
-.ha-recording-slot {
-  margin-top: 12px;
-  padding: 20px;
-  border: 1.5px dashed var(--dust);
-  border-radius: 12px;
-  font-size: 13px;
-  color: var(--slate);
-  line-height: 1.5;
-}
-
-.ha-recording-card {
-  display: grid;
-  grid-template-columns: minmax(220px, 38%) 1fr;
-  margin-top: 12px;
-  overflow: hidden;
-  border: 1.5px solid transparent;
-  border-radius: 16px;
-  background: var(--white);
-  box-shadow: var(--shadow);
-  color: var(--ink);
-  transition:
-    border-color 0.15s ease,
-    transform 0.15s ease;
-}
-
-.ha-recording-card:hover,
-.ha-recording-card:focus-visible {
-  border-color: var(--signal-orange);
-  transform: translateY(-2px);
-}
-
-.ha-recording-thumbnail {
-  position: relative;
-  display: grid;
-  min-height: 180px;
-  overflow: hidden;
-  background: var(--ink);
-  place-items: center;
-}
-
-.ha-recording-thumbnail img {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.ha-recording-thumbnail-fallback {
-  color: rgb(255 255 255 / 45%);
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-}
-
-.ha-recording-play {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: grid;
-  width: 52px;
-  height: 52px;
-  padding-left: 3px;
-  place-items: center;
-  border-radius: 50%;
-  background: rgb(15 23 42 / 82%);
-  color: var(--white);
-  font-size: 18px;
-  transform: translate(-50%, -50%);
-}
-
-.ha-recording-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 24px;
-}
-
-.ha-recording-platform {
-  margin-bottom: 8px;
-  color: var(--signal-orange);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.ha-recording-body strong {
-  font-size: 19px;
-  line-height: 1.25;
-}
-
-.ha-recording-description {
-  margin-top: 8px;
-  color: var(--slate);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.ha-recording-cta {
-  margin-top: 16px;
-  color: var(--signal-orange);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-@media (max-width: 620px) {
-  .ha-recording-card {
-    grid-template-columns: 1fr;
-  }
-
-  .ha-recording-thumbnail {
-    min-height: 0;
-    aspect-ratio: 16 / 9;
-  }
-}
-
 /* Scenario B — live health probe (shared by both shutdown paths) */
 .hp-card {
   display: flex;
@@ -2918,8 +2794,11 @@ a {
   }
 }
 
-/* ── Scalability (Backlog → capacity control loop) ────────────── */
-.scl-scenario {
+/* ── Scalability (Backlog → capacity control loop) ──────────────
+   這一頁的段落都是同一種卡片，差別只在裝什麼；共用的殼寫成一條規則，
+   各段只補自己不一樣的地方。 */
+.scl-scenario,
+.scl-evidence {
   margin-top: 40px;
   padding: 32px 36px;
   border-radius: 16px;
@@ -2927,7 +2806,8 @@ a {
   box-shadow: var(--shadow);
 }
 
-.scl-scenario-title {
+/* 卡片的標題，不專屬於哪一段 —— 證據那段不是一個 scenario。 */
+.scl-card-title {
   margin: 8px 0 20px;
 }
 
@@ -2936,7 +2816,9 @@ a {
   margin: 4px 0 8px;
 }
 
-.scl-scenario p {
+.scl-scenario p,
+.scl-evidence > p,
+.scl-shot figcaption {
   max-width: 68ch;
   color: var(--charcoal);
   line-height: 1.65;
@@ -2954,9 +2836,85 @@ a {
 }
 
 @media (max-width: 640px) {
-  .scl-scenario {
+  .scl-scenario,
+  .scl-evidence {
     padding: 24px;
   }
+}
+
+/* ── 證據：驗收實驗的截圖 ─────────────────────────────────────
+   截圖是原圖照放，所以版面只能繞著它走：不裁、不套濾鏡，寬度給滿，
+   要補的話交給 figcaption。 */
+.scl-shot {
+  margin: 28px 0 0;
+}
+
+/* 每張截圖先寫出它回答的是哪個問題 —— 兩張圖的差別在問題，不在畫面。 */
+.scl-shot-question {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.scl-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1.5px solid var(--dust);
+  border-radius: 12px;
+}
+
+/* 輔圖只有一格，撐滿整卡會把它放大到比主圖還顯眼；限寬讓它維持是輔圖。 */
+.scl-shot--aux img {
+  max-width: 520px;
+}
+
+.scl-shot figcaption {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+/* 主圖的圖說就是 legend：一條線一行，說明它是什麼，不說它發生了什麼。 */
+.scl-legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scl-legend li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.scl-legend li + li {
+  margin-top: 6px;
+}
+
+/* 色塊照抄截圖上的線色，讓每一行對得回圖上的哪一條。 */
+.scl-swatch {
+  flex: none;
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+  transform: translateY(-4px);
+}
+
+.scl-swatch--backlog {
+  background: #3b76af;
+}
+
+.scl-swatch--inflight {
+  background: #ef8636;
+}
+
+.scl-swatch--worker {
+  background: #529e3f;
+}
+
+.scl-swatch--wait {
+  background: #c53b33;
 }
 
 /* ── 控制迴路圖 ─────────────────────────────────────────────────
@@ -3196,4 +3154,130 @@ a {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   font-size: 13px;
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── 錄影卡片（RecordingSlot） ─────────────────────────────────
+   HighAvailability 與 Scalability 兩頁共用，所以不掛任何一頁的前綴，
+   也不放在任何一頁的區段裡。 */
+.recording {
+  margin: 24px 0 0;
+}
+
+.recording-slot {
+  margin-top: 12px;
+  padding: 20px;
+  border: 1.5px dashed var(--dust);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.5;
+}
+
+.recording-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 38%) 1fr;
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.recording-card:hover,
+.recording-card:focus-visible {
+  border-color: var(--signal-orange);
+  transform: translateY(-2px);
+}
+
+.recording-thumbnail {
+  position: relative;
+  display: grid;
+  min-height: 180px;
+  overflow: hidden;
+  background: var(--ink);
+  place-items: center;
+}
+
+.recording-thumbnail img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recording-thumbnail-fallback {
+  color: rgb(255 255 255 / 45%);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.recording-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  padding-left: 3px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(15 23 42 / 82%);
+  color: var(--white);
+  font-size: 18px;
+  transform: translate(-50%, -50%);
+}
+
+.recording-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+}
+
+.recording-platform {
+  margin-bottom: 8px;
+  color: var(--signal-orange);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recording-body strong {
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.recording-description {
+  margin-top: 8px;
+  color: var(--slate);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.recording-cta {
+  margin-top: 16px;
+  color: var(--signal-orange);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 620px) {
+  .recording-card {
+    grid-template-columns: 1fr;
+  }
+
+  .recording-thumbnail {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
 }

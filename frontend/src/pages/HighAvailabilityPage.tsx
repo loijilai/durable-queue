@@ -13,6 +13,7 @@ import {
 import AuditTrail from "../components/AuditTrail.tsx";
 import DiagramLightbox from "../components/DiagramLightbox.tsx";
 import Foldout from "../components/Foldout.tsx";
+import RecordingSlot from "../components/RecordingSlot.tsx";
 
 const DIAGRAM_LABEL = "AWS infrastructure diagram";
 const POLL_INTERVAL_MS = 2000;
@@ -181,83 +182,6 @@ function HealthProbe() {
         </div>
       </dl>
     </div>
-  );
-}
-
-function getYouTubeVideoId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace(/^www\./, "");
-    let id: string | null = null;
-
-    if (host === "youtu.be") {
-      id = parsed.pathname.split("/").filter(Boolean)[0] ?? null;
-    } else if (host === "youtube.com" || host === "m.youtube.com") {
-      id =
-        parsed.searchParams.get("v") ??
-        parsed.pathname.match(/^\/(?:embed|shorts)\/([^/?]+)/)?.[1] ??
-        null;
-    }
-
-    return id && /^[\w-]{11}$/.test(id) ? id : null;
-  } catch {
-    return null;
-  }
-}
-
-// 預覽只抓靜態縮圖，不載入 YouTube iframe；第三方播放器要等使用者點擊後才開啟。
-function RecordingSlot({
-  url,
-  title,
-  description,
-  slotHint,
-}: {
-  url: string;
-  title: string;
-  description: string;
-  slotHint: string;
-}) {
-  const videoId = getYouTubeVideoId(url);
-
-  return (
-    <figure className="ha-recording">
-      {url ? (
-        <a
-          className="ha-recording-card"
-          href={url}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`Watch ${title} on YouTube`}
-        >
-          {videoId && (
-            <span className="ha-recording-thumbnail">
-              <span className="ha-recording-thumbnail-fallback">
-                REAL AWS DEMO
-              </span>
-              <img
-                src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
-                alt=""
-                loading="lazy"
-                onError={(event) => {
-                  event.currentTarget.hidden = true;
-                }}
-              />
-              <span className="ha-recording-play" aria-hidden="true">
-                ▶
-              </span>
-            </span>
-          )}
-          <span className="ha-recording-body">
-            <span className="ha-recording-platform">YouTube demo</span>
-            <strong>{title}</strong>
-            <span className="ha-recording-description">{description}</span>
-            <span className="ha-recording-cta">Watch recording ↗</span>
-          </span>
-        </a>
-      ) : (
-        <p className="ha-recording-slot">Recording slot — {slotHint}</p>
-      )}
-    </figure>
   );
 }
 

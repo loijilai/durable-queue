@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 03 — 證據：截圖與實機錄影
 
@@ -29,9 +29,9 @@ YouTube 卡片的元件目前是 High Availability 頁裡的區域函式，需�
 
 **Blocked by:** 01
 
-- [ ] 主圖與裁切後的輔圖由 frontend 自己的資源提供，頁面在無外部網路的情況下也能顯示
-- [ ] 主圖的圖說是四條線的 legend，使用 `CONTEXT.md` 的詞彙，不含判讀
-- [ ] 輔圖只包含最左邊那一格，並說明它回答的是哪個問題
-- [ ] 錄影卡片指向該影片，並標明是同一次執行的實機錄影
-- [ ] YouTube 卡片成為共用元件，High Availability 頁改用它且呈現不變
-- [ ] `./scripts/verify.sh full` 通過
+- [x] 主圖與裁切後的輔圖由 frontend 自己的資源提供，頁面在無外部網路的情況下也能顯示
+- [x] 主圖的圖說是四條線的 legend，使用 `CONTEXT.md` 的詞彙，不含判讀
+- [x] 輔圖只包含最左邊那一格，並說明它回答的是哪個問題
+- [x] 錄影卡片指向該影片，並標明是同一次執行的實機錄影
+- [x] YouTube 卡片成為共用元件，High Availability 頁改用它且呈現不變
+- [x] `./scripts/verify.sh full` 通過
