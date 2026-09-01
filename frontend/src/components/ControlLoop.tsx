@@ -164,9 +164,6 @@ function ControlLoop() {
             <text className="cl-node-name" x="170" y="112">
               Backlog
             </text>
-            <text className="cl-node-value" x="170" y="138">
-              peak 245 Jobs waiting
-            </text>
           </g>
         </g>
 
@@ -175,9 +172,6 @@ function ControlLoop() {
             <rect x="366" y="78" width="208" height="84" rx="16" />
             <text className="cl-node-name" x="470" y="112">
               alarm
-            </text>
-            <text className="cl-node-value" x="470" y="138">
-              Backlog &gt; 1
             </text>
           </g>
         </g>
