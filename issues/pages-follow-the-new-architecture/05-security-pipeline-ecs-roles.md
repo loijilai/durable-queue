@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 05 — Security ② 的部署管線圖改說 ECS 的兩個角色
 
@@ -32,11 +32,11 @@ migration 併進第五步的圖說即可。
 
 **Blocked by:** None — can start immediately.
 
-- [ ] master 頁以 execution role 與 task role 兩個節點取代 `EC2 / instance profile`，兩者
+- [x] master 頁以 execution role 與 task role 兩個節點取代 `EC2 / instance profile`，兩者
       的權限差異在圖上看得出來
-- [ ] 收尾的邊改說 `update-service --force-new-deployment`
-- [ ] 維持五個步驟；migration 在第五步的圖說中被交代
-- [ ] 五張鏡頭 SVG 由 build script 重新產生，未經手改
-- [ ] 機密分類表的判準改為 task definition 的 `environment` vs `secrets`，維持三欄三列
-- [ ] 全節搜尋不到 EC2、instance profile、instance refresh、user_data
-- [ ] `./scripts/verify.sh full` 通過
+- [x] 收尾的邊改說 `update-service --force-new-deployment`
+- [x] 維持五個步驟；migration 在第五步的圖說中被交代
+- [x] 五張鏡頭 SVG 由 build script 重新產生，未經手改
+- [x] 機密分類表的判準改為 task definition 的 `environment` vs `secrets`，維持三欄三列
+- [x] 全節搜尋不到 EC2、instance profile、instance refresh、user_data
+- [x] `./scripts/verify.sh full` 通過

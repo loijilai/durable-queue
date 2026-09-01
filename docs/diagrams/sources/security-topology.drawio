@@ -32,25 +32,19 @@
                 <mxCell id="sg_api" value="SG-api" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#ED7100;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#ED7100;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;" parent="private" vertex="1">
                     <mxGeometry x="230" y="30" width="230" height="115" as="geometry" />
                 </mxCell>
-                <mxCell id="api" value="api  ×2 (ASG)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="sg_api" vertex="1">
+                <mxCell id="api" value="api  (ECS service)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;" parent="sg_api" vertex="1">
                     <mxGeometry x="85" y="22" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="sg_worker" value="SG-worker · no ingress" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#ED7100;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#ED7100;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;" parent="private" vertex="1">
                     <mxGeometry x="620" y="30" width="230" height="115" as="geometry" />
                 </mxCell>
-                <mxCell id="worker" value="worker  ×2 (ASG)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="sg_worker" vertex="1">
+                <mxCell id="worker" value="worker  (ECS service)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;" parent="sg_worker" vertex="1">
                     <mxGeometry x="85" y="22" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="sg_rds" value="SG-rds" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#C925D1;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#C925D1;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;" parent="private" vertex="1">
-                    <mxGeometry x="230" y="215" width="230" height="105" as="geometry" />
+                    <mxGeometry x="425" y="215" width="230" height="105" as="geometry" />
                 </mxCell>
                 <mxCell id="rds" value="RDS PostgreSQL" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.rds_instance;" parent="sg_rds" vertex="1">
-                    <mxGeometry x="85" y="18" width="55" height="55" as="geometry" />
-                </mxCell>
-                <mxCell id="sg_redis" value="SG-redis" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#C925D1;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#C925D1;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;" parent="private" vertex="1">
-                    <mxGeometry x="620" y="215" width="230" height="105" as="geometry" />
-                </mxCell>
-                <mxCell id="redis" value="ElastiCache Redis" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.elasticache;" parent="sg_redis" vertex="1">
                     <mxGeometry x="85" y="18" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="tls_line" value="" style="line;strokeWidth=2;html=1;strokeColor=#D13212;dashed=1;dashPattern=6 6;" parent="vpc" vertex="1">
@@ -65,25 +59,19 @@
                 <mxCell id="e_alb_api" value=":8000  ← from SG-alb only" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#ED7100;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="alb" target="api" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <mxCell id="e_api_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.2;exitY=1;entryX=0.2;entryY=0;" parent="1" source="sg_api" target="sg_rds" edge="1">
-                    <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <mxCell id="e_wk_redis" value=":6379" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.8;exitY=1;entryX=0.8;entryY=0;" parent="1" source="sg_worker" target="sg_redis" edge="1">
-                    <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <mxCell id="e_api_redis" value=":6379" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.8;exitY=1;entryX=0.2;entryY=0;" parent="1" source="sg_api" target="sg_redis" edge="1">
-                    <mxGeometry x="-0.6" relative="1" as="geometry">
+                <mxCell id="e_api_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" parent="1" source="sg_api" target="sg_rds" edge="1">
+                    <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="574" y="690" />
-                            <mxPoint x="826" y="690" />
+                            <mxPoint x="505" y="700" />
+                            <mxPoint x="642" y="700" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_wk_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="sg_worker" target="sg_rds" edge="1">
-                    <mxGeometry x="-0.6" relative="1" as="geometry">
+                <mxCell id="e_wk_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" parent="1" source="sg_worker" target="sg_rds" edge="1">
+                    <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="895" y="716" />
-                            <mxPoint x="505" y="716" />
+                            <mxPoint x="895" y="700" />
+                            <mxPoint x="757" y="700" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
@@ -136,25 +124,19 @@
                 <mxCell id="sg_api" value="SG-api" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#ED7100;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#ED7100;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;opacity=0;textOpacity=0;" parent="private" vertex="1">
                     <mxGeometry x="230" y="30" width="230" height="115" as="geometry" />
                 </mxCell>
-                <mxCell id="api" value="api  ×2 (ASG)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="sg_api" vertex="1">
+                <mxCell id="api" value="api  (ECS service)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;" parent="sg_api" vertex="1">
                     <mxGeometry x="85" y="22" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="sg_worker" value="SG-worker · no ingress" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#ED7100;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#ED7100;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;opacity=0;textOpacity=0;" parent="private" vertex="1">
                     <mxGeometry x="620" y="30" width="230" height="115" as="geometry" />
                 </mxCell>
-                <mxCell id="worker" value="worker  ×2 (ASG)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="sg_worker" vertex="1">
+                <mxCell id="worker" value="worker  (ECS service)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;" parent="sg_worker" vertex="1">
                     <mxGeometry x="85" y="22" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="sg_rds" value="SG-rds" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#C925D1;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#C925D1;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;opacity=0;textOpacity=0;" parent="private" vertex="1">
-                    <mxGeometry x="230" y="215" width="230" height="105" as="geometry" />
+                    <mxGeometry x="425" y="215" width="230" height="105" as="geometry" />
                 </mxCell>
                 <mxCell id="rds" value="RDS PostgreSQL" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.rds_instance;" parent="sg_rds" vertex="1">
-                    <mxGeometry x="85" y="18" width="55" height="55" as="geometry" />
-                </mxCell>
-                <mxCell id="sg_redis" value="SG-redis" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#C925D1;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#C925D1;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;opacity=0;textOpacity=0;" parent="private" vertex="1">
-                    <mxGeometry x="620" y="215" width="230" height="105" as="geometry" />
-                </mxCell>
-                <mxCell id="redis" value="ElastiCache Redis" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.elasticache;" parent="sg_redis" vertex="1">
                     <mxGeometry x="85" y="18" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="tls_line" value="" style="line;strokeWidth=2;html=1;strokeColor=#D13212;dashed=1;dashPattern=6 6;opacity=0;textOpacity=0;" parent="vpc" vertex="1">
@@ -169,25 +151,19 @@
                 <mxCell id="e_alb_api" value=":8000  ← from SG-alb only" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#ED7100;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;opacity=0;textOpacity=0;" parent="1" source="alb" target="api" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <mxCell id="e_api_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.2;exitY=1;entryX=0.2;entryY=0;opacity=0;textOpacity=0;" parent="1" source="sg_api" target="sg_rds" edge="1">
-                    <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <mxCell id="e_wk_redis" value=":6379" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.8;exitY=1;entryX=0.8;entryY=0;opacity=0;textOpacity=0;" parent="1" source="sg_worker" target="sg_redis" edge="1">
-                    <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <mxCell id="e_api_redis" value=":6379" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.8;exitY=1;entryX=0.2;entryY=0;opacity=0;textOpacity=0;" parent="1" source="sg_api" target="sg_redis" edge="1">
-                    <mxGeometry x="-0.6" relative="1" as="geometry">
+                <mxCell id="e_api_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.25;entryY=0;opacity=0;textOpacity=0;" parent="1" source="sg_api" target="sg_rds" edge="1">
+                    <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="574" y="690" />
-                            <mxPoint x="826" y="690" />
+                            <mxPoint x="505" y="700" />
+                            <mxPoint x="642" y="700" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_wk_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;opacity=0;textOpacity=0;" parent="1" source="sg_worker" target="sg_rds" edge="1">
-                    <mxGeometry x="-0.6" relative="1" as="geometry">
+                <mxCell id="e_wk_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.75;entryY=0;opacity=0;textOpacity=0;" parent="1" source="sg_worker" target="sg_rds" edge="1">
+                    <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="895" y="716" />
-                            <mxPoint x="505" y="716" />
+                            <mxPoint x="895" y="700" />
+                            <mxPoint x="757" y="700" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
@@ -240,25 +216,19 @@
                 <mxCell id="sg_api" value="SG-api" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#ED7100;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#ED7100;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;" parent="private" vertex="1">
                     <mxGeometry x="230" y="30" width="230" height="115" as="geometry" />
                 </mxCell>
-                <mxCell id="api" value="api  ×2 (ASG)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="sg_api" vertex="1">
+                <mxCell id="api" value="api  (ECS service)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;" parent="sg_api" vertex="1">
                     <mxGeometry x="85" y="22" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="sg_worker" value="SG-worker · no ingress" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#ED7100;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#ED7100;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;" parent="private" vertex="1">
                     <mxGeometry x="620" y="30" width="230" height="115" as="geometry" />
                 </mxCell>
-                <mxCell id="worker" value="worker  ×2 (ASG)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="sg_worker" vertex="1">
+                <mxCell id="worker" value="worker  (ECS service)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;" parent="sg_worker" vertex="1">
                     <mxGeometry x="85" y="22" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="sg_rds" value="SG-rds" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#C925D1;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#C925D1;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;" parent="private" vertex="1">
-                    <mxGeometry x="230" y="215" width="230" height="105" as="geometry" />
+                    <mxGeometry x="425" y="215" width="230" height="105" as="geometry" />
                 </mxCell>
                 <mxCell id="rds" value="RDS PostgreSQL" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.rds_instance;" parent="sg_rds" vertex="1">
-                    <mxGeometry x="85" y="18" width="55" height="55" as="geometry" />
-                </mxCell>
-                <mxCell id="sg_redis" value="SG-redis" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#C925D1;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#C925D1;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;" parent="private" vertex="1">
-                    <mxGeometry x="620" y="215" width="230" height="105" as="geometry" />
-                </mxCell>
-                <mxCell id="redis" value="ElastiCache Redis" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.elasticache;" parent="sg_redis" vertex="1">
                     <mxGeometry x="85" y="18" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="tls_line" value="" style="line;strokeWidth=2;html=1;strokeColor=#D13212;dashed=1;dashPattern=6 6;opacity=0;textOpacity=0;" parent="vpc" vertex="1">
@@ -273,25 +243,19 @@
                 <mxCell id="e_alb_api" value=":8000  ← from SG-alb only" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#ED7100;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="alb" target="api" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <mxCell id="e_api_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.2;exitY=1;entryX=0.2;entryY=0;" parent="1" source="sg_api" target="sg_rds" edge="1">
-                    <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <mxCell id="e_wk_redis" value=":6379" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.8;exitY=1;entryX=0.8;entryY=0;" parent="1" source="sg_worker" target="sg_redis" edge="1">
-                    <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <mxCell id="e_api_redis" value=":6379" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.8;exitY=1;entryX=0.2;entryY=0;" parent="1" source="sg_api" target="sg_redis" edge="1">
-                    <mxGeometry x="-0.6" relative="1" as="geometry">
+                <mxCell id="e_api_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" parent="1" source="sg_api" target="sg_rds" edge="1">
+                    <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="574" y="690" />
-                            <mxPoint x="826" y="690" />
+                            <mxPoint x="505" y="700" />
+                            <mxPoint x="642" y="700" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_wk_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="sg_worker" target="sg_rds" edge="1">
-                    <mxGeometry x="-0.6" relative="1" as="geometry">
+                <mxCell id="e_wk_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" parent="1" source="sg_worker" target="sg_rds" edge="1">
+                    <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="895" y="716" />
-                            <mxPoint x="505" y="716" />
+                            <mxPoint x="895" y="700" />
+                            <mxPoint x="757" y="700" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
@@ -344,25 +308,19 @@
                 <mxCell id="sg_api" value="SG-api" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#ED7100;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#ED7100;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;opacity=55;textOpacity=55;" parent="private" vertex="1">
                     <mxGeometry x="230" y="30" width="230" height="115" as="geometry" />
                 </mxCell>
-                <mxCell id="api" value="api  ×2 (ASG)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="sg_api" vertex="1">
+                <mxCell id="api" value="api  (ECS service)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;" parent="sg_api" vertex="1">
                     <mxGeometry x="85" y="22" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="sg_worker" value="SG-worker · no ingress" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#ED7100;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#ED7100;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;opacity=55;textOpacity=55;" parent="private" vertex="1">
                     <mxGeometry x="620" y="30" width="230" height="115" as="geometry" />
                 </mxCell>
-                <mxCell id="worker" value="worker  ×2 (ASG)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2;" parent="sg_worker" vertex="1">
+                <mxCell id="worker" value="worker  (ECS service)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;" parent="sg_worker" vertex="1">
                     <mxGeometry x="85" y="22" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="sg_rds" value="SG-rds" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#C925D1;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#C925D1;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;opacity=55;textOpacity=55;" parent="private" vertex="1">
-                    <mxGeometry x="230" y="215" width="230" height="105" as="geometry" />
+                    <mxGeometry x="425" y="215" width="230" height="105" as="geometry" />
                 </mxCell>
                 <mxCell id="rds" value="RDS PostgreSQL" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.rds_instance;" parent="sg_rds" vertex="1">
-                    <mxGeometry x="85" y="18" width="55" height="55" as="geometry" />
-                </mxCell>
-                <mxCell id="sg_redis" value="SG-redis" style="rounded=1;arcSize=6;dashed=1;fillColor=none;strokeColor=#C925D1;dashPattern=8 4;strokeWidth=2;html=1;verticalAlign=top;align=left;fontColor=#C925D1;fontSize=11;fontStyle=1;spacingLeft=8;spacingTop=2;opacity=55;textOpacity=55;" parent="private" vertex="1">
-                    <mxGeometry x="620" y="215" width="230" height="105" as="geometry" />
-                </mxCell>
-                <mxCell id="redis" value="ElastiCache Redis" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.elasticache;" parent="sg_redis" vertex="1">
                     <mxGeometry x="85" y="18" width="55" height="55" as="geometry" />
                 </mxCell>
                 <mxCell id="tls_line" value="" style="line;strokeWidth=2;html=1;strokeColor=#D13212;dashed=1;dashPattern=6 6;" parent="vpc" vertex="1">
@@ -377,25 +335,19 @@
                 <mxCell id="e_alb_api" value=":8000  ← from SG-alb only" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#ED7100;strokeWidth=2;fontSize=11;fontColor=#ED7100;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;opacity=55;textOpacity=55;" parent="1" source="alb" target="api" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <mxCell id="e_api_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.2;exitY=1;entryX=0.2;entryY=0;opacity=55;textOpacity=55;" parent="1" source="sg_api" target="sg_rds" edge="1">
-                    <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <mxCell id="e_wk_redis" value=":6379" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.8;exitY=1;entryX=0.8;entryY=0;opacity=55;textOpacity=55;" parent="1" source="sg_worker" target="sg_redis" edge="1">
-                    <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <mxCell id="e_api_redis" value=":6379" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.8;exitY=1;entryX=0.2;entryY=0;opacity=55;textOpacity=55;" parent="1" source="sg_api" target="sg_redis" edge="1">
-                    <mxGeometry x="-0.6" relative="1" as="geometry">
+                <mxCell id="e_api_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.25;entryY=0;opacity=55;textOpacity=55;" parent="1" source="sg_api" target="sg_rds" edge="1">
+                    <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="574" y="690" />
-                            <mxPoint x="826" y="690" />
+                            <mxPoint x="505" y="700" />
+                            <mxPoint x="642" y="700" />
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_wk_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;opacity=55;textOpacity=55;" parent="1" source="sg_worker" target="sg_rds" edge="1">
-                    <mxGeometry x="-0.6" relative="1" as="geometry">
+                <mxCell id="e_wk_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeColor=#C925D1;strokeWidth=2;fontSize=11;fontColor=#C925D1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.75;entryY=0;opacity=55;textOpacity=55;" parent="1" source="sg_worker" target="sg_rds" edge="1">
+                    <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="895" y="716" />
-                            <mxPoint x="505" y="716" />
+                            <mxPoint x="895" y="700" />
+                            <mxPoint x="757" y="700" />
                         </Array>
                     </mxGeometry>
                 </mxCell>

@@ -80,7 +80,7 @@ The queue decouples the API tier from the worker pool, so each scales on its own
 
 | Network reachability                                                                                        | Security-group authorization chain                                                                          |
 | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| ![Private subnets reach the internet only outbound, via NAT + IGW](frontend/public/diagrams/sec-topology-network.svg) | ![SGs reference SGs — ALB → EC2 → {RDS, ElastiCache}, never a raw CIDR](frontend/public/diagrams/sec-topology-sg.svg) |
+| ![Private subnets reach the internet only outbound, via NAT + IGW](frontend/public/diagrams/sec-topology-network.svg) | ![SGs reference SGs — ALB → ECS services → RDS, never a raw CIDR](frontend/public/diagrams/sec-topology-sg.svg) |
 
 CI/CD identity and secrets follow the same discipline — no long-lived credentials, no plaintext at rest:
 
