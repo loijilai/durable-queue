@@ -2109,130 +2109,6 @@ a {
   width: auto;
 }
 
-/* Scenario B — recorded evidence slot */
-.ha-recording {
-  margin: 24px 0 0;
-}
-
-.ha-recording-slot {
-  margin-top: 12px;
-  padding: 20px;
-  border: 1.5px dashed var(--dust);
-  border-radius: 12px;
-  font-size: 13px;
-  color: var(--slate);
-  line-height: 1.5;
-}
-
-.ha-recording-card {
-  display: grid;
-  grid-template-columns: minmax(220px, 38%) 1fr;
-  margin-top: 12px;
-  overflow: hidden;
-  border: 1.5px solid transparent;
-  border-radius: 16px;
-  background: var(--white);
-  box-shadow: var(--shadow);
-  color: var(--ink);
-  transition:
-    border-color 0.15s ease,
-    transform 0.15s ease;
-}
-
-.ha-recording-card:hover,
-.ha-recording-card:focus-visible {
-  border-color: var(--signal-orange);
-  transform: translateY(-2px);
-}
-
-.ha-recording-thumbnail {
-  position: relative;
-  display: grid;
-  min-height: 180px;
-  overflow: hidden;
-  background: var(--ink);
-  place-items: center;
-}
-
-.ha-recording-thumbnail img {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.ha-recording-thumbnail-fallback {
-  color: rgb(255 255 255 / 45%);
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-}
-
-.ha-recording-play {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: grid;
-  width: 52px;
-  height: 52px;
-  padding-left: 3px;
-  place-items: center;
-  border-radius: 50%;
-  background: rgb(15 23 42 / 82%);
-  color: var(--white);
-  font-size: 18px;
-  transform: translate(-50%, -50%);
-}
-
-.ha-recording-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 24px;
-}
-
-.ha-recording-platform {
-  margin-bottom: 8px;
-  color: var(--signal-orange);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.ha-recording-body strong {
-  font-size: 19px;
-  line-height: 1.25;
-}
-
-.ha-recording-description {
-  margin-top: 8px;
-  color: var(--slate);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.ha-recording-cta {
-  margin-top: 16px;
-  color: var(--signal-orange);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-@media (max-width: 620px) {
-  .ha-recording-card {
-    grid-template-columns: 1fr;
-  }
-
-  .ha-recording-thumbnail {
-    min-height: 0;
-    aspect-ratio: 16 / 9;
-  }
-}
-
 /* Scenario B — live health probe (shared by both shutdown paths) */
 .hp-card {
   display: flex;
@@ -2918,177 +2794,383 @@ a {
   }
 }
 
-/* ── Scalability (scale-out) ──────────────────────────────────── */
-.scl-demo {
-  display: flex;
-  flex-direction: column;
-}
-
-.scl-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.scl-progress {
-  font-size: 13px;
-  color: var(--slate);
-  font-variant-numeric: tabular-nums;
-}
-
-.scl-clock {
-  font-family: ui-monospace, monospace;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--light-orange);
-  font-variant-numeric: tabular-nums;
-  margin-left: auto;
-}
-
-.scl-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.scl-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1.5px solid var(--dust);
-  background: var(--canvas-lifted);
-  font-variant-numeric: tabular-nums;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.scl-cell-id {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.scl-cell-status {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--slate);
-}
-
-.scl-cell-host {
-  font-family: ui-monospace, monospace;
-  font-size: 10px;
-  color: var(--slate);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.scl-cell-running {
-  border-color: var(--light-orange);
-  background: rgba(243, 115, 56, 0.1);
-}
-
-.scl-cell-succeeded {
-  border-color: var(--signal-green);
-  background: rgba(47, 122, 61, 0.12);
-}
-
-.scl-cell-succeeded .scl-cell-status {
-  color: var(--signal-green);
-}
-
-.scl-cell-failed {
-  border-color: var(--signal-orange);
-  background: rgba(207, 69, 0, 0.12);
-}
-
-.scl-cell-failed .scl-cell-status {
-  color: var(--signal-orange);
-}
-
-.scl-results {
+/* ── Scalability (Backlog → capacity control loop) ──────────────
+   這一頁的段落都是同一種卡片，差別只在裝什麼；共用的殼寫成一條規則，
+   各段只補自己不一樣的地方。 */
+.scl-scenario,
+.scl-evidence {
   margin-top: 40px;
-  padding: 28px 32px;
+  padding: 32px 36px;
   border-radius: 16px;
   background: var(--white);
   box-shadow: var(--shadow);
 }
 
-.scl-results-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+/* 卡片的標題，不專屬於哪一段 —— 證據那段不是一個 scenario。 */
+.scl-card-title {
+  margin: 8px 0 20px;
 }
 
-.scl-reset {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--slate);
-  cursor: pointer;
+/* 這一段的主體是圖不是文字 —— 給它整張卡的寬度，兩側留白由卡片的 padding 負責。 */
+.scl-scenario .excalidraw-diagram {
+  margin: 4px 0 8px;
 }
 
-.scl-reset:hover {
-  color: var(--signal-orange);
+.scl-scenario p,
+.scl-evidence > p {
+  max-width: 68ch;
+  color: var(--charcoal);
+  line-height: 1.65;
 }
 
-.scl-run-table {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.scl-run-row {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--canvas-lifted);
-  font-variant-numeric: tabular-nums;
-}
-
-.scl-run-workers {
-  font-weight: 600;
-  color: var(--ink);
-  min-width: 90px;
-}
-
-.scl-run-detail {
-  font-size: 14px;
-  color: var(--slate);
-  flex: 1;
-}
-
-.scl-run-time {
-  font-family: ui-monospace, monospace;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--signal-green);
-}
-
-.scl-speedup {
+.scl-scenario p + p {
   margin-top: 16px;
+}
+
+/* 圖說：一句話，字級比內文小一點，靠圖站著而不是自己成段。 */
+.scl-scenario-caption {
+  margin-top: 4px;
   font-size: 15px;
   color: var(--charcoal);
 }
 
-.scl-speedup strong {
-  color: var(--signal-orange);
-  font-size: 18px;
+@media (max-width: 640px) {
+  .scl-scenario,
+  .scl-evidence {
+    padding: 24px;
+  }
+}
+
+/* ── 證據：驗收實驗的截圖（EvidenceCarousel） ─────────────────
+   截圖是原圖照放，所以版面只能繞著它走：不裁、不套濾鏡。四張的長寬比
+   各不相同，框因此吃固定比例、圖用 contain 擺進去 —— 換頁時版面不動，
+   是這一疊看起來像同一疊的唯一原因。 */
+.ev-carousel {
+  margin: 28px 0 0;
+}
+
+.ev-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1.5px solid var(--dust);
+  border-radius: 12px;
+  /* 截圖自己是白底，框跟著白，留白才不會看起來像沒對齊的邊。 */
+  background: var(--white);
+}
+
+.ev-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.ev-slide.is-current {
+  opacity: 1;
+}
+
+/* 要點的是圖本身：兩塊透明的操作面壓在左右兩側，各佔三成寬。 */
+.ev-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.ev-zone--prev {
+  left: 0;
+  justify-content: flex-start;
+}
+
+.ev-zone--next {
+  right: 0;
+  justify-content: flex-end;
+}
+
+/* 箭頭平常是淡的，不跟圖搶；滑過去或用鍵盤走到才實體化。 */
+.ev-arrow {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(15 23 42 / 6%);
+  color: var(--slate);
+  font-size: 24px;
+  line-height: 1;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.ev-zone:hover .ev-arrow {
+  background: rgb(15 23 42 / 82%);
+  color: var(--white);
+}
+
+.ev-zone:focus-visible {
+  outline: none;
+}
+
+.ev-zone:focus-visible .ev-arrow {
+  background: var(--signal-orange);
+  color: var(--white);
+}
+
+.ev-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ev-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--dust);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ev-dot.is-current {
+  background: var(--signal-orange);
+}
+
+/* 圖說會隨著圖換掉，長短不一 —— 給一個下限，換頁時底下的東西才不會跳。 */
+.ev-caption {
+  min-height: 108px;
+  margin-top: 12px;
+  max-width: 68ch;
+  color: var(--charcoal);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* 主圖的圖說就是 legend：一條線一行，說明它是什麼，不說它發生了什麼。 */
+.scl-legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scl-legend li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.scl-legend li + li {
+  margin-top: 6px;
+}
+
+/* 色塊照抄截圖上的線色，讓每一行對得回圖上的哪一條。 */
+.scl-swatch {
+  flex: none;
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+  transform: translateY(-4px);
+}
+
+.scl-swatch--backlog {
+  background: #3b76af;
+}
+
+.scl-swatch--inflight {
+  background: #ef8636;
+}
+
+.scl-swatch--worker {
+  background: #529e3f;
+}
+
+.scl-swatch--wait {
+  background: #c53b33;
+}
+
+/* ── 控制迴路圖 ─────────────────────────────────────────────────
+   節點與邊都是可點亮的元素，作法與 .jl-（Job lifecycle）同源；兩張圖的
+   class 分開命名，是因為這張圖沒有旁邊的說明欄，整塊就是一張圖，共用一組
+   class 會讓其中一張的規則變成另一張的例外。 */
+.cl-frame {
+  margin-top: 40px;
+}
+
+/* 圖吃滿整個框：這一塊沒有第二欄要分寬度。 */
+.cl-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 16px;
+  overflow: visible;
+}
+
+.cl-svg text {
+  font-family: var(--sans);
+  font-weight: 500;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* 對齊要用 class 而不是 text-anchor 屬性：這個 <svg> 底下已經有一條
+   `text { text-anchor: middle }` 的 CSS 規則，而 CSS 一律蓋過 presentation
+   attribute —— 寫在元素上的 textAnchor="start" 會靜靜地不生效。 */
+.cl-svg .cl-anchor-start {
+  text-anchor: start;
+}
+
+/* ── 節點 ─────────────────────────────────────────────────── */
+.cl-node rect {
+  fill: var(--white);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  transition:
+    fill 0.4s ease,
+    stroke 0.4s ease,
+    stroke-width 0.4s ease;
+}
+
+.cl-node-name {
+  font-size: 19px;
+  fill: var(--slate);
+  transition: fill 0.4s ease;
+}
+
+/* 每個節點的實測數字：跟著節點名走，但比它輕一級 —— 它是註腳不是標題。 */
+.cl-node-value {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--slate);
+}
+
+.cl-node.is-lit rect {
+  stroke: var(--charcoal);
+  stroke-width: 2.5;
+}
+
+.cl-node.is-lit .cl-node-name {
+  fill: var(--ink);
+}
+
+/* alarm 是圖上唯一會「響」的東西，點亮時轉紅 —— 這是它與其他三個節點的
+   差別：其餘三個是常態運作，只有這一個代表某條線被越過了。 */
+.cl-node--alarm.is-lit rect {
+  fill: rgba(163, 35, 43, 0.08);
+  stroke: var(--error-red);
+}
+
+.cl-node--alarm.is-lit .cl-node-name,
+.cl-node--alarm.is-lit .cl-node-value {
+  fill: var(--error-red);
+}
+
+/* Worker 是圖上唯一在動工的東西，點亮時走 running 的藍（DESIGN.md §2
+   Job Status Colors）—— in-progress 是資訊，不是確認。 */
+.cl-node--worker.is-lit rect {
+  fill: rgba(56, 96, 190, 0.1);
+  stroke: var(--status-running);
+}
+
+/* ── 邊 ───────────────────────────────────────────────────── */
+.cl-edge {
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  marker-end: url(#cl-mk-dust);
+  fill: none;
+  transition:
+    stroke 0.4s ease,
+    stroke-width 0.4s ease;
+}
+
+.cl-edge.is-lit {
+  stroke-width: 2.5;
+}
+
+.cl-edge--ink.is-lit {
+  stroke: var(--charcoal);
+  marker-end: url(#cl-mk-ink);
+}
+
+/* 回到起點的那一段常駐上色：環之所以是環就在這條線上，它不能只有在
+   被 hover 到時才存在。 */
+.cl-edge--loop {
+  stroke: var(--status-running);
+  stroke-width: 2;
+  marker-end: url(#cl-mk-loop);
+}
+
+.cl-edge--loop.is-lit {
+  stroke-width: 3.5;
+}
+
+.cl-edge-label {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--slate);
+}
+
+/* ── 圖形即控制項 ─────────────────────────────────────────
+   方塊本身就是按鈕，所以要給出可點的訊號，並自己補上鍵盤焦點框
+   —— SVG 的 <g> 沒有內建 focus ring。 */
+.cl-control {
+  cursor: pointer;
+  outline: none;
+}
+
+.cl-control:hover rect {
+  stroke: var(--slate);
+}
+
+.cl-control:focus-visible rect {
+  stroke: var(--signal-orange);
+  stroke-width: 2.5;
+}
+
+/* 釘住的那一格要看得出來：點擊會讓這個 <g> 拿到 focus，hover 與 pinned
+   因此在圖上長得一模一樣，取消釘選就變成沒有回應的操作。 */
+.cl-control[aria-pressed="true"] rect {
+  stroke: var(--charcoal);
+  stroke-width: 3.5;
+}
+
+/* 縮容不在環上，用一顆畫在環中央的 chip 當開關 */
+.cl-chip rect {
+  fill: var(--white);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  transition:
+    fill 0.4s ease,
+    stroke 0.4s ease;
+}
+
+.cl-chip text {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--slate);
+  transition: fill 0.4s ease;
+}
+
+.cl-chip.is-lit rect {
+  stroke: var(--charcoal);
+}
+
+.cl-chip.is-lit text {
+  fill: var(--ink);
 }
 
 /* ── Site footer（DESIGN.md §4 Footer） ───────────────────────── */
@@ -3157,4 +3239,140 @@ a {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   font-size: 13px;
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── 錄影卡片（RecordingSlot） ─────────────────────────────────
+   HighAvailability 與 Scalability 兩頁共用，所以不掛任何一頁的前綴，
+   也不放在任何一頁的區段裡。 */
+.recording {
+  margin: 24px 0 0;
+}
+
+.recording-slot {
+  margin-top: 12px;
+  padding: 20px;
+  border: 1.5px dashed var(--dust);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.5;
+}
+
+.recording-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 38%) 1fr;
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.recording-card:hover,
+.recording-card:focus-visible {
+  border-color: var(--signal-orange);
+  transform: translateY(-2px);
+}
+
+.recording-thumbnail {
+  position: relative;
+  display: grid;
+  min-height: 180px;
+  overflow: hidden;
+  background: var(--ink);
+  place-items: center;
+}
+
+.recording-thumbnail img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recording-thumbnail-fallback {
+  color: rgb(255 255 255 / 45%);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.recording-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  padding-left: 3px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(15 23 42 / 82%);
+  color: var(--white);
+  font-size: 18px;
+  transform: translate(-50%, -50%);
+}
+
+.recording-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+}
+
+.recording-platform {
+  margin-bottom: 8px;
+  color: var(--signal-orange);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recording-body strong {
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.recording-description {
+  margin-top: 8px;
+  color: var(--slate);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.recording-cta {
+  margin-top: 16px;
+  color: var(--signal-orange);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 來源聲明：卡片之外的註腳，比 description 更小更淡，不跟它爭視線。 */
+.recording-provenance {
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--dust);
+  color: var(--slate);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 620px) {
+  .recording-card {
+    grid-template-columns: 1fr;
+  }
+
+  .recording-thumbnail {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
 }

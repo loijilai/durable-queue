@@ -54,14 +54,14 @@ const TOPOLOGY_LENSES: Lens[] = [
     tab: "Network boundary",
     src: "/diagrams/sec-topology-network.svg",
     caption:
-      "The public subnets hold only the ALB and the NAT gateway. Every compute and data node lives in a private subnet with no public IP — and no security group anywhere opens :22. The admin plane is SSM Session Manager, so there is no bastion and no SSH surface to attack.",
+      "The public subnets hold only the ALB and the NAT gateway. Every compute and data node lives in a private subnet with no public IP — and no security group anywhere opens :22. There is no admin plane at all: no bastion, no SSM Session Manager, and ECS Exec is off.",
   },
   {
     id: "sg",
     tab: "SG authorization chain",
     src: "/diagrams/sec-topology-sg.svg",
     caption:
-      "Each hop authorizes the security group upstream of it rather than a CIDR block, so the boundary follows the resource instead of its IP — instances can scale out or move AZ without a rule change. The worker has zero ingress at all: it is a client that pulls work.",
+      "Each hop authorizes the security group upstream of it rather than a CIDR block, so the boundary follows the resource instead of its IP — tasks can scale out or land in another AZ without a rule change. SG-worker carries no ingress rule at all: outbound only, nothing may open a connection to it.",
   },
   {
     id: "tls",
@@ -112,14 +112,15 @@ const PIPELINE_LENSES: Lens[] = [
     tab: "5",
     src: "/diagrams/sec-pipeline-5-boot.svg",
     caption:
-      "The instance refresh replaces the machine, and the new one authenticates as itself. Its instance profile pulls that same commit SHA and fetches the secrets, which land as environment variables inside the container and nowhere else.",
+      "update-service --force-new-deployment starts the rollout, after one standalone migration task on the same image. Two identities split the work: the execution role resolves the secrets into environment variables at start-up; the task role the application runs as gets the queue, and nothing from Secrets Manager.",
   },
 ];
 
-// 這張表真正要說的話是最後一欄：user_data 存在 instance metadata 裡，只有
-// base64、沒有加密，任何碰得到那台機器的人都讀得到。所以「可不可以出現在
-// user_data」就是機密與否的判準——分類不是憑感覺分的。no / no / yes 讀完，
-// 三個來源為什麼走三條不同的路就講完了。
+// 這張表真正要說的話是最後一欄：task definition 有兩個欄位，`environment`
+// 的值明文寫在定義裡，任何讀得到 task definition 的人就讀得到；`secrets` 只
+// 放 ARN，由 execution role 在啟動時去解析。所以「該進 environment 還是進
+// secrets」就是機密與否的判準——而且這條界線是平台強制的二分，不是靠自律。
+// secrets / secrets / environment 讀完，三個來源為什麼走兩條不同的路就講完了。
 interface ConfigSource {
   source: string;
   origin: string;
@@ -131,17 +132,17 @@ const CONFIG_SOURCES: ConfigSource[] = [
   {
     source: "RDS master password",
     origin: "AWS (manage_master_user_password = true)",
-    delivery: "Secrets Manager",
+    delivery: "secrets: → Secrets Manager ARN",
   },
   {
     source: "App secret",
     origin: "Developer",
-    delivery: "Secrets Manager",
+    delivery: "secrets: → Secrets Manager ARN",
   },
   {
     source: "Config & endpoints",
     origin: "Terraform, computed from other resources",
-    delivery: "user_data templated into docker run -e",
+    delivery: "environment: → literal value in the task definition",
   },
 ];
 
@@ -355,7 +356,7 @@ function SecurityPage() {
                 <tr>
                   <th>Source</th>
                   <th>Who creates the value</th>
-                  <th>How it reaches the process</th>
+                  <th>Task definition field</th>
                 </tr>
               </thead>
               <tbody>

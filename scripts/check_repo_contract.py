@@ -47,19 +47,10 @@ DIAGRAM_ASSETS = (
     "frontend/src/assets/diagrams/3-1-race-condition.excalidraw",
     "frontend/src/assets/diagrams/3-worker-stuck-duplicate.excalidraw",
     "frontend/src/assets/diagrams/4-sequence-concurrency.excalidraw",
-    "frontend/src/assets/diagrams/5-scale-out.excalidraw",
     "frontend/src/assets/diagrams/auth-sequence-google-oidc.excalidraw",
     "frontend/src/assets/diagrams/8-auth-attack-1-state.excalidraw",
     "frontend/src/assets/diagrams/8-auth-attack-2-token.excalidraw",
     "frontend/src/assets/diagrams/8-auth-attack-3-linking.excalidraw",
-    "docs/diagrams/rendered/1-queue-arch.png",
-    "docs/diagrams/rendered/2-1-visibility-timeout.png",
-    "docs/diagrams/rendered/2-worker-failure.png",
-    "docs/diagrams/rendered/3-1-race-condition.png",
-    "docs/diagrams/rendered/3-worker-stuck-duplicate.png",
-    "docs/diagrams/rendered/4-sequence-concurrency.png",
-    "docs/diagrams/rendered/5-scale-out.png",
-    "docs/diagrams/rendered/auth-sequence-google-oidc.png",
 )
 
 

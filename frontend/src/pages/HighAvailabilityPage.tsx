@@ -13,6 +13,7 @@ import {
 import AuditTrail from "../components/AuditTrail.tsx";
 import DiagramLightbox from "../components/DiagramLightbox.tsx";
 import Foldout from "../components/Foldout.tsx";
+import RecordingSlot from "../components/RecordingSlot.tsx";
 
 const DIAGRAM_LABEL = "AWS infrastructure diagram";
 const POLL_INTERVAL_MS = 2000;
@@ -24,6 +25,10 @@ const DEMO_JOB_KEY = "ha-scenario-a-job-id";
 // 場景 B 的兩條路徑都是對真實 AWS、預錄的。放上連結就會取代下方的 placeholder。
 const GRACEFUL_RECORDING_URL = "https://youtu.be/1IOtkj5hIEo";
 const UNGRACEFUL_RECORDING_URL = "https://youtu.be/s9L_QNKJyRQ";
+// 兩支錄影拍的是 ECS service 之前那一版部署。頁面上的機制描述跟著 infra 走，
+// 所以寧可標註錄影比程式碼舊，也不讓文字退回去配合錄影。
+const RECORDING_PROVENANCE =
+  "Recorded on the deployment that preceded the current ECS service — the same design, an earlier implementation of it.";
 
 const PROBE_INTERVAL_MS = 1000;
 const PROBE_WINDOW = 39;
@@ -184,83 +189,6 @@ function HealthProbe() {
   );
 }
 
-function getYouTubeVideoId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace(/^www\./, "");
-    let id: string | null = null;
-
-    if (host === "youtu.be") {
-      id = parsed.pathname.split("/").filter(Boolean)[0] ?? null;
-    } else if (host === "youtube.com" || host === "m.youtube.com") {
-      id =
-        parsed.searchParams.get("v") ??
-        parsed.pathname.match(/^\/(?:embed|shorts)\/([^/?]+)/)?.[1] ??
-        null;
-    }
-
-    return id && /^[\w-]{11}$/.test(id) ? id : null;
-  } catch {
-    return null;
-  }
-}
-
-// 預覽只抓靜態縮圖，不載入 YouTube iframe；第三方播放器要等使用者點擊後才開啟。
-function RecordingSlot({
-  url,
-  title,
-  description,
-  slotHint,
-}: {
-  url: string;
-  title: string;
-  description: string;
-  slotHint: string;
-}) {
-  const videoId = getYouTubeVideoId(url);
-
-  return (
-    <figure className="ha-recording">
-      {url ? (
-        <a
-          className="ha-recording-card"
-          href={url}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`Watch ${title} on YouTube`}
-        >
-          {videoId && (
-            <span className="ha-recording-thumbnail">
-              <span className="ha-recording-thumbnail-fallback">
-                REAL AWS DEMO
-              </span>
-              <img
-                src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
-                alt=""
-                loading="lazy"
-                onError={(event) => {
-                  event.currentTarget.hidden = true;
-                }}
-              />
-              <span className="ha-recording-play" aria-hidden="true">
-                ▶
-              </span>
-            </span>
-          )}
-          <span className="ha-recording-body">
-            <span className="ha-recording-platform">YouTube demo</span>
-            <strong>{title}</strong>
-            <span className="ha-recording-description">{description}</span>
-            <span className="ha-recording-cta">Watch recording ↗</span>
-          </span>
-        </a>
-      ) : (
-        <p className="ha-recording-slot">Recording slot — {slotHint}</p>
-      )}
-    </figure>
-  );
-}
-
 function HighAvailabilityPage() {
   const { accessToken, authedFetch } = useAuth();
   const [job, setJob] = useState<TranscriptionJob | null>(null);
@@ -314,10 +242,10 @@ function HighAvailabilityPage() {
         <span className="eyebrow-dot" />
         HIGH AVAILABILITY
       </p>
-      <h1>Surviving Instance Loss</h1>
+      <h1>Surviving Task Loss</h1>
       <p className="placeholder-body">
-        Across two AZs, worker crashes lose no work and API instance loss
-        recovers automatically.
+        Across two AZs, worker crashes lose no work and API task loss recovers
+        automatically.
       </p>
 
       <nav className="sec-spine" aria-label="high availability chapters">
@@ -443,7 +371,7 @@ function HighAvailabilityPage() {
           <span className="eyebrow-dot" />
           SCENARIO B
         </p>
-        <h2 className="ha-scenario-title">Two Ways to Lose an API Instance</h2>
+        <h2 className="ha-scenario-title">Two Ways to Lose an API Task</h2>
 
         <HealthProbe />
 
@@ -469,8 +397,9 @@ function HighAvailabilityPage() {
           <RecordingSlot
             url={GRACEFUL_RECORDING_URL}
             title="Zero-Downtime Deployment with ALB Draining"
-            description="Instance refresh drains each target before replacement, keeping failed requests at zero."
-            slotHint="instance refresh → drain → healthy replacement"
+            description="The rolling update drains each target before replacement, keeping failed requests at zero."
+            slotHint="rolling update → drain → healthy replacement"
+            provenance={RECORDING_PROVENANCE}
           />
 
           <Foldout title="HOW TO RUN · WHY IT SURVIVES">
@@ -503,12 +432,13 @@ function HighAvailabilityPage() {
                     shutdown.
                   </li>
                   <li>
-                    <strong>50% minimum healthy</strong> — at least one target
-                    keeps serving.
+                    <strong>100% minimum healthy</strong> — healthy capacity
+                    never dips below <code>desired_count</code>.
                   </li>
                   <li>
                     <strong>Health-gated replacement</strong> — a new stateless
-                    instance must pass <code>/health/</code> before serving.
+                    ECS task must pass <code>/health/</code> before the old
+                    one is drained.
                   </li>
                 </ul>
               </div>
@@ -526,9 +456,10 @@ function HighAvailabilityPage() {
 
           <RecordingSlot
             url={UNGRACEFUL_RECORDING_URL}
-            title="Automatic Recovery After an API Instance Crash"
-            description="The ALB detects the dead target and the ASG restores capacity automatically."
-            slotHint="hard kill → unhealthy target → ASG replacement"
+            title="Automatic Recovery After an API Task Crash"
+            description="The ALB detects the dead target and the ECS service scheduler restores capacity automatically."
+            slotHint="hard kill → unhealthy target → scheduler replacement"
+            provenance={RECORDING_PROVENANCE}
           />
 
           <Foldout title="HOW TO RUN · WHY IT SURVIVES">
@@ -541,7 +472,8 @@ function HighAvailabilityPage() {
                 <ol className="ha-steps">
                   <li>Start the probe and establish a healthy baseline.</li>
                   <li>
-                    Terminate one <code>durable-queue-api</code> instance.
+                    Stop one <code>durable-queue-api</code> task with{" "}
+                    <code>StopTask</code>.
                   </li>
                   <li>
                     Observe brief failures, then recovery and automatic
@@ -566,8 +498,9 @@ function HighAvailabilityPage() {
                     the dead target until detection.
                   </li>
                   <li>
-                    <strong>ASG self-healing</strong> — <code>desired=2</code>{" "}
-                    is restored automatically.
+                    <strong>Scheduler self-healing</strong> — the ECS service
+                    starts a replacement ECS task to bring the running count
+                    back to <code>desired_count=2</code>.
                   </li>
                 </ul>
               </div>
@@ -593,8 +526,8 @@ function HighAvailabilityPage() {
               <tbody>
                 <tr>
                   <th scope="row">Trigger</th>
-                  <td>Code push → CI/CD instance refresh</td>
-                  <td>EC2 terminate, no warning</td>
+                  <td>Code push → CI/CD rolling update</td>
+                  <td>StopTask, no warning</td>
                 </tr>
                 <tr>
                   <th scope="row">Target state</th>
@@ -607,8 +540,8 @@ function HighAvailabilityPage() {
                 </tr>
                 <tr>
                   <th scope="row">Order of events</th>
-                  <td>ALB removes the target, then the instance shuts down</td>
-                  <td>The instance dies, then the ALB detects it</td>
+                  <td>ALB removes the target, then the ECS task shuts down</td>
+                  <td>The ECS task dies, then the ALB detects it</td>
                 </tr>
                 <tr>
                   <th scope="row">Failed requests</th>

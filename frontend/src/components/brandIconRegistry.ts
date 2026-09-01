@@ -4,7 +4,6 @@ import {
   DockerIcon,
   KubernetesIcon,
   PostgresqlIcon,
-  RedisIcon,
   TerraformIcon,
 } from './BrandIcons.tsx'
 
@@ -15,7 +14,6 @@ const BRAND_ICONS = {
   kubernetes: KubernetesIcon,
   terraform: TerraformIcon,
   postgresql: PostgresqlIcon,
-  redis: RedisIcon,
 } as const
 
 type BrandIconKey = keyof typeof BRAND_ICONS
