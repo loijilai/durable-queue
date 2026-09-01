@@ -2918,177 +2918,41 @@ a {
   }
 }
 
-/* ── Scalability (scale-out) ──────────────────────────────────── */
-.scl-demo {
-  display: flex;
-  flex-direction: column;
-}
-
-.scl-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.scl-progress {
-  font-size: 13px;
-  color: var(--slate);
-  font-variant-numeric: tabular-nums;
-}
-
-.scl-clock {
-  font-family: ui-monospace, monospace;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--light-orange);
-  font-variant-numeric: tabular-nums;
-  margin-left: auto;
-}
-
-.scl-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.scl-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1.5px solid var(--dust);
-  background: var(--canvas-lifted);
-  font-variant-numeric: tabular-nums;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.scl-cell-id {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.scl-cell-status {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--slate);
-}
-
-.scl-cell-host {
-  font-family: ui-monospace, monospace;
-  font-size: 10px;
-  color: var(--slate);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.scl-cell-running {
-  border-color: var(--light-orange);
-  background: rgba(243, 115, 56, 0.1);
-}
-
-.scl-cell-succeeded {
-  border-color: var(--signal-green);
-  background: rgba(47, 122, 61, 0.12);
-}
-
-.scl-cell-succeeded .scl-cell-status {
-  color: var(--signal-green);
-}
-
-.scl-cell-failed {
-  border-color: var(--signal-orange);
-  background: rgba(207, 69, 0, 0.12);
-}
-
-.scl-cell-failed .scl-cell-status {
-  color: var(--signal-orange);
-}
-
-.scl-results {
+/* ── Scalability (Backlog → capacity control loop) ────────────── */
+.scl-scenario {
   margin-top: 40px;
-  padding: 28px 32px;
+  padding: 32px 36px;
   border-radius: 16px;
   background: var(--white);
   box-shadow: var(--shadow);
 }
 
-.scl-results-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+.scl-scenario-title {
+  margin: 8px 0 20px;
 }
 
-.scl-reset {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--slate);
-  cursor: pointer;
-}
-
-.scl-reset:hover {
-  color: var(--signal-orange);
-}
-
-.scl-run-table {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.scl-run-row {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--canvas-lifted);
-  font-variant-numeric: tabular-nums;
-}
-
-.scl-run-workers {
-  font-weight: 600;
-  color: var(--ink);
-  min-width: 90px;
-}
-
-.scl-run-detail {
-  font-size: 14px;
-  color: var(--slate);
-  flex: 1;
-}
-
-.scl-run-time {
-  font-family: ui-monospace, monospace;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--signal-green);
-}
-
-.scl-speedup {
-  margin-top: 16px;
-  font-size: 15px;
+.scl-scenario p {
+  max-width: 68ch;
   color: var(--charcoal);
+  line-height: 1.65;
 }
 
-.scl-speedup strong {
-  color: var(--signal-orange);
-  font-size: 18px;
+.scl-scenario p + p {
+  margin-top: 16px;
+}
+
+/* 結語是這一段的重點，不是它的結尾語氣詞 —— 用左邊那條線把它跟前面的敘述分開。 */
+.scl-scenario-close {
+  margin-top: 24px;
+  padding-left: 20px;
+  border-left: 3px solid var(--signal-orange);
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .scl-scenario {
+    padding: 24px;
+  }
 }
 
 /* ── Site footer（DESIGN.md §4 Footer） ───────────────────────── */

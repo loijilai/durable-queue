@@ -23,4 +23,12 @@ Deep dive 應該把這個 feature 的推理帶進去，而不只是換掉名詞 
 - [ ] Deep dive 涵蓋服務水準指標的選擇理由，而非僅描述機制
 - [ ] 技術棧表格與本機開發說明反映新的 broker 與運算層
 - [ ] 文中所有指向 ADR 與此 feature 目錄的連結有效
+- [ ] 退役 `5-scale-out` 這張圖：`frontend/src/assets/diagrams/5-scale-out.excalidraw`、
+      `docs/diagrams/rendered/5-scale-out.png`、`scripts/check_repo_contract.py` 的兩筆
+      `DIAGRAM_ASSETS` 宣告、以及 README 對該圖的引用，四者一起處理
 - [ ] `./scripts/verify.sh full` 通過
+
+**備註（來自 `issues/scalability-page-narrative/01`）**：`/scalability` 頁面已經不再使用
+`5-scale-out` 這張圖，前端的 `scaleOutScene` export 已移除。但 `.excalidraw` 原始檔沒有一併
+刪除，因為它仍被 `check_repo_contract.py` 宣告為既有資產，而它的 render 仍是 README 這一段的
+插圖——單獨刪掉原始檔會讓 `verify.sh full` 出現 REPO004。四者要一起退役，而那正是這張票的範圍。

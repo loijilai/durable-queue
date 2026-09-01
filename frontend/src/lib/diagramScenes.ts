@@ -14,7 +14,6 @@ import authSequenceGoogleOidc from '../assets/diagrams/auth-sequence-google-oidc
 import authAttackState from '../assets/diagrams/8-auth-attack-1-state.excalidraw?raw'
 import authAttackToken from '../assets/diagrams/8-auth-attack-2-token.excalidraw?raw'
 import authAttackLinking from '../assets/diagrams/8-auth-attack-3-linking.excalidraw?raw'
-import scaleOut from '../assets/diagrams/5-scale-out.excalidraw?raw'
 
 export interface StepScenes {
   // The architecture diagram — steps 1–3 all share this same layout, only the
@@ -45,6 +44,3 @@ export const AUTH_ATTACK_SCENES = {
   token: authAttackToken,
   linking: authAttackLinking,
 } satisfies Record<string, string>
-
-// Scalability page — producer → queue → fan-out to a worker pool that scales out.
-export const scaleOutScene = scaleOut
