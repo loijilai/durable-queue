@@ -73,14 +73,13 @@ ROLES = {
     "e_get": "fetch",
     "sqs": "queue",
     "e_sqs": "queue",
-    "env_note": "runtime_note",
 }
 
 # ── lighting: what each step lights, mutes, and hides ────────────────
 # The section reads as a timeline, so every step keeps the whole pipeline
 # visible and only moves the emphasis. Note boxes are the exception: they are
 # hidden outside their own step, or they argue over the step being read.
-NOTES = {"state_note", "runtime_note"}
+NOTES = {"state_note"}
 ALL = {
     "actor",
     "boundary",
@@ -142,7 +141,6 @@ LENSES = [
             "fetch",
             "store",
             "queue",
-            "runtime_note",
         },
     ),
 ]
