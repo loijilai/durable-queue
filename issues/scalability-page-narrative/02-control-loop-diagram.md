@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 02 — 控制迴路圖
 
@@ -32,9 +32,23 @@ Excalidraw，這裡是同一個理由。
 
 **Blocked by:** 01
 
-- [ ] 四節點成環，回到起點的那段箭頭在圖上看得出來
-- [ ] 五格皆可 hover 預覽、點擊釘住，且鍵盤可達（focus 與 Enter/Space）
-- [ ] 每一格切換時，圖旁的說明文字隨之更換
-- [ ] 地板 1 與 Scaling Ceiling 67 以常駐標記呈現
-- [ ] 圖上文字使用 `CONTEXT.md` 的詞彙（Backlog、In-flight Job、Worker、Scaling Ceiling）
-- [ ] `./scripts/verify.sh full` 通過
+- [x] 四節點成環，回到起點的那段箭頭在圖上看得出來
+- [x] 五格皆可 hover 預覽、點擊釘住，且鍵盤可達（focus 與 Enter/Space）
+- [x] 每一格切換時，圖旁的說明文字隨之更換
+- [x] 地板 1 與 Scaling Ceiling 67 以常駐標記呈現
+- [x] 圖上文字使用 `CONTEXT.md` 的詞彙（Backlog、In-flight Job、Worker、Scaling Ceiling）
+- [x] `./scripts/verify.sh full` 通過
+
+**實作註記：兩處對票面的收斂。**
+
+- 迴路上沒有綠色。回到起點的那段箭頭與被點亮的 Worker 用的是 Link Blue：
+  `DESIGN.md` §2 把 Signal Green 保留給 done/verified，而這條線上發生的事是
+  Worker 正在取走 Job，屬於 in-progress。同理，alarm 沒有用 Signal Orange
+  —— 那個顏色在 `DESIGN.md` 是留給 consent/legal 的。
+- 五格的說明壓成各一句話。原先寫成兩三句，與票面「一句話、一個實測數字」
+  不符；圖旁也不再掛一段常駐的結語，因為票面說圖上只有機制與數字。
+
+**已知的重複，未在此票處理**：`ControlLoop.tsx` 與 `JobLifecycle.tsx` 之間，
+`controlProps`、marker 的 `<defs>`、`nodeCls`/`edgeCls` 三處是同一個形狀。票面
+指定「走 `JobLifecycle.tsx` 那條路」，抽共用會動到首頁那個既有元件，超出這張票；
+第三張這種圖出現時就該抽。

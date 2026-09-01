@@ -2959,6 +2959,245 @@ a {
   }
 }
 
+/* ── 控制迴路圖 ─────────────────────────────────────────────────
+   節點與邊都是可點亮的元素，作法與 .jl-（Job lifecycle）同源；兩張圖的
+   class 分開命名，是因為這張圖多了「回到起點的那一段」與常駐邊界標記，
+   共用一組 class 會讓其中一張的規則變成另一張的例外。 */
+.cl-frame {
+  margin-top: 40px;
+}
+
+/* 說明在圖旁：左圖右文，窄螢幕時圖在上、文字在下。 */
+.cl-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.cl-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.cl-svg text {
+  font-family: var(--sans);
+  font-weight: 500;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* ── 節點 ─────────────────────────────────────────────────── */
+.cl-node rect {
+  fill: var(--white);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  transition:
+    fill 0.4s ease,
+    stroke 0.4s ease,
+    stroke-width 0.4s ease;
+}
+
+.cl-node-name {
+  font-size: 19px;
+  fill: var(--slate);
+  transition: fill 0.4s ease;
+}
+
+/* 每個節點的實測數字：跟著節點名走，但比它輕一級 —— 它是註腳不是標題。 */
+.cl-node-value {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--slate);
+}
+
+.cl-node.is-lit rect {
+  stroke: var(--charcoal);
+  stroke-width: 2.5;
+}
+
+.cl-node.is-lit .cl-node-name {
+  fill: var(--ink);
+}
+
+/* Worker 是圖上唯一在動工的東西，點亮時走 running 的藍（DESIGN.md §2
+   Job Status Colors）。其餘節點都是控制結構而非 Job 的狀態，只加深邊框
+   —— 全站規則是一個顏色只代表一件事，這張圖不該多發明一種狀態色。 */
+.cl-node--worker.is-lit rect {
+  fill: rgba(56, 96, 190, 0.1);
+  stroke: var(--status-running);
+}
+
+/* ── 邊 ───────────────────────────────────────────────────── */
+.cl-edge {
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  marker-end: url(#cl-mk-dust);
+  fill: none;
+  transition:
+    stroke 0.4s ease,
+    stroke-width 0.4s ease;
+}
+
+.cl-edge.is-lit {
+  stroke-width: 2.5;
+}
+
+.cl-edge--ink.is-lit {
+  stroke: var(--charcoal);
+  marker-end: url(#cl-mk-ink);
+}
+
+/* 回到起點的那一段常駐上色：環之所以是環就在這條線上，它不能只有在
+   被 hover 到時才存在。 */
+.cl-edge--loop {
+  stroke: var(--status-running);
+  stroke-width: 2;
+  marker-end: url(#cl-mk-loop);
+}
+
+.cl-edge--loop.is-lit {
+  stroke-width: 3.5;
+}
+
+.cl-edge-label {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--slate);
+}
+
+/* 對齊要用 class 而不是 text-anchor 屬性：這個 <svg> 底下已經有一條
+   `text { text-anchor: middle }` 的 CSS 規則，而 CSS 一律蓋過 presentation
+   attribute —— 寫在元素上的 textAnchor="start" 會靜靜地不生效。 */
+.cl-svg .cl-anchor-start {
+  text-anchor: start;
+}
+
+.cl-svg .cl-loop-label {
+  font-size: 13px;
+  font-weight: 500;
+  text-anchor: end;
+  fill: var(--status-running);
+}
+
+.cl-svg .cl-loop-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-anchor: end;
+  fill: var(--status-running);
+}
+
+/* ── 常駐標記：地板與 Scaling Ceiling ─────────────────────
+   兩條邊界不是迴路上的一步，所以不可點也不參與點亮 —— 虛線框讓它們
+   讀起來是刻度，不是元件。 */
+.cl-marker rect {
+  fill: none;
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 6;
+}
+
+.cl-marker text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  fill: var(--slate);
+}
+
+/* ── 圖形即控制項 ─────────────────────────────────────────
+   方塊本身就是按鈕，所以要給出可點的訊號，並自己補上鍵盤焦點框
+   —— SVG 的 <g> 沒有內建 focus ring。 */
+.cl-control {
+  cursor: pointer;
+  outline: none;
+}
+
+.cl-control:hover rect {
+  stroke: var(--slate);
+}
+
+.cl-control:focus-visible rect {
+  stroke: var(--signal-orange);
+  stroke-width: 2.5;
+}
+
+/* 釘住的那一格要看得出來：點擊會讓這個 <g> 拿到 focus，hover 與 pinned
+   因此在圖上長得一模一樣，取消釘選就變成沒有回應的操作。 */
+.cl-control[aria-pressed="true"] rect {
+  stroke: var(--charcoal);
+  stroke-width: 3.5;
+}
+
+/* 縮容不在環上，用一顆畫在環中央的 chip 當開關 */
+.cl-chip rect {
+  fill: var(--white);
+  stroke: var(--dust);
+  stroke-width: 1.5;
+  transition:
+    fill 0.4s ease,
+    stroke 0.4s ease;
+}
+
+.cl-chip text {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--slate);
+  transition: fill 0.4s ease;
+}
+
+.cl-chip.is-lit rect {
+  stroke: var(--charcoal);
+}
+
+.cl-chip.is-lit text {
+  fill: var(--ink);
+}
+
+/* ── 圖旁的說明 ───────────────────────────────────────────
+   min-height 固定，換格時文字長短不同也不會把下面的內容推上推下。 */
+.cl-live {
+  min-height: 210px;
+  margin-top: 12px;
+}
+
+.cl-current {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.cl-detail {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--charcoal);
+}
+
+.cl-hint {
+  padding-top: 14px;
+  border-top: 1px solid var(--dust);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--slate);
+}
+
+@media (max-width: 900px) {
+  .cl-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .cl-live {
+    min-height: 0;
+  }
+}
+
 /* ── Site footer（DESIGN.md §4 Footer） ───────────────────────── */
 .site-footer {
   background: var(--footer-black);

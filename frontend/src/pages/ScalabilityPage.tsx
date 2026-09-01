@@ -1,3 +1,4 @@
+import ControlLoop from "../components/ControlLoop.tsx";
 import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";
 import { twoSubmittersScene } from "../lib/diagramScenes.ts";
 
@@ -40,7 +41,10 @@ function ScalabilityPage() {
         </p>
       </div>
 
-      {/* 02 填入：控制迴路圖 */}
+      {/* 容量由 Backlog 決定，不由人去撥 —— 這張圖是這一頁的主角，
+          所以緊接在工作負載之後、證據之前。 */}
+      <ControlLoop />
+
       {/* 03 填入：證據（截圖與實機錄影） */}
     </section>
   );
