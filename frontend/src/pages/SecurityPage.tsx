@@ -54,14 +54,14 @@ const TOPOLOGY_LENSES: Lens[] = [
     tab: "Network boundary",
     src: "/diagrams/sec-topology-network.svg",
     caption:
-      "The public subnets hold only the ALB and the NAT gateway. Every compute and data node lives in a private subnet with no public IP — and no security group anywhere opens :22. The admin plane is SSM Session Manager, so there is no bastion and no SSH surface to attack.",
+      "The public subnets hold only the ALB and the NAT gateway. Every compute and data node lives in a private subnet with no public IP — and no security group anywhere opens :22. There is no admin plane at all: no bastion, no SSM Session Manager, and ECS Exec is off.",
   },
   {
     id: "sg",
     tab: "SG authorization chain",
     src: "/diagrams/sec-topology-sg.svg",
     caption:
-      "Each hop authorizes the security group upstream of it rather than a CIDR block, so the boundary follows the resource instead of its IP — instances can scale out or move AZ without a rule change. The worker has zero ingress at all: it is a client that pulls work.",
+      "Each hop authorizes the security group upstream of it rather than a CIDR block, so the boundary follows the resource instead of its IP — tasks can scale out or land in another AZ without a rule change. SG-worker carries no ingress rule at all: outbound only, nothing may open a connection to it.",
   },
   {
     id: "tls",

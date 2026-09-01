@@ -55,19 +55,15 @@ ROLES = {
     "api": "node",
     "worker": "node",
     "rds": "node",
-    "redis": "node",
     # the authorization boundaries themselves
     "sg_alb": "sg",
     "sg_api": "sg",
     "sg_worker": "sg",
     "sg_rds": "sg",
-    "sg_redis": "sg",
     # who may talk to whom, on which port
     "e_alb_api": "edge_chain",
     "e_api_rds": "edge_chain",
-    "e_api_redis": "edge_chain",
     "e_wk_rds": "edge_chain",
-    "e_wk_redis": "edge_chain",
     # the TLS termination marker (only ever shown on the tls lens)
     "tls_line": "tls_marker",
     "tls_label": "tls_marker",

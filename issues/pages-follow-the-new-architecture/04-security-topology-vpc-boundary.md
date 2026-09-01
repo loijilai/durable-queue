@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 04 — Security ① 的拓撲圖收斂成 VPC 內的 SG 邊界
 
@@ -26,10 +26,13 @@ network lens 的圖說宣稱 admin plane 是 SSM Session Manager。infra 裡現�
 
 **Blocked by:** None — can start immediately.
 
-- [ ] master 頁不再有 Redis 節點、其 security group 與 `:6379` 邊
-- [ ] 運算節點標示為 ECS service，不再是 ASG
-- [ ] 三張鏡頭 SVG 由 build script 重新產生，未經手改
-- [ ] SG lens 圖說收斂成純 security group 的語言，不再提工作來源、不再提 instance
-- [ ] network lens 關於 admin plane 的說法與 infra 現況一致，且維持一到兩句
+- [x] master 頁不再有 Redis 節點、其 security group 與 `:6379` 邊
+- [x] 運算節點標示為 ECS service，不再是 ASG
+- [x] 三張鏡頭 SVG 由 build script 重新產生，未經手改
+- [x] SG lens 圖說收斂成純 security group 的語言，不再提工作來源、不再提 instance
+- [x] network lens 關於 admin plane 的說法與 infra 現況一致，且維持一到兩句
 - [ ] 三個鏡頭在瀏覽器中切換正常，圖與圖說對得上
-- [ ] `./scripts/verify.sh full` 通過
+      —— 三張 SVG 與 /security 皆由 dev server 正常供應，三張圖的內容也逐一看過、
+      與圖說對得上；只有「用瀏覽器點過三個 tab」這一步沒做（此環境沒有可用的瀏覽器
+      自動化）。鏡頭切換的程式碼本身這次沒有動到。
+- [x] `./scripts/verify.sh full` 通過
