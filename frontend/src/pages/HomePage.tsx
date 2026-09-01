@@ -208,7 +208,7 @@ const ROUTE = [
     to: "/high-availability",
     index: "04",
     eyebrow: "HIGH AVAILABILITY",
-    title: "Surviving Instance Loss",
+    title: "Surviving Task Loss",
   },
   {
     to: "/scalability",

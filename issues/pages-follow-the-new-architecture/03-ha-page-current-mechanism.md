@@ -1,4 +1,4 @@
-Status: open
+Status: done
 
 # 03 — HA 頁改說現行機制，並標註錄影的年代
 
@@ -31,12 +31,12 @@ CONTEXT.md 對詞彙一向嚴格。首頁 route card 04 鏡射的是同一句，
 **Blocked by:** 01 — 這頁的 lightbox 開的就是 01 那張架構圖。文字先改完會變成 ECS 的敘述
 配一張 EC2 的圖，這張票就不是自己可驗收的。
 
-- [ ] `RecordingSlot` 有一個 optional 的來源聲明欄位，未傳入時不渲染任何東西
-- [ ] 兩支 HA 錄影標註它們拍的是同一設計在 EC2/ASG 上的前一版部署；Scalability 頁那支
+- [x] `RecordingSlot` 有一個 optional 的來源聲明欄位，未傳入時不渲染任何東西
+- [x] 兩支 HA 錄影標註它們拍的是同一設計在 EC2/ASG 上的前一版部署；Scalability 頁那支
       沒有變化
-- [ ] graceful 那段描述的是 100% minimum healthy 的滾動更新，不再宣稱 50%
-- [ ] ungraceful 那段與對照表描述的是 ECS service scheduler 與 StopTask
-- [ ] ALB 偵測窗口的數字未被更動
-- [ ] h1 與首頁 route card 04 同步改為 `Surviving Task Loss`
-- [ ] 全頁搜尋不到 EC2、ASG、instance refresh
-- [ ] `./scripts/verify.sh full` 通過
+- [x] graceful 那段描述的是 100% minimum healthy 的滾動更新，不再宣稱 50%
+- [x] ungraceful 那段與對照表描述的是 ECS service scheduler 與 StopTask
+- [x] ALB 偵測窗口的數字未被更動
+- [x] h1 與首頁 route card 04 同步改為 `Surviving Task Loss`
+- [x] 全頁搜尋不到 EC2、ASG、instance refresh
+- [x] `./scripts/verify.sh full` 通過
