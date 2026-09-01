@@ -112,7 +112,7 @@ const PIPELINE_LENSES: Lens[] = [
     tab: "5",
     src: "/diagrams/sec-pipeline-5-boot.svg",
     caption:
-      "update-service --force-new-deployment starts the rollout — preceded by one standalone migration task, on the same image and the same commit SHA, so no two API tasks race to migrate. Two identities then do two different jobs: the execution role pulls that image and resolves the task definition's secrets block into environment variables at start-up, while the task role — what the application actually runs as — carries the queue permissions and no Secrets Manager access at all.",
+      "update-service --force-new-deployment starts the rollout, after one standalone migration task on the same image. Two identities split the work: the execution role resolves the secrets into environment variables at start-up; the task role the application runs as gets the queue, and nothing from Secrets Manager.",
   },
 ];
 
