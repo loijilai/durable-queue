@@ -6,7 +6,7 @@ import { twoSubmittersScene } from "../lib/diagramScenes.ts";
 const RUN_RECORDING_URL = "https://youtu.be/-sCn0tKnO98";
 
 const WORKLOAD_DIAGRAM_LABEL =
-  "Two Submitters: the Interactive Submitter goes through the Frontend, the Batch Submitter calls the Django API directly";
+  "Two Submitters reach the Django API — the Interactive Submitter through the Frontend, the Batch Submitter directly — which enqueues onto SQS; the Worker pool scales from 1 to 67 to drain it";
 
 function ScalabilityPage() {
   return (
