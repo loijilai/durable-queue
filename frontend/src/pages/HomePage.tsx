@@ -6,7 +6,7 @@ import JobLifecycle from "../components/JobLifecycle.tsx";
 
 const AWS_DIAGRAM_LABEL = "AWS infrastructure diagram";
 const AWS_DIAGRAM_ALT =
-  "AWS infrastructure: ALB fronting an API ASG spread across two availability zones, with worker ASG, RDS, and Redis";
+  "AWS infrastructure: an ALB fronting api Fargate tasks across two availability zones, worker Fargate tasks alongside them, both egressing through the NAT gateway that carries their SQS calls out to the queue drawn outside the VPC, and RDS Postgres in the private subnets";
 
 /* Hero 圖：hover 左邊的技術層，右邊亮起作用到該層的 deploy stages。
    一層可以對應多個 stage；這是 stack 與 pipeline 的多對多關係，不硬畫成
@@ -27,7 +27,8 @@ type Layer = {
 const STACK: Layer[] = [
   {
     tier: "APPLICATION",
-    icons: ["django", "celery", "postgresql", "redis"],
+    icons: ["django", "celery", "postgresql"],
+    marks: ["SQS"],
     primary: "Django REST Framework · Celery",
     detail:
       "A push starts the workflow, then Django tests against Postgres before an image is built.",
@@ -41,12 +42,12 @@ const STACK: Layer[] = [
   },
   {
     tier: "ORCHESTRATION",
-    marks: ["ASG"],
-    primary: "EC2 Auto Scaling · ALB",
+    marks: ["ECS"],
+    primary: "ECS Fargate · ALB",
     // 這一格不是空的，是「還沒升級」。用 whisper 色標，視覺上就分得出來。
     next: { label: "Kubernetes", icon: "kubernetes" },
     detail:
-      "An instance refresh replaces the fleet while keeping at least half of its capacity healthy.",
+      "A rolling deployment starts the replacement tasks first and keeps the full desired count healthy throughout.",
   },
   {
     tier: "INFRASTRUCTURE AS CODE",
@@ -82,7 +83,7 @@ const PIPELINE = [
     targets: [3, 4],
   },
   {
-    label: "roll ASGs",
+    label: "roll ECS services",
     targets: [2],
   },
 ];
@@ -125,15 +126,15 @@ function StackFigure() {
                 }
               >
                 <span className="stack-glyphs" aria-hidden="true">
+                  {layer.icons?.map((key) => {
+                    const Icon = BRAND_ICONS[key];
+                    return <Icon key={key} className="stack-icon" />;
+                  })}
                   {layer.marks?.map((mark) => (
                     <span key={mark} className="stack-mark">
                       {mark}
                     </span>
                   ))}
-                  {layer.icons?.map((key) => {
-                    const Icon = BRAND_ICONS[key];
-                    return <Icon key={key} className="stack-icon" />;
-                  })}
                 </span>
 
                 <span className="stack-text">
