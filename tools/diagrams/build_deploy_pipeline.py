@@ -63,11 +63,16 @@ ROLES = {
     # a note box is an argument, not a component — it belongs only to the step
     # that is making that argument.
     "state_props": "state_note",
-    # 5 · the machine boots and fetches what it needs
+    # 5 · the rollout starts, and two identities do two different jobs
     "e_refresh": "rollout",
-    "ec2": "compute",
+    # one lighting role for both, because step 5 lights them together — what
+    # separates the two is which edges leave them, not the lighting.
+    "exec_role": "runtime_identity",
+    "task_role": "runtime_identity",
     "e_pull": "pull",
     "e_get": "fetch",
+    "sqs": "queue",
+    "e_sqs": "queue",
     "env_note": "runtime_note",
 }
 
@@ -87,9 +92,10 @@ ALL = {
     "registry",
     "state",
     "rollout",
-    "compute",
+    "runtime_identity",
     "pull",
     "fetch",
+    "queue",
 } | NOTES
 
 
@@ -128,7 +134,16 @@ LENSES = [
         "boot",
         "5 boot (derived)",
         "sec-pipeline-5-boot.svg",
-        {"rollout", "compute", "pull", "registry", "fetch", "store", "runtime_note"},
+        {
+            "rollout",
+            "runtime_identity",
+            "pull",
+            "registry",
+            "fetch",
+            "store",
+            "queue",
+            "runtime_note",
+        },
     ),
 ]
 

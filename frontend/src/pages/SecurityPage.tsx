@@ -112,14 +112,15 @@ const PIPELINE_LENSES: Lens[] = [
     tab: "5",
     src: "/diagrams/sec-pipeline-5-boot.svg",
     caption:
-      "The instance refresh replaces the machine, and the new one authenticates as itself. Its instance profile pulls that same commit SHA and fetches the secrets, which land as environment variables inside the container and nowhere else.",
+      "update-service --force-new-deployment starts the rollout — preceded by one standalone migration task, on the same image and the same commit SHA, so no two API tasks race to migrate. Two identities then do two different jobs: the execution role pulls that image and resolves the task definition's secrets block into environment variables at start-up, while the task role — what the application actually runs as — carries the queue permissions and no Secrets Manager access at all.",
   },
 ];
 
-// 這張表真正要說的話是最後一欄：user_data 存在 instance metadata 裡，只有
-// base64、沒有加密，任何碰得到那台機器的人都讀得到。所以「可不可以出現在
-// user_data」就是機密與否的判準——分類不是憑感覺分的。no / no / yes 讀完，
-// 三個來源為什麼走三條不同的路就講完了。
+// 這張表真正要說的話是最後一欄：task definition 有兩個欄位，`environment`
+// 的值明文寫在定義裡，任何讀得到 task definition 的人就讀得到；`secrets` 只
+// 放 ARN，由 execution role 在啟動時去解析。所以「該進 environment 還是進
+// secrets」就是機密與否的判準——而且這條界線是平台強制的二分，不是靠自律。
+// secrets / secrets / environment 讀完，三個來源為什麼走兩條不同的路就講完了。
 interface ConfigSource {
   source: string;
   origin: string;
@@ -131,17 +132,17 @@ const CONFIG_SOURCES: ConfigSource[] = [
   {
     source: "RDS master password",
     origin: "AWS (manage_master_user_password = true)",
-    delivery: "Secrets Manager",
+    delivery: "secrets: → Secrets Manager ARN",
   },
   {
     source: "App secret",
     origin: "Developer",
-    delivery: "Secrets Manager",
+    delivery: "secrets: → Secrets Manager ARN",
   },
   {
     source: "Config & endpoints",
     origin: "Terraform, computed from other resources",
-    delivery: "user_data templated into docker run -e",
+    delivery: "environment: → literal value in the task definition",
   },
 ];
 
@@ -355,7 +356,7 @@ function SecurityPage() {
                 <tr>
                   <th>Source</th>
                   <th>Who creates the value</th>
-                  <th>How it reaches the process</th>
+                  <th>Task definition field</th>
                 </tr>
               </thead>
               <tbody>
