@@ -14,6 +14,7 @@ import authSequenceGoogleOidc from '../assets/diagrams/auth-sequence-google-oidc
 import authAttackState from '../assets/diagrams/8-auth-attack-1-state.excalidraw?raw'
 import authAttackToken from '../assets/diagrams/8-auth-attack-2-token.excalidraw?raw'
 import authAttackLinking from '../assets/diagrams/8-auth-attack-3-linking.excalidraw?raw'
+import twoSubmitters from '../assets/diagrams/5-two-submitters.excalidraw?raw'
 
 export interface StepScenes {
   // The architecture diagram — steps 1–3 all share this same layout, only the
@@ -35,6 +36,11 @@ export const raceIdempotencyScene = sequenceConcurrency
 
 // Auth page — Google OIDC authorization-code login sequence (RFC-worded).
 export const authSequenceScene = authSequenceGoogleOidc
+
+// Scalability page § THE WORKLOAD — the two Submitters and the two paths they
+// take into the system. The Batch Submitter's arrow bypasses the Frontend,
+// which is the whole point of the picture.
+export const twoSubmittersScene = twoSubmitters
 
 // Security page § APP — the same login sequence ghosted down to one attack at a
 // time. Derived by tools/diagrams/build_auth_attacks.py, so they

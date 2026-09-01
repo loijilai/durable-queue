@@ -1,3 +1,9 @@
+import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";
+import { twoSubmittersScene } from "../lib/diagramScenes.ts";
+
+const WORKLOAD_DIAGRAM_LABEL =
+  "Two Submitters: the Interactive Submitter goes through the Frontend, the Batch Submitter calls the Django API directly";
+
 function ScalabilityPage() {
   return (
     <section className="ha-page">
@@ -11,7 +17,9 @@ function ScalabilityPage() {
       </p>
 
       {/* 開場不從機制開始，從工作負載開始 —— 讀者要先知道這條迴路是為了誰而存在，
-          才有辦法判斷它設計得對不對。CONTEXT.md 的兩種 Submitter 就是這一段。 */}
+          才有辦法判斷它設計得對不對。CONTEXT.md 的兩種 Submitter 就是這一段。
+          這裡刻意用圖不用文字：兩條路徑（一條經過 Frontend、一條繞過它）擺在一起
+          看，比兩段敘述更快講完「兩種 Submitter」這件事。 */}
       <div className="scl-scenario">
         <p className="eyebrow">
           <span className="eyebrow-dot" />
@@ -19,26 +27,16 @@ function ScalabilityPage() {
         </p>
         <h2 className="scl-scenario-title">Two Submitters, Two Needs</h2>
 
-        <p>
-          Every night at a fixed hour, a Batch Submitter drops several hundred
-          Jobs into the system in one go. It never waits for any of them and it
-          does not care how long any single Job takes — it cares that the whole
-          run finishes. Nobody is awake to add capacity for it.
-        </p>
+        <ExcalidrawDiagram
+          scene={twoSubmittersScene}
+          label={WORKLOAD_DIAGRAM_LABEL}
+        />
 
-        <p>
-          During the day the other kind of submitter shows up: one person, one
-          Job, at an unpredictable moment. They care about exactly one thing —
-          how long their Job sits in the Backlog before a Worker picks it up.
-        </p>
-
-        {/* 這一段是整頁的樞紐：它讓 min=1 從一個設定值變成一個結論。 */}
-        <p className="scl-scenario-close">
-          Two needs, two mechanisms — and that split is why the floor is one
-          Worker rather than zero. The scale-out threshold is tuned to absorb the
-          burst, so a single Job never reaches it. Starting from zero, that one
-          Job would wait forever: a policy written for the Batch Submitter's
-          throughput cannot also serve the Interactive Submitter's latency.
+        {/* 圖已經把兩條路徑講完了，文字只補一句「這兩個人是誰」。 */}
+        <p className="scl-scenario-caption">
+          The Interactive Submitter is one person sending one Job at an
+          unpredictable moment; the Batch Submitter is a scheduled service
+          sending hundreds of them at a fixed hour.
         </p>
       </div>
 

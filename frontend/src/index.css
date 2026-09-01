@@ -2931,6 +2931,11 @@ a {
   margin: 8px 0 20px;
 }
 
+/* 這一段的主體是圖不是文字 —— 給它整張卡的寬度，兩側留白由卡片的 padding 負責。 */
+.scl-scenario .excalidraw-diagram {
+  margin: 4px 0 8px;
+}
+
 .scl-scenario p {
   max-width: 68ch;
   color: var(--charcoal);
@@ -2941,12 +2946,11 @@ a {
   margin-top: 16px;
 }
 
-/* 結語是這一段的重點，不是它的結尾語氣詞 —— 用左邊那條線把它跟前面的敘述分開。 */
-.scl-scenario-close {
-  margin-top: 24px;
-  padding-left: 20px;
-  border-left: 3px solid var(--signal-orange);
-  color: var(--ink);
+/* 圖說：一句話，字級比內文小一點，靠圖站著而不是自己成段。 */
+.scl-scenario-caption {
+  margin-top: 4px;
+  font-size: 15px;
+  color: var(--charcoal);
 }
 
 @media (max-width: 640px) {
