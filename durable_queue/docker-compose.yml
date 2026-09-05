@@ -23,7 +23,16 @@ services:
 
   api:
     build: . # build context is docker-compose.yml file location
-    command: sh -c "python manage.py migrate && gunicorn durable_queue.wsgi:application --bind 0.0.0.0:8000"
+    # 不能用 gunicorn 的預設值（1 個 sync worker、timeout 30 秒）。sync worker
+    # accept() 收下連線後就阻塞等 request line，期間不發心跳；瀏覽器為了省下次
+    # 握手而預開的連線（preconnect）不送任何資料，足以卡住唯一的 worker，30 秒後
+    # 被 master 判死。gthread 用 event loop 管連線，idle socket 不佔住 worker。
+    # prod 走 ALB，ALB 不做投機式預連，所以那邊維持原設定（見 infra/api.tf）。
+    command: >
+      sh -c "python manage.py migrate &&
+      gunicorn durable_queue.wsgi:application --bind 0.0.0.0:8000
+      --worker-class gthread --workers 2 --threads 4
+      --timeout 60 --access-logfile -"
     ports:
       - "8000:8000"
     env_file:
