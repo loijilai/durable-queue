@@ -7,26 +7,15 @@ import { useState, type KeyboardEvent } from "react";
    讓每個 node / edge 都是有 id、可被 state 點亮的元素。
 
    顏色不照抄 .excalidraw 的調色盤，改用 DESIGN.md §2 Job Status Colors。
-   全站規則是「一個顏色只代表一件事」：redeliver 那顆在原圖是琥珀色，
-   但它的 status 其實還是 running —— 換顏色會讓讀者以為多了第五種狀態。
-   這裡改成同樣的藍 + 虛線框 + attempt #2 標籤：同一個狀態，不同次嘗試。 */
+   全站規則是「一個顏色只代表一件事」。 */
 
-type NodeId = "pending" | "running" | "redelivered" | "succeeded" | "failed";
-type EdgeId =
-  | "enqueue"
-  | "pickup"
-  | "crash"
-  | "redeliver"
-  | "success"
-  | "fail"
-  | "retry";
+type NodeId = "pending" | "running" | "succeeded" | "failed";
+type EdgeId = "enqueue" | "pickup" | "success" | "fail" | "retry";
 
 /* 每條邊只寫一次 path，讓線條幾何維持單一資料來源。 */
 const EDGES: Record<EdgeId, { d: string; tone: string }> = {
   enqueue: { d: "M 32 300 H 92", tone: "ink" },
   pickup: { d: "M 248 300 H 346", tone: "blue" },
-  crash: { d: "M 392 256 V 200", tone: "red" },
-  redeliver: { d: "M 484 200 V 256", tone: "blue" },
   success: { d: "M 530 284 L 706 196", tone: "green" },
   fail: { d: "M 530 316 L 706 376", tone: "red" },
   retry: { d: "M 792 442 V 466 H 170 V 344", tone: "ink" },
@@ -34,7 +23,7 @@ const EDGES: Record<EdgeId, { d: string; tone: string }> = {
 
 type Step = {
   label: string;
-  /* 這一格的「開關」畫在哪裡 —— 使用者點的就是它。五格對應五個狀態方塊，
+  /* 這一格的「開關」畫在哪裡 —— 使用者點的就是它。四格對應四個狀態方塊，
      manual retry 沒有自己的狀態（它是一條邊），所以在那條邊上放一顆 chip。 */
   control: NodeId | "retry-chip";
   tone: string;
@@ -63,15 +52,6 @@ const STEPS: Step[] = [
     edges: ["pickup"],
     detail:
       "A worker takes the task and calls mark_running(), appending {host, at} to worker_attempts — that list is the record of who ran this job, and how many times.",
-  },
-  {
-    label: "redelivered",
-    control: "redelivered",
-    tone: "blue",
-    nodes: ["running", "redelivered"],
-    edges: ["crash", "redeliver"],
-    detail:
-      "The worker dies before it acks. Because the task is acks_late, the broker hands the same job to a second worker: the status is still running — only the attempt count moved.",
   },
   {
     label: "succeeded",
@@ -175,7 +155,7 @@ function JobLifecycle() {
         className="jl-svg"
         viewBox="0 78 910 414"
         role="group"
-        aria-label="Job lifecycle: pending to running, redelivered on worker death, then branching to succeeded or failed, with failed retryable back to pending"
+        aria-label="Job lifecycle: pending to running, then branching to succeeded or failed, with failed retryable back to pending"
       >
         <defs>
           {/* marker 一個色一顆：CSS 的 marker-end 會跟著 .is-lit 換掉，
@@ -235,23 +215,6 @@ function JobLifecycle() {
             running
           </text>
         </g>
-        <text className="jl-tag" x="438" y="356">
-          attempt #1
-        </text>
-
-        {/* 同一個 status 的第二次嘗試：同色、虛線框 —— 不是新狀態。 */}
-        <g
-          {...controlProps("redelivered")}
-          className={`${nodeCls("redelivered", "running")} jl-node--ghost`}
-        >
-          <rect x="352" y="118" width="172" height="76" rx="16" />
-          <text x="438" y="156">
-            running
-          </text>
-        </g>
-        <text className="jl-tag" x="438" y="108">
-          attempt #2 — same job
-        </text>
 
         <g
           {...controlProps("succeeded")}
@@ -279,12 +242,6 @@ function JobLifecycle() {
         <text className="jl-edge-label" x="297" y="282">
           worker picks it up
         </text>
-        <text className="jl-edge-label" x="378" y="222" textAnchor="end">
-          crash before ack
-        </text>
-        <text className="jl-edge-label" x="498" y="222" textAnchor="start">
-          broker redelivers
-        </text>
         <text className="jl-edge-label" x="612" y="228">
           transcript written
         </text>
@@ -293,7 +250,7 @@ function JobLifecycle() {
         </text>
 
         {/* manual retry 是一條邊，不是一個狀態，所以它的開關是畫在線上的
-            chip；做成跟方塊一樣大的可點區域，不然這一格會比其他五格難點。 */}
+            chip；做成跟方塊一樣大的可點區域，不然這一格會比其他四格難點。 */}
         <g
           {...controlProps("retry-chip")}
           className={`jl-chip${active?.control === "retry-chip" ? " is-lit" : ""}`}
