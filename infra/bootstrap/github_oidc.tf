@@ -98,7 +98,19 @@ resource "aws_iam_role_policy" "github_actions" {
           # logs:DescribeLogGroups 是帳號層級的列出型 API，不接受
           # resource-level 限制（曾實測：綁定單一 log-group ARN 一樣被拒），
           # 只能放這裡跟其他 Describe* 一起用 Resource = "*"。
-          "logs:DescribeLogGroups"
+          "logs:DescribeLogGroups",
+          # 07 的 observability / autoscaling 資源在 refresh 階段要讀回自己的
+          # 現狀。這幾個同樣是帳號層級 API：CloudWatch 的 DescribeAlarms、
+          # ListDashboards 和 Application Auto Scaling 全系列都不支援
+          # resource-level 限制，只能用 Resource = "*"。
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:GetDashboard",
+          "cloudwatch:ListDashboards",
+          "cloudwatch:ListTagsForResource",
+          "logs:DescribeMetricFilters",
+          "logs:DescribeQueryDefinitions",
+          "application-autoscaling:DescribeScalableTargets",
+          "application-autoscaling:DescribeScalingPolicies"
         ]
         Resource = "*"
       },
@@ -234,7 +246,11 @@ resource "aws_iam_role_policy" "github_actions" {
           StringEquals = {
             "iam:AWSServiceName" = [
               "elasticloadbalancing.amazonaws.com",
-              "rds.amazonaws.com"
+              "rds.amazonaws.com",
+              # 帳號裡第一次 RegisterScalableTarget 時，Application Auto
+              # Scaling 會順手建自己的 service-linked role；沒有這條會讓
+              # worker_autoscaling.tf 的第一次 apply 失敗。
+              "ecs.application-autoscaling.amazonaws.com"
             ]
           }
         }
@@ -371,6 +387,68 @@ resource "aws_iam_role_policy" "github_actions" {
             "iam:PassedToService" = "ecs-tasks.amazonaws.com"
           }
         }
+      },
+      {
+        # 07：observability.tf 的 metric filter 把 worker 的結構化日誌轉成
+        # QueueWaitSeconds metric。metric filter 掛在 log group 底下，所以
+        # 這裡沿用 TfWriteWorkerLogGroup 的 ARN 前綴收斂範圍。
+        Sid    = "TfWriteWorkerMetricFilter"
+        Effect = "Allow"
+        Action = [
+          "logs:PutMetricFilter",
+          "logs:DeleteMetricFilter"
+        ]
+        Resource = "arn:aws:logs:ap-northeast-1:461346075470:log-group:/ecs/durable-queue-worker*"
+      },
+      {
+        # Logs Insights 的 saved query 不屬於任何 log group——實測 AWS 傳回的
+        # 拒絕訊息裡資源是空的 `log-group::log-stream:`，代表它不吃
+        # resource-level 限制，只能開 "*"。
+        Sid    = "TfWriteQueryDefinition"
+        Effect = "Allow"
+        Action = [
+          "logs:PutQueryDefinition",
+          "logs:DeleteQueryDefinition"
+        ]
+        Resource = "*"
+      },
+      {
+        # 07：observability.tf 的 alarm/dashboard 與 worker_autoscaling.tf 的
+        # step scaling。alarm 與 dashboard 收斂到 durable-queue 前綴；
+        # Application Auto Scaling 整組 API 都不支援 resource-level 限制
+        # （RegisterScalableTarget 的資源永遠是 scalable-target/*），只能開 "*"。
+        Sid    = "TfWriteScalingAndAlarms"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource"
+        ]
+        Resource = "arn:aws:cloudwatch:ap-northeast-1:461346075470:alarm:durable-queue-*"
+      },
+      {
+        Sid    = "TfWriteDashboard"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutDashboard",
+          "cloudwatch:DeleteDashboards"
+        ]
+        Resource = "arn:aws:cloudwatch::461346075470:dashboard/durable-queue"
+      },
+      {
+        Sid    = "TfWriteAutoscaling"
+        Effect = "Allow"
+        Action = [
+          "application-autoscaling:RegisterScalableTarget",
+          "application-autoscaling:DeregisterScalableTarget",
+          "application-autoscaling:PutScalingPolicy",
+          "application-autoscaling:DeleteScalingPolicy",
+          "application-autoscaling:TagResource",
+          "application-autoscaling:UntagResource",
+          "application-autoscaling:ListTagsForResource"
+        ]
+        Resource = "*"
       }
     ]
   })
