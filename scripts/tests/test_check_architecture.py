@@ -18,28 +18,29 @@ class ArchitectureCheckerTests(TestCase):
         violations = self.check_modules(
             models="from django.db import models\n",
             services="from .models import TranscriptionJob\n",
-            tasks="from jobs.services import mark_running\nfrom jobs.transcribers import get_transcriber\n",
+            queue="import boto3\n",
+            worker="from jobs.queue import sqs_client\nfrom jobs.services import mark_running\nfrom jobs.transcribers import get_transcriber\n",
             serializers="from .models import TranscriptionJob\n",
-            views="from jobs.models import TranscriptionJob\nfrom jobs.tasks import execute_job\n",
+            views="from jobs.models import TranscriptionJob\nfrom jobs.queue import enqueue_job\n",
         )
 
         self.assertEqual(violations, [])
 
-    def test_tasks_cannot_import_models(self):
-        violations = self.check_modules(tasks="from jobs.models import TranscriptionJob\n")
+    def test_worker_cannot_import_models(self):
+        violations = self.check_modules(worker="from jobs.models import TranscriptionJob\n")
 
         self.assertEqual([violation.code for violation in violations], ["ARCH001"])
         self.assertIn("jobs.models", violations[0].message)
 
     def test_combined_imports_cannot_hide_a_forbidden_dependency(self):
-        violations = self.check_modules(tasks="import jobs.services, jobs.models\n")
+        violations = self.check_modules(worker="import jobs.services, jobs.models\n")
 
         self.assertEqual([violation.code for violation in violations], ["ARCH001"])
         self.assertIn("jobs.models", violations[0].message)
 
     def test_services_cannot_depend_on_higher_layers(self):
         violations = self.check_modules(
-            services="from jobs.views import JobCreateView\nfrom jobs.tasks import execute_job\n"
+            services="from jobs.views import JobCreateView\nfrom jobs.worker import handler\n"
         )
 
         self.assertEqual([violation.code for violation in violations], ["ARCH001", "ARCH001"])
@@ -50,7 +51,7 @@ class ArchitectureCheckerTests(TestCase):
         self.assertEqual([violation.code for violation in violations], ["ARCH002"])
 
     def test_queryset_lifecycle_update_outside_services_is_rejected(self):
-        violations = self.check_modules(tasks="jobs.update(status='failed', error='x')\n")
+        violations = self.check_modules(worker="jobs.update(status='failed', error='x')\n")
 
         self.assertEqual([violation.code for violation in violations], ["ARCH003"])
         self.assertIn("error, status", violations[0].message)

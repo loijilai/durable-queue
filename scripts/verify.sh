@@ -145,9 +145,10 @@ export_test_environment() {
   export SECRET_KEY="verification-secret-key-at-least-32-bytes"
   export TRANSCRIBER="fake"
   export TRANSCRIBE_SECONDS="0"
-  export CELERY_VISIBILITY_TIMEOUT="3600"
   export FRONTEND_URL="http://test.example"
-  export CELERY_BROKER_URL="sqs://x:x@localhost:9324"
+  export JOB_QUEUE_URL="http://localhost:9324/000000000000/durable-queue-jobs"
+  # 測試一律 patch SQS client；萬一漏 patch，打到一個不存在的本機端點，而不是真的 AWS
+  export AWS_ENDPOINT_URL_SQS="http://127.0.0.1:9"
   export GOOGLE_CLIENT_ID="verification.apps.googleusercontent.com"
   export GOOGLE_CLIENT_SECRET="verification-client-secret"
   export GOOGLE_REDIRECT_URI="http://localhost:8000/api/auth/google/callback"

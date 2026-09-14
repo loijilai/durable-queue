@@ -14,11 +14,12 @@ RERUN = "./scripts/verify.sh quick"
 
 ALLOWED_JOB_IMPORTS = {
     "models": set(),
+    "queue": set(),
     "serializers": {"jobs.models"},
     "services": {"jobs.models"},
     "transcribers": set(),
-    "tasks": {"jobs.services", "jobs.transcribers"},
-    "views": {"jobs.models", "jobs.serializers", "jobs.services", "jobs.tasks"},
+    "views": {"jobs.models", "jobs.queue", "jobs.serializers", "jobs.services"},
+    "worker": {"jobs.queue", "jobs.services", "jobs.transcribers"},
 }
 
 LIFECYCLE_FIELDS = {

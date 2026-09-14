@@ -11,9 +11,6 @@ locals {
 
   # 02 投影的 Admission Limit 下最長 Execution Time 352.1s × 安全係數 2。
   celery_visibility_timeout = 720
-
-  # 不帶 host/port，靠 task role 解析佇列；名稱固定為 "celery"（queue.tf）。
-  celery_broker_url = "sqs://"
 }
 
 

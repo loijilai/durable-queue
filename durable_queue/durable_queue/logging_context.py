@@ -2,15 +2,15 @@
 
 Lives outside the ``jobs`` package (not one of the modules
 ``scripts/check_architecture.py`` restricts) so it can be imported from both
-``jobs.tasks`` and ``jobs.transcribers`` without weakening that boundary.
+``jobs.worker`` and ``jobs.transcribers`` without weakening that boundary.
 """
 
 import contextvars
 import json
 import logging
 
-# Set by the Celery task_prerun/task_postrun signal handlers so that any log
-# line emitted while a job is being processed carries its job id, without
+# Set by jobs.worker.handler for the duration of one Job so that any log line
+# emitted while it is being processed carries its job id, without
 # threading job_id through every function call.
 job_id_var = contextvars.ContextVar("job_id", default=None)
 

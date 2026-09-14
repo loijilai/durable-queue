@@ -24,8 +24,7 @@ locals {
     { name = "POSTGRES_USER", value = aws_db_instance.postgres.username },
     { name = "POSTGRES_HOST", value = aws_db_instance.postgres.address },
     { name = "POSTGRES_PORT", value = tostring(aws_db_instance.postgres.port) },
-    { name = "CELERY_BROKER_URL", value = local.celery_broker_url },
-    { name = "CELERY_VISIBILITY_TIMEOUT", value = tostring(local.celery_visibility_timeout) },
+    { name = "JOB_QUEUE_URL", value = aws_sqs_queue.celery.url },
     { name = "TRANSCRIBER", value = local.transcriber },
     { name = "TRANSCRIBE_SECONDS", value = tostring(local.transcribe_seconds) },
     { name = "GOOGLE_REDIRECT_URI", value = local.google_redirect_uri },
@@ -86,7 +85,7 @@ resource "aws_iam_role_policy" "api_execution_secrets" {
 }
 
 
-# ── Task role：API 透過 tasks.execute_job.delay() 送出 Job，只准對
+# ── Task role：API 透過 jobs.queue.enqueue_job() 送出 Job，只准對
 #    celery 這一個佇列發布訊息（不含 Receive/Delete/ChangeVisibility ——
 #    那是 Worker 的權限，API 從不消費自己送出的訊息）不再依賴虛擬機的
 #    instance profile ──────────────────────────────────────────────────
