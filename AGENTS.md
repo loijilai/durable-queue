@@ -22,6 +22,12 @@ Run the repository-owned harness from the repository root:
   `./scripts/verify.sh quick`
 - Complete verification with tests, builds, and Terraform validation:
   `./scripts/verify.sh full`
+- Django tests only, optionally narrowed to specific labels:
+  `./scripts/verify.sh test jobs.tests.test_task`
+
+While iterating on a change, run `quick` and the `test` mode narrowed to the
+test modules you touched. Run `full` once, before committing — not after every
+edit.
 
 The harness bootstraps the Python virtual environment and frontend dependencies
 when their committed manifests change. It requires Python 3.13, Node.js 22,
