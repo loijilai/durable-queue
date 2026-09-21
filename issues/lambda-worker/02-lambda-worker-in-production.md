@@ -22,4 +22,4 @@ Status: done
 - [x] CD 的 worker 部署步驟改為以本次 image tag 更新 Lambda function code 並等待更新完成，順序在 migrate task 之後；手動部署腳本同步修改。
 - [x] bootstrap CD role 移除 worker service、worker IAM role、autoscaling 權限，加入管理 Lambda function、ESM、Lambda log group，以及 Lambda execution role 的 `iam:PassRole`。
 - [x] `./scripts/verify.sh full` 通過。
-- [ ] 部署後在正式環境送出一份 Job，由 Lambda 執行至 succeeded，log 帶 job id，dashboard 四條線皆有資料。
+- [x] 部署後在正式環境送出一份 Job，由 Lambda 執行至 succeeded，log 帶 job id，dashboard 四條線皆有資料。
