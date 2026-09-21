@@ -24,6 +24,13 @@ class TranscriptionJob(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True)
     worker_attempts = models.JSONField(default=list)
+    # How many worker_attempts entries predate the last manual retry. They stay
+    # in the audit trail but no longer count toward the retry limit.
+    worker_attempts_before_retry = models.PositiveIntegerField(default=0)
+
+    @property
+    def attempts_since_retry(self):
+        return len(self.worker_attempts) - self.worker_attempts_before_retry
 
 
 class CustomUser(AbstractUser):

@@ -12,13 +12,14 @@ resource "aws_sqs_queue" "jobs" {
   # local 而不是各寫一個 900，兩者相等就不必靠註解維持。
   visibility_timeout_seconds = local.worker_timeout_seconds
 
-  # 投遞次數上限，也是唯一的重試計數器——Celery 那層應用層重試已經不存在。
-  # 4 = 第一次加三次重試，與 handler 的 MAX_ATTEMPTS 相同，讓最後一次暫時性
-  # 失敗由 handler 記成 failed；只有 handler 根本沒機會記錄結果就死掉（OOM、
-  # 逾時、進程被殺）的訊息才會用完四次投遞落到 DLQ。
+  # 投遞次數上限不是重試計數器：一次投遞可能根本沒執行 Job（invocation 被
+  # throttle、只是在等容量），所以重試上限由 handler 依 Job 實際被執行的次數
+  # （worker_attempts，MAX_ATTEMPTS = 4）判斷，最後一次暫時性失敗記成 failed。
+  # 10 留給等待造成的重送，DLQ 只收 handler 每次都沒能記錄結果（OOM、逾時、
+  # 進程被殺）的訊息。
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.jobs_dlq.arn
-    maxReceiveCount     = 4
+    maxReceiveCount     = 10
   })
 
   tags = { Name = "durable-queue-jobs" }

@@ -22,9 +22,14 @@ locals {
   # Admission Limit 的 4 小時影片估算 ≈ 115MB，1024MB 留了充分餘裕。
   worker_ephemeral_storage_mb = 1024
 
-  # Scaling Ceiling：下游限制中最低的一項，也就是 RDS db.t4g.micro 的連線預算。
-  # 推導（原本記在 issues/scaling-control-loop 的 07，那份文件已經刪除，數字搬
-  # 到這裡）：
+  # Scaling Ceiling：下游限制中最低的一項。目前是帳號的 Lambda 併發配額 10——
+  # ESM 送出超過配額的 invocation 只會被 throttle，ESM 退避到停止，訊息等
+  # visibility timeout 到期才重送（見 issues/lambda-worker/04-burst-experiment-results.md）。
+  # 所以 ceiling 必須對齊配額，而不是對齊下面推導出的資料庫預算。
+  worker_scaling_ceiling = 10
+
+  # 配額調升後的目標 ceiling 是 67：RDS db.t4g.micro 的連線預算。推導（原本記在
+  # issues/scaling-control-loop 的 07，那份文件已經刪除，數字搬到這裡）：
   #
   #   max_connections 在 RDS 的預設參數是
   #   LEAST({DBInstanceClassMemory/9531392}, 5000)。1GiB 級距的機型扣掉 OS 與
@@ -38,9 +43,8 @@ locals {
   #   Worker 沒有連線池（Django 預設 CONN_MAX_AGE=0），一個 Worker 同時最多佔
   #   用 1 個連線，所以這個限制允許到 67 個 Worker。
   #
-  # 要讓 ceiling 再往上，下一步是資料庫（更大的 instance class 或連線代理），
-  # 不是 compute。
-  worker_scaling_ceiling = 67
+  # 配額調到 67 以上時，把 worker_scaling_ceiling 改成 67；要再往上，下一步是
+  # 資料庫（更大的 instance class 或連線代理），不是 compute。
 
   # handler 冷啟動時解析成環境變數的機密（見
   # durable_queue/lambda_handler.py）。形式與 ECS task definition 的
@@ -244,7 +248,8 @@ resource "aws_lambda_function" "worker" {
 #
 # maximum_concurrency 實作 Scaling Ceiling（推導見上方 locals）。它是這條事件
 # 來源的上限，不是函式的 reserved concurrency——超出的訊息留在 Backlog
-# 等，不會被拒絕，也不會消耗投遞次數。
+# 等，不會被 ESM 領走。它必須不超過帳號的併發配額：超過配額的部分 ESM 仍會
+# 領走訊息，invocation 卻被 throttle，訊息要等 visibility timeout 到期才重送。
 # =====================================================================
 resource "aws_lambda_event_source_mapping" "worker" {
   event_source_arn = aws_sqs_queue.jobs.arn

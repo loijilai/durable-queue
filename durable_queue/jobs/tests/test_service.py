@@ -101,6 +101,22 @@ class TranscriptionServiceTests(TestCase):
         self.assertIsNone(job.error)
         self.assertIsNone(job.finished_at)
 
+    def test_retry_job_keeps_worker_attempts_and_restarts_attempt_count(self):
+        # Arrange
+        attempts = [{"host": "worker-host", "at": "2026-01-01T00:00:00+00:00"}] * 4
+        job = TranscriptionJob.objects.create(
+            owner=self.user,
+            video_url=self.VALID_URL,
+            status=TranscriptionJob.FAILED,
+            worker_attempts=attempts,
+        )
+        # Act
+        retry_job(job.id)
+        job.refresh_from_db()
+        # Assert
+        self.assertEqual(job.worker_attempts, attempts)
+        self.assertEqual(job.attempts_since_retry, 0)
+
     def test_retry_job_raises_value_error_when_job_is_not_failed(self):
         # Arrange
         job = TranscriptionJob.objects.create(
