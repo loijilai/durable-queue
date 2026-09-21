@@ -29,8 +29,8 @@ class JobAuthzTests(APITestCase):
 
     # --- 正向：自己對自己的 job ---
 
-    @patch("jobs.views.execute_job.delay")
-    def test_create_stamps_request_user_as_owner(self, mock_execute_job):
+    @patch("jobs.views.enqueue_job")
+    def test_create_stamps_request_user_as_owner(self, mock_enqueue_job):
         # Arrange
         self.client.force_authenticate(user=self.alice)
         # Act
@@ -63,16 +63,17 @@ class JobAuthzTests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["owner"], self.alice.id)
 
-    @patch("jobs.views.execute_job.delay")
-    def test_retry_own_failed_job(self, mock_delay):
+    @patch("jobs.views.enqueue_job")
+    def test_retry_own_failed_job(self, mock_enqueue_job):
         # Arrange
         mine = self._make_job(self.alice, status=TranscriptionJob.FAILED)
         self.client.force_authenticate(user=self.alice)
         # Act
-        resp = self.client.post(reverse("job-retry", kwargs={"job_id": mine.id}))
+        with self.captureOnCommitCallbacks(execute=True):
+            resp = self.client.post(reverse("job-retry", kwargs={"job_id": mine.id}))
         # Assert
         self.assertEqual(resp.status_code, status.HTTP_202_ACCEPTED)
-        mock_delay.assert_called_once_with(mine.id)
+        mock_enqueue_job.assert_called_once_with(mine.id)
 
     # --- 隔離：別人的 job（回 404，不洩漏存在性）---
 
@@ -85,8 +86,8 @@ class JobAuthzTests(APITestCase):
         # Assert
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch("jobs.views.execute_job.delay")
-    def test_retry_others_job_returns_404_and_does_not_mutate(self, mock_delay):
+    @patch("jobs.views.enqueue_job")
+    def test_retry_others_job_returns_404_and_does_not_mutate(self, mock_enqueue_job):
         """回歸測試：修好的 check-after-act。
         bob 的 FAILED job 被 alice retry，必須 404，且 job 完全沒被改動。"""
         # Arrange
@@ -96,7 +97,7 @@ class JobAuthzTests(APITestCase):
         resp = self.client.post(reverse("job-retry", kwargs={"job_id": others.id}))
         # Assert：404 + 沒有派工 + 從 DB 重撈確認狀態沒被改
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        mock_delay.assert_not_called()
+        mock_enqueue_job.assert_not_called()
         others.refresh_from_db()
         self.assertEqual(others.status, TranscriptionJob.FAILED)
 

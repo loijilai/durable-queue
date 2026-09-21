@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =====================================================================
 # deploy.sh — 一鍵部署：terraform apply → build+push → 灌 secret →
-#             跑一次性 migrate task → 滾 api/worker 兩個 Fargate service
+#             跑一次性 migrate task → 滾 api service → 更新 worker function
 # =====================================================================
 set -euo pipefail
 
@@ -9,6 +9,7 @@ REGION="ap-northeast-1"
 ECR_REPO="durable-queue"
 APP_SECRET_ID="durable-queue-app"
 ECS_CLUSTER="durable-queue"
+WORKER_FUNCTION="durable-queue-worker"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_CONTEXT="${ROOT}/durable_queue"
@@ -34,7 +35,7 @@ aws secretsmanager put-secret-value --region "$REGION" --secret-id "$APP_SECRET_
     --arg cs  "$(get_env GOOGLE_CLIENT_SECRET)" \
     '{secret_key: $sk, google_client_id: $cid, google_client_secret: $cs}')" >/dev/null
 
-# ── 4. 資料庫遷移：獨立的一次性 task，跑在滾動部署 api/worker 之前 ──────
+# ── 4. 資料庫遷移：獨立的一次性 task，跑在部署 api/worker 之前 ────────────
 SUBNETS_JSON="$(terraform -chdir="${ROOT}/infra" output -json private_subnet_ids)"
 SECURITY_GROUP="$(terraform -chdir="${ROOT}/infra" output -raw api_security_group_id)"
 
@@ -49,13 +50,17 @@ EXIT_CODE="$(aws ecs describe-tasks --region "$REGION" --cluster "$ECS_CLUSTER" 
   --query 'tasks[0].containers[0].exitCode' --output text)"
 [ "$EXIT_CODE" = "0" ] || { echo "Migration task failed (exit code $EXIT_CODE)" >&2; exit 1; }
 
-# ── 5. 讓 api / worker 兩個 Fargate service 抓新 image ──────────────────
+# ── 5. 讓 api service 抓新 image ───────────────────────────────────────
 aws ecs update-service --region "$REGION" \
   --cluster "$ECS_CLUSTER" --service durable-queue-api \
   --force-new-deployment >/dev/null
 
-aws ecs update-service --region "$REGION" \
-  --cluster "$ECS_CLUSTER" --service durable-queue-worker \
-  --force-new-deployment >/dev/null
+# ── 6. Worker 是 Lambda：image_uri 的漂移由 Terraform 忽略，程式碼只在這裡
+#       更新（見 infra/worker.tf 的 lifecycle），順序在 migrate 之後 ────────
+aws lambda update-function-code --region "$REGION" \
+  --function-name "$WORKER_FUNCTION" --image-uri "${ECR_URI}:latest" >/dev/null
+
+aws lambda wait function-updated --region "$REGION" \
+  --function-name "$WORKER_FUNCTION"
 
 echo "✓ done."

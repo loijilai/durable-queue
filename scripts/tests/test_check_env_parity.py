@@ -4,8 +4,8 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from scripts.check_env_parity import (
-    TASK_DEFINITION_ENV_RE,
-    WORKER_TASK_DEFINITION_SOURCE,
+    LAMBDA_ENV_RE,
+    LAMBDA_ENVIRONMENT_SOURCE,
     DeploymentSource,
     reconcile,
 )
@@ -32,35 +32,45 @@ class DeploymentSourceTests(TestCase):
 
             self.assertEqual(source.declared(), {"FOO", "BAR"})
 
-    def test_declared_with_task_definition_pattern_matches_hcl_style(self):
+    def test_declared_with_lambda_pattern_matches_plaintext_and_secret_maps(self):
+        """Lambda 的明文環境變數與由 handler 解析的機密都是 HCL map 的鍵。"""
         with TemporaryDirectory() as directory:
             path = Path(directory) / "worker.tf"
             path.write_text(
-                "environment = [\n"
-                '  { name = "FOO", value = "1" },\n'
-                '  { name = "BAR", value = local.bar },\n'
-                "]\n"
-                'secrets = [{ name = "BAZ", valueFrom = "arn:..." }]\n',
+                "locals {\n"
+                "  worker_secret_env_sources = {\n"
+                '    BAZ = "arn:aws:secretsmanager:...:baz"\n'
+                "  }\n"
+                "}\n"
+                "environment {\n"
+                "  variables = {\n"
+                '    FOO = "1"\n'
+                "    BAR = local.bar\n"
+                "  }\n"
+                "}\n",
                 encoding="utf-8",
             )
             source = DeploymentSource(
-                label="worker.tf", path=path, pattern=TASK_DEFINITION_ENV_RE
+                label="worker.tf", path=path, pattern=LAMBDA_ENV_RE
             )
 
             self.assertEqual(source.declared(), {"FOO", "BAR", "BAZ"})
 
-    def test_task_definition_pattern_ignores_lowercase_resource_names(self):
+    def test_lambda_pattern_ignores_lowercase_and_mixed_case_keys(self):
         with TemporaryDirectory() as directory:
             path = Path(directory) / "worker.tf"
             path.write_text(
-                'resource "aws_ecs_service" "worker" {\n'
-                '  name = "durable-queue-worker"\n'
-                "}\n"
-                'environment = [{ name = "FOO", value = "1" }]\n',
+                'resource "aws_lambda_function" "worker" {\n'
+                '  function_name = "durable-queue-worker"\n'
+                "  Version = \"2012-10-17\"\n"
+                "  variables = {\n"
+                '    FOO = "1"\n'
+                "  }\n"
+                "}\n",
                 encoding="utf-8",
             )
             source = DeploymentSource(
-                label="worker.tf", path=path, pattern=TASK_DEFINITION_ENV_RE
+                label="worker.tf", path=path, pattern=LAMBDA_ENV_RE
             )
 
             self.assertEqual(source.declared(), {"FOO"})
@@ -97,6 +107,19 @@ class ReconcileTests(TestCase):
             )
 
         self.assertFalse(ok)
+
+    def test_library_owned_variables_are_not_reported_as_dead_config(self):
+        """依賴（yt-dlp）讀、我們的程式碼不讀的變數，不是死設定。"""
+        with TemporaryDirectory() as directory:
+            source = self.make_source(directory, "-e FOO=1 -e XDG_CACHE_HOME=/tmp")
+            ok = reconcile(
+                required={"FOO"},
+                optional=set(),
+                documented={"FOO"},
+                deployment_source=source,
+            )
+
+        self.assertTrue(ok)
 
     def test_fails_when_deployment_source_declares_dead_config(self):
         with TemporaryDirectory() as directory:
@@ -143,19 +166,19 @@ class ReconcileTests(TestCase):
         self.assertTrue(ok)
 
 
-class RegressionAgainstRealWorkerTaskDefinitionTests(TestCase):
-    """驗收條件（05）：對帳的預設來源已換成 Worker 的 ECS task definition。"""
+class RegressionAgainstRealWorkerDeploymentTests(TestCase):
+    """驗收條件：對帳的預設來源是 Worker 的 Lambda function 環境設定。"""
 
-    def test_default_source_points_at_worker_task_definition(self):
-        self.assertEqual(WORKER_TASK_DEFINITION_SOURCE.label, "infra/worker.tf")
-        self.assertTrue(WORKER_TASK_DEFINITION_SOURCE.path.name == "worker.tf")
+    def test_default_source_points_at_the_worker_lambda(self):
+        self.assertEqual(LAMBDA_ENVIRONMENT_SOURCE.label, "infra/worker.tf")
+        self.assertIn("aws_lambda_function", LAMBDA_ENVIRONMENT_SOURCE.path.read_text(encoding="utf-8"))
 
     def test_label_is_derived_from_path_and_cannot_drift_from_it(self):
         from scripts.check_env_parity import ROOT
 
         self.assertEqual(
-            WORKER_TASK_DEFINITION_SOURCE.label,
-            str(WORKER_TASK_DEFINITION_SOURCE.path.relative_to(ROOT)),
+            LAMBDA_ENVIRONMENT_SOURCE.label,
+            str(LAMBDA_ENVIRONMENT_SOURCE.path.relative_to(ROOT)),
         )
 
     def test_real_repository_env_contract_is_consistent(self):

@@ -1,5 +1,5 @@
 locals {
-  # 前端部署在 Vercel, api 和 worker 的 task definition 都要用到
+  # 前端部署在 Vercel，API 的 task definition 與 Worker 的 Lambda 環境都要用到
   frontend_url        = "https://app.loijilai.site"
   google_redirect_uri = "https://durable-queue.loijilai.site/api/auth/google/callback/"
 
@@ -8,12 +8,6 @@ locals {
   # issues/scaling-control-loop/11-acceptance-experiment-results.md。
   transcriber        = "fake"
   transcribe_seconds = 24
-
-  # 02 投影的 Admission Limit 下最長 Execution Time 352.1s × 安全係數 2。
-  celery_visibility_timeout = 720
-
-  # 不帶 host/port，靠 task role 解析佇列；名稱固定為 "celery"（queue.tf）。
-  celery_broker_url = "sqs://"
 }
 
 

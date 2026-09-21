@@ -9,13 +9,12 @@
   optional（os.environ.get("X", ...)，有 default）
       → 只要求出現在 .env.example，讓那份清單保持完整可讀
   部署來源裡多餘的宣告
-      → 程式碼從來不讀 = 死設定，一併報出來
+      → 程式碼從來不讀 = 死設定，一併報出來（LIBRARY_OWNED 例外，見下）
 
 部署來源是可替換的 DeploymentSource：換掉它指到的路徑和解析規則，就能改對帳去對
 別的部署宣告，不必碰其餘的對帳邏輯。05 把預設來源從機器開機腳本換成 Worker 的
-ECS task definition（infra/worker.tf 的 container_definitions）。06 把 API 也
-搬上 Fargate、刪除了機器開機腳本本身，這裡對應的 DOCKER_ENV_RE / 舊來源就一併
-移除。
+ECS task definition；Worker 改成 Lambda 之後，來源換成那個 function 的環境設定
+（infra/worker.tf），機器開機腳本與 task definition 對應的解析規則一併移除。
 """
 
 from __future__ import annotations
@@ -32,10 +31,17 @@ ENV_EXAMPLE = APP / ".env.example"
 REQUIRED_RE = re.compile(r'os\.environ\[\s*"([A-Z_][A-Z0-9_]*)"\s*\]')
 OPTIONAL_RE = re.compile(r'os\.environ\.get\(\s*"([A-Z_][A-Z0-9_]*)"')
 ENV_KEY_RE = re.compile(r"^([A-Z_][A-Z0-9_]*)=", re.MULTILINE)
-# ECS task definition 是 HCL（container_definitions = jsonencode(...)），不是
-# 字面 JSON，所以配對的是 `name = "FOO"` 而不是 `"name": "FOO"`。只認全大寫
-# 加底線，天然排除同一個檔案裡一堆小寫連字號的 resource/container 名稱。
-TASK_DEFINITION_ENV_RE = re.compile(r'name\s*=\s*"([A-Z_][A-Z0-9_]*)"')
+# Lambda 的環境設定是 HCL map（`environment { variables = { FOO = ... } }`），
+# 所以配對的是 HCL 的鍵。同一個檔案裡由 handler 冷啟動解析的機密也是一份 HCL
+# map（worker_secret_env_sources），鍵的形狀相同，因此兩者一起被認出來——對帳
+# 要看的是「這個函式跑起來會有哪些環境變數」，不分它是明文還是機密。只認全大寫
+# 加底線，天然排除檔案裡一堆小寫連字號的 resource / attribute 名稱。
+LAMBDA_ENV_RE = re.compile(r"^\s*([A-Z_][A-Z0-9_]*)\s*=", re.MULTILINE)
+
+# 由依賴而非我們的程式碼讀取的環境變數：部署宣告裡有它，程式碼裡搜不到，卻不是
+# 死設定。XDG_CACHE_HOME 是 yt-dlp 的 cache 路徑，Lambda 上必須指到唯一可寫的
+# /tmp（見 infra/worker.tf）。
+LIBRARY_OWNED = {"XDG_CACHE_HOME"}
 
 
 @dataclass(frozen=True)
@@ -50,14 +56,13 @@ class DeploymentSource:
         return set(self.pattern.findall(self.path.read_text(encoding="utf-8")))
 
 
-# Worker 不再是機器開機腳本，是 ECS/Fargate 的 task definition（05）。06 把
-# API 也搬上 Fargate、共用同一份 settings.py，需要的環境變數集合完全相同，所以
-# 對帳只需要盯著其中一份部署宣告。
-_WORKER_TASK_DEFINITION_PATH = ROOT / "infra" / "worker.tf"
-WORKER_TASK_DEFINITION_SOURCE = DeploymentSource(
-    label=str(_WORKER_TASK_DEFINITION_PATH.relative_to(ROOT)),
-    path=_WORKER_TASK_DEFINITION_PATH,
-    pattern=TASK_DEFINITION_ENV_RE,
+# Worker 是 Lambda，部署宣告是那個 function 的環境設定。API 共用同一份
+# settings.py，需要的環境變數集合完全相同，所以對帳只需要盯著其中一份部署宣告。
+_WORKER_LAMBDA_PATH = ROOT / "infra" / "worker.tf"
+LAMBDA_ENVIRONMENT_SOURCE = DeploymentSource(
+    label=str(_WORKER_LAMBDA_PATH.relative_to(ROOT)),
+    path=_WORKER_LAMBDA_PATH,
+    pattern=LAMBDA_ENV_RE,
 )
 
 
@@ -98,13 +103,13 @@ def reconcile(
         (required | optional) - documented,
     )
     ok &= report(
-        f"程式碼需要但 {deployment_source.label} 沒有傳進 container："
-        "（缺了會讓 container 起不來，或在執行 task 時才爆）",
+        f"程式碼需要但 {deployment_source.label} 沒有宣告："
+        "（缺了會讓部署的 process 起不來，或在執行時才爆）",
         required - deployed,
     )
     ok &= report(
         f"{deployment_source.label} 傳了但程式碼從來不讀（死設定）：",
-        deployed - required - optional,
+        deployed - required - optional - LIBRARY_OWNED,
     )
 
     if ok:
@@ -114,7 +119,7 @@ def reconcile(
     return ok
 
 
-def main(deployment_source: DeploymentSource = WORKER_TASK_DEFINITION_SOURCE) -> int:
+def main(deployment_source: DeploymentSource = LAMBDA_ENVIRONMENT_SOURCE) -> int:
     required, optional = scan_code()
     documented = set(ENV_KEY_RE.findall(ENV_EXAMPLE.read_text(encoding="utf-8")))
     ok = reconcile(required, optional, documented, deployment_source)

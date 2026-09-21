@@ -112,8 +112,8 @@ jobs:
           terraform init
           terraform apply -auto-approve -var="image_tag=$IMAGE_TAG"
 
-      # 一次性 task，跑在滾動部署任何 api/worker 實例之前，修正原本「多個
-      # 實例可能同時跑 migrate」的競爭條件。
+      # 一次性 task，跑在部署 API service 與 Worker function 之前，修正原本
+      # 「多個實例可能同時跑 migrate」的競爭條件。
       - name: Run database migration
         working-directory: infra
         run: |
@@ -155,15 +155,21 @@ jobs:
             --cluster durable-queue \
             --services durable-queue-api
 
-      - name: Deploy worker service
+      # Worker 是 Lambda：function 的 image_uri 由 Terraform 忽略漂移（見
+      # infra/worker.tf 的 lifecycle），程式碼更新只在這裡發生，順序在 migrate
+      # task 之後——Worker 不會跑在 schema 之前。`wait function-updated` 等到
+      # Lambda 收下這個 image 為止，Lambda 拒收（image 不存在、架構不符）會讓這
+      # 步失敗而不是默默留在舊版本上。它不驗證 handler 能不能 import——那要到第
+      # 一次 invocation 才知道。
+      - name: Deploy worker function
         run: |
-          aws ecs update-service \
-            --region "$AWS_REGION" \
-            --cluster durable-queue \
-            --service durable-queue-worker \
-            --force-new-deployment
+          ECR_URI="${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPO }}"
 
-          aws ecs wait services-stable \
+          aws lambda update-function-code \
             --region "$AWS_REGION" \
-            --cluster durable-queue \
-            --services durable-queue-worker
+            --function-name durable-queue-worker \
+            --image-uri "$ECR_URI:$IMAGE_TAG" >/dev/null
+
+          aws lambda wait function-updated \
+            --region "$AWS_REGION" \
+            --function-name durable-queue-worker

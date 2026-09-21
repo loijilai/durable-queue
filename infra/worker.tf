@@ -1,80 +1,119 @@
 # =====================================================================
-# Worker：ECS/Fargate service
+# Worker：AWS Lambda，由 Job 佇列的 event source mapping 觸發
 # ---------------------------------------------------------------------
-# 取代原本「開一台 EC2、跑 user_data.sh 裡的 celery worker」的 launch
-# template + ASG。API 現在也在 ECS/Fargate 上（見 api.tf）。
-#
-# 容量由 07（worker_autoscaling.tf）的 step scaling policy 驅動；這裡只
-# 宣告 service 本身，desired_count 的初始值等於 scaling policy 的最小
-# 容量，實際值之後交給 Application Auto Scaling 管理。
-# Celery concurrency 設為 1：放棄多工的成本效率，換取容量訊號的物理
-# 意義 —— 不可見訊息數精確等於 In-flight Job 數。
+# 取代原本的 ECS/Fargate worker service 加一整套自己維護的 step scaling
+# control loop。一份 Job = 一則訊息 = 一次 invocation（ESM batch_size = 1），
+# 容量由平台依 Backlog 自動擴張，上限就是下面 ESM 的 maximum_concurrency。
+# API 仍在 ECS/Fargate 上（見 api.tf）。
 # =====================================================================
 
-resource "aws_ecs_cluster" "main" {
-  name = "durable-queue"
+locals {
+  # 900 秒是 Lambda 單次執行的上限，也是佇列的 visibility timeout
+  # （queue.tf）。02 投影的 Admission Limit 下最長 Execution Time 是 352.1s，
+  # 落在這個上限內。
+  worker_timeout_seconds = 900
 
-  # Worker 數量在 dashboard 上沒有其他免費的來源：ECS 預設只發布
-  # CPU/MemoryUtilization，RunningTaskCount 只存在於 Container Insights
-  # 底下的 ECS/ContainerInsights namespace。開啟它是受管服務內建指標的
-  # 一部分（ADR-0007），不是應用程式發送的 metric。
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
+  # 記憶體：沿用 Fargate 上量到夠用的 2GiB。Lambda 的 vCPU 配額隨記憶體
+  # 線性給，2048MB 約等於 1 vCPU，與原本 worker task 的 1 vCPU 同級——
+  # re-encode 階段是單執行緒 ffmpeg CPU 工作，需要一整顆。
+  worker_memory_mb = 2048
+
+  # /tmp 的大小。下載的原始音訊加上重新編碼後的 64kbps mono 分段都寫在這裡；
+  # Admission Limit 的 4 小時影片估算 ≈ 115MB，1024MB 留了充分餘裕。
+  worker_ephemeral_storage_mb = 1024
+
+  # Scaling Ceiling：下游限制中最低的一項，也就是 RDS db.t4g.micro 的連線預算。
+  # 推導（原本記在 issues/scaling-control-loop 的 07，那份文件已經刪除，數字搬
+  # 到這裡）：
+  #
+  #   max_connections 在 RDS 的預設參數是
+  #   LEAST({DBInstanceClassMemory/9531392}, 5000)。1GiB 級距的機型扣掉 OS 與
+  #   RDS 管理程序的保留後，實測預設值落在 80–90，取保守值 80 當預算基礎
+  #   （部署後可用 SHOW max_connections; 核對）。
+  #
+  #   扣掉的消耗方：API service 2 個 task × 1 個 gunicorn worker = 2；一次性
+  #   migrate task 執行期間 1；操作餘裕（人工 psql、apply 期間的瞬時重疊）10。
+  #   80 − (2 + 1 + 10) = 67 個連線留給 Worker。
+  #
+  #   Worker 沒有連線池（Django 預設 CONN_MAX_AGE=0），一個 Worker 同時最多佔
+  #   用 1 個連線，所以這個限制允許到 67 個 Worker。
+  #
+  # 要讓 ceiling 再往上，下一步是資料庫（更大的 instance class 或連線代理），
+  # 不是 compute。
+  worker_scaling_ceiling = 67
+
+  # handler 冷啟動時解析成環境變數的機密（見
+  # durable_queue/lambda_handler.py）。形式與 ECS task definition 的
+  # `secrets` 欄位相同：<secret arn>:<json key>。Lambda 沒有同等的注入機制，
+  # 而把值放進函式的環境變數會讓它們以明文出現在函式設定上，所以這裡只給
+  # ARN。這份對照表同時是環境變數對帳的來源之一（見下方 environment）。
+  worker_secret_env_sources = {
+    POSTGRES_PASSWORD    = "${aws_db_instance.postgres.master_user_secret[0].secret_arn}:password"
+    SECRET_KEY           = "${data.aws_secretsmanager_secret.app.arn}:secret_key"
+    GOOGLE_CLIENT_ID     = "${data.aws_secretsmanager_secret.app.arn}:google_client_id"
+    GOOGLE_CLIENT_SECRET = "${data.aws_secretsmanager_secret.app.arn}:google_client_secret"
   }
 }
 
+
 resource "aws_cloudwatch_log_group" "worker" {
-  name              = "/ecs/durable-queue-worker"
+  # 名稱不是自由選的：Lambda 固定寫到 /aws/lambda/<function name>。先宣告它
+  # 才能設保留天數，否則函式第一次被叫起來時會自己建一個永久保留的。
+  name              = "/aws/lambda/durable-queue-worker"
   retention_in_days = 14
 }
 
 
-# =====================================================================
-# Task 規格：CPU / 記憶體 / 暫存磁碟，回溯自 02 的量測
-# ---------------------------------------------------------------------
-# 執行過程不是純 I/O 等待：re-encode 階段是單執行緒 ffmpeg CPU 工作，且
-# concurrency=1 代表沒有平行工作可以互相掩蓋這段時間。02 量測到 split_s
-# 佔 video_duration 的比例穩定在 ~0.15–0.18%；Admission Limit
-# （14400s）投影下 split ≈ 22s，量不大但是真的在燒 CPU，因此給 1 vCPU
-# 而非最小的 0.25/0.5 vCPU 檔位，避免這段時間被鄰居任務排擠。1 vCPU 在
-# Fargate 上最低相容記憶體是 2GB，這裡沒有額外理由加碼。
-#
-# 暫存磁碟：下載的原始音訊 + 重新編碼後的 64kbps mono 分段都寫在本機。
-# 以 Admission Limit 的 4 小時影片估算，重新編碼後的分段總大小
-# ≈ 14400s ÷ 1200s/chunk × 9.6MB/chunk ≈ 115MB；原始下載音訊量級相近或
-# 更小。Fargate 預設 20GiB 已遠超這個量，這裡明確宣告 21GiB（顯式覆寫
-# 的最小值）只是為了讓這個判斷寫進程式碼，而不是依賴一個沒人讀過的預設。
-locals {
-  worker_cpu                   = "1024" # 1 vCPU
-  worker_memory                = "2048" # 2 GiB —— 1 vCPU 在 Fargate 的最低相容檔位
-  worker_ephemeral_storage_gib = 21     # 平台預設 20GiB 已遠超 ~115MB 的估算用量；顯式宣告見上
-}
-
-
-# ── Execution role：ECS agent 用它 pull image、寫 CloudWatch Logs、
-#    在容器啟動時解析 `secrets` 欄位指向的 Secrets Manager 值 ──────────
-resource "aws_iam_role" "worker_execution" {
-  name = "durable-queue-worker-execution"
+# ── Execution role：Lambda 服務代表函式取得的權限。VPC 網路介面是放進
+#    private subnet 的代價；Logs 是函式寫自己的日誌；SQS 那四個動作是 ESM
+#    代表函式操作佇列（ReceiveMessage/DeleteMessage/GetQueueAttributes）加上
+#    handler 自己縮短 visibility 做退避（ChangeMessageVisibility）；
+#    GetSecretValue 是冷啟動解析機密。沒有 SendMessage——Worker 從不送訊息；
+#    沒有 DLQ——應用程式從不直接碰它 ─────────────────────────────────────
+resource "aws_iam_role" "worker" {
+  name = "durable-queue-worker"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = { Service = "ecs-tasks.amazonaws.com" }
+      Principal = { Service = "lambda.amazonaws.com" }
       Action    = "sts:AssumeRole"
     }]
   })
 }
 
-resource "aws_iam_role_policy_attachment" "worker_execution" {
-  role       = aws_iam_role.worker_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+# 用 AWS 受管政策而不是手寫：它給的就是「建/查/刪自己的 ENI」加上 Logs 寫入，
+# 而 ENI 的 Describe 類 API 不支援 resource-level 限制，手寫只會得到同樣的
+# Resource = "*" 再加上抄錯的風險。api.tf 的 execution role 用
+# AmazonECSTaskExecutionRolePolicy 是同一個判斷。
+resource "aws_iam_role_policy_attachment" "worker_vpc_access" {
+  role       = aws_iam_role.worker.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
-resource "aws_iam_role_policy" "worker_execution_secrets" {
+resource "aws_iam_role_policy" "worker_queue" {
+  name = "consume-job-queue"
+  role = aws_iam_role.worker.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:ChangeMessageVisibility"
+      ]
+      Resource = aws_sqs_queue.jobs.arn
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "worker_secrets" {
   name = "read-app-secrets"
-  role = aws_iam_role.worker_execution.id
+  role = aws_iam_role.worker.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -90,150 +129,129 @@ resource "aws_iam_role_policy" "worker_execution_secrets" {
 }
 
 
-# ── Task role：應用程式執行期的權限。不再依賴虛擬機的 instance profile
-#    ——只准對 celery 這一個佇列做 Worker 實際會做的動作。SendMessage 是
-#    因為 tasks.py 的 autoretry_for 在 Worker 進程內部發出新訊息（見
-#    queue.tf 的註解）。不含 DLQ（應用程式從不直接碰它）、不含
-#    CreateQueue（佇列由 Terraform 建立，Worker 沒有能力另外造一個名稱
-#    分歧的佇列）──────────────────────────────────────────────────────
-resource "aws_iam_role" "worker_task" {
-  name = "durable-queue-worker-task"
+# ── Image pull：Lambda 服務在建立與更新函式時要從 ECR 拉 image，repo 沒有允許
+#    它的 policy 時，Lambda 會試著自己寫一份，但那要求呼叫端（CD role）有
+#    SetRepositoryPolicy，而且寫出來的內容不在 Terraform 裡。所以明確宣告。
+#    repo 本身是 data source（見 shared.tf），但這份 policy 只在函式存在時
+#    才有意義，跟著這一層建立與刪除 ─────────────────────────────────────
+resource "aws_ecr_repository_policy" "lambda_pull" {
+  repository = data.aws_ecr_repository.registry.name
 
-  assume_role_policy = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
+      Sid       = "LambdaImagePull"
       Effect    = "Allow"
-      Principal = { Service = "ecs-tasks.amazonaws.com" }
-      Action    = "sts:AssumeRole"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action = [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+      ]
+      Condition = {
+        StringLike = {
+          "aws:sourceArn" = "arn:aws:lambda:ap-northeast-1:461346075470:function:durable-queue-worker"
+        }
+      }
     }]
   })
 }
 
-resource "aws_iam_role_policy" "worker_task_sqs" {
-  name = "consume-celery-queue"
-  role = aws_iam_role.worker_task.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "sqs:GetQueueUrl",
-          "sqs:GetQueueAttributes",
-          "sqs:ReceiveMessage",
-          "sqs:DeleteMessage",
-          "sqs:ChangeMessageVisibility",
-          "sqs:SendMessage"
-        ]
-        Resource = aws_sqs_queue.celery.arn
-      },
-      {
-        # kombu 的 SQS transport 建連線時一定會呼叫 ListQueues 把佇列名稱
-        # 解析成 URL（因為 queue.tf 刻意不用 predefined_queue_urls，見那邊
-        # 註解）。這是帳號層級的列出型 API，不支援綁在單一佇列 ARN 上，只能
-        # 跟 logs:DescribeLogGroups 一樣獨立用 Resource = "*"（實測過：沒
-        # 這條，worker 連 broker 都連不上，Unrecoverable error 直接掛掉）。
-        Effect   = "Allow"
-        Action   = "sqs:ListQueues"
-        Resource = "*"
-      }
-    ]
-  })
-}
-
 
 # =====================================================================
-# Task definition
+# Function
 # ---------------------------------------------------------------------
 # 這是環境變數對帳檢查的部署來源（見 scripts/check_env_parity.py 的
-# WORKER_TASK_DEFINITION_SOURCE）：`environment` / `secrets` 底下每一個
-# 全大寫加底線的 name 都會被那支腳本解析出來，跟程式碼實際讀取的環境
-# 變數對帳。清單必須與 durable_queue/.env.example 裡標記為必要的項目
-# 完全一致，因為 API 和 Worker 共用同一份 Django settings.py，兩邊在
-# import 時都要讀到全部必要變數。
+# LAMBDA_ENVIRONMENT_SOURCE）：這個檔案裡每一個全大寫加底線的鍵——不分
+# 它是 `environment` 底下的明文變數，還是 worker_secret_env_sources 裡由
+# handler 解析的機密——都會被那支腳本解析出來，跟程式碼實際讀取的環境變數
+# 對帳。清單必須與 durable_queue/.env.example 裡標記為必要的項目完全一致，
+# 因為 API 和 Worker 共用同一份 Django settings.py。
 # =====================================================================
-resource "aws_ecs_task_definition" "worker" {
-  family                   = "durable-queue-worker"
-  requires_compatibilities = ["FARGATE"]
-  network_mode             = "awsvpc"
-  cpu                      = local.worker_cpu
-  memory                   = local.worker_memory
-  execution_role_arn       = aws_iam_role.worker_execution.arn
-  task_role_arn            = aws_iam_role.worker_task.arn
+resource "aws_lambda_function" "worker" {
+  function_name = "durable-queue-worker"
+  role          = aws_iam_role.worker.arn
+
+  # API 與 Worker 共用同一個 image 與 tag（build once, run many）。entrypoint
+  # 由 image_config 覆寫，指向 image 裡的 awslambdaric 與這個 handler；
+  # Dockerfile 本身沒有預設 entrypoint，因為 API 的啟動指令也是從外面給的。
+  package_type = "Image"
+  image_uri    = "${data.aws_ecr_repository.registry.repository_url}:${var.image_tag}"
+
+  image_config {
+    entry_point       = ["python", "-m", "awslambdaric"]
+    command           = ["durable_queue.lambda_handler.handler"]
+    working_directory = "/app"
+  }
+
+  timeout     = local.worker_timeout_seconds
+  memory_size = local.worker_memory_mb
 
   ephemeral_storage {
-    size_in_gib = local.worker_ephemeral_storage_gib
+    size = local.worker_ephemeral_storage_mb
   }
 
-  container_definitions = jsonencode([
-    {
-      name      = "worker"
-      image     = "${data.aws_ecr_repository.registry.repository_url}:${var.image_tag}"
-      essential = true
-      command   = ["celery", "-A", "durable_queue", "worker", "-l", "info", "--concurrency=1"]
+  # 沿用 worker security group：無 ingress，egress 走既有 NAT，連得到 RDS
+  # 與外網（見 security_group.tf）。
+  vpc_config {
+    subnet_ids         = [for subnet in aws_subnet.private : subnet.id]
+    security_group_ids = [aws_security_group.worker.id]
+  }
 
-      environment = [
-        { name = "POSTGRES_DB", value = aws_db_instance.postgres.db_name },
-        { name = "POSTGRES_USER", value = aws_db_instance.postgres.username },
-        { name = "POSTGRES_HOST", value = aws_db_instance.postgres.address },
-        { name = "POSTGRES_PORT", value = tostring(aws_db_instance.postgres.port) },
-        { name = "CELERY_BROKER_URL", value = local.celery_broker_url },
-        { name = "CELERY_VISIBILITY_TIMEOUT", value = tostring(local.celery_visibility_timeout) },
-        { name = "TRANSCRIBER", value = local.transcriber },
-        { name = "TRANSCRIBE_SECONDS", value = tostring(local.transcribe_seconds) },
-        { name = "GOOGLE_REDIRECT_URI", value = local.google_redirect_uri },
-        { name = "FRONTEND_URL", value = local.frontend_url },
-        { name = "CORS_ALLOWED_ORIGINS", value = local.frontend_url },
-        { name = "DEBUG", value = "False" }
-      ]
+  environment {
+    variables = {
+      POSTGRES_DB          = aws_db_instance.postgres.db_name
+      POSTGRES_USER        = aws_db_instance.postgres.username
+      POSTGRES_HOST        = aws_db_instance.postgres.address
+      POSTGRES_PORT        = tostring(aws_db_instance.postgres.port)
+      JOB_QUEUE_URL        = aws_sqs_queue.jobs.url
+      TRANSCRIBER          = local.transcriber
+      TRANSCRIBE_SECONDS   = tostring(local.transcribe_seconds)
+      GOOGLE_REDIRECT_URI  = local.google_redirect_uri
+      FRONTEND_URL         = local.frontend_url
+      CORS_ALLOWED_ORIGINS = local.frontend_url
+      DEBUG                = "False"
 
-      secrets = [
-        { name = "POSTGRES_PASSWORD", valueFrom = "${aws_db_instance.postgres.master_user_secret[0].secret_arn}:password::" },
-        { name = "SECRET_KEY", valueFrom = "${data.aws_secretsmanager_secret.app.arn}:secret_key::" },
-        { name = "GOOGLE_CLIENT_ID", valueFrom = "${data.aws_secretsmanager_secret.app.arn}:google_client_id::" },
-        { name = "GOOGLE_CLIENT_SECRET", valueFrom = "${data.aws_secretsmanager_secret.app.arn}:google_client_secret::" }
-      ]
+      # Lambda 的檔案系統唯讀，只有 /tmp 可寫。yt-dlp 預設把 cache 寫進
+      # $XDG_CACHE_HOME（沒設時是 $HOME/.cache），在 Lambda 上會是唯讀路徑。
+      XDG_CACHE_HOME = "/tmp"
 
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.worker.name
-          "awslogs-region"        = "ap-northeast-1"
-          "awslogs-stream-prefix" = "worker"
-        }
-      }
+      SECRET_ENV_SOURCES = jsonencode(local.worker_secret_env_sources)
     }
-  ])
+  }
+
+  depends_on = [aws_cloudwatch_log_group.worker, aws_ecr_repository_policy.lambda_pull]
+
+  # 部署順序的保證：terraform apply 跑在一次性 migrate task 之前，而改
+  # image_uri 會讓 Lambda 立刻換程式碼——那就成了「Worker 跑在 schema 之前」。
+  # 所以這裡只在建立函式時用 image_tag，之後的程式碼更新交給部署流程在
+  # migrate 之後明確呼叫 UpdateFunctionCode（見 .github/workflows/ci-cd.yml
+  # 的 Deploy worker function 與 deploy.sh）。
+  #
+  # 代價要講清楚：Terraform 從此不再收斂 Worker 跑的是哪個 image，`terraform
+  # apply` 也不能用來回退它。換 image 這件事只有部署流程做得到。
+  lifecycle {
+    ignore_changes = [image_uri]
+  }
 }
 
-resource "aws_ecs_service" "worker" {
-  name            = "durable-queue-worker"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.worker.arn
-  launch_type     = "FARGATE"
 
-  # 初始值等於 worker_autoscaling.tf 的最小容量；之後由 step scaling
-  # policy 改變，Terraform 不應該把它改回來（見下面的 lifecycle block）。
-  desired_count = 1
+# =====================================================================
+# Event source mapping：Job 佇列 → 這個函式
+# ---------------------------------------------------------------------
+# batch_size = 1：一次 invocation 只處理一則訊息，也就是一份 Job。「Worker
+# 數量 = In-flight Job 數量 = 容量單位」這個等式因此成立，也不需要 partial
+# batch failure 回報。
+#
+# maximum_concurrency 實作 Scaling Ceiling（推導見上方 locals）。它是這條事件
+# 來源的上限，不是函式的 reserved concurrency——超出的訊息留在 Backlog
+# 等，不會被拒絕，也不會消耗投遞次數。
+# =====================================================================
+resource "aws_lambda_event_source_mapping" "worker" {
+  event_source_arn = aws_sqs_queue.jobs.arn
+  function_name    = aws_lambda_function.worker.arn
+  batch_size       = 1
 
-  # 09：跟 api.tf 同構的零停機設定——即使 desired_count 之後被 step
-  # scaling 改成別的值，min=100%/max=200% 仍保證滾動更新時舊任務數不掉到
-  # 更新前的水位以下。
-  deployment_minimum_healthy_percent = 100
-  deployment_maximum_percent         = 200
-
-  network_configuration {
-    subnets          = [for subnet in aws_subnet.private : subnet.id]
-    security_groups  = [aws_security_group.worker.id]
-    assign_public_ip = false
-  }
-
-  # desired_count 之後由 Application Auto Scaling（worker_autoscaling.tf）
-  # 依 Backlog / In-flight Job 改變。忽略它的漂移，否則下一次
-  # `terraform apply` 會把 scaling policy 剛設定好的容量改回這裡宣告的
-  # 初始值，兩者互相打架。
-  lifecycle {
-    ignore_changes = [desired_count]
+  scaling_config {
+    maximum_concurrency = local.worker_scaling_ceiling
   }
 }

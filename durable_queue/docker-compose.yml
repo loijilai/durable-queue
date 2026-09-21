@@ -18,6 +18,8 @@ services:
 
   sqs:
     image: softwaremill/elasticmq-native:1.6.10
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf:ro
     ports: # for development
       - "29324:9324"
 
@@ -37,8 +39,12 @@ services:
       - "8000:8000"
     env_file:
       - .env # load .env at runtime, not COPY into image
-    environment:
-      - CELERY_BROKER_URL=sqs://x:x@sqs:9324
+    environment: &queue-environment
+      - JOB_QUEUE_URL=http://sqs:9324/000000000000/durable-queue-jobs
+      # ElasticMQ 的端點與佔位憑證（不是真的 AWS 金鑰），由 botocore 直接讀取
+      - AWS_ENDPOINT_URL_SQS=http://sqs:9324
+      - AWS_ACCESS_KEY_ID=x
+      - AWS_SECRET_ACCESS_KEY=x
       - POSTGRES_HOST=postgres
     depends_on:
       postgres:
@@ -48,12 +54,12 @@ services:
 
   worker:
     build: .
-    command: celery -A durable_queue worker -l info
+    # 本機專用的 poll shim：呼叫與 Lambda 相同的 handler（jobs.worker）
+    command: python manage.py run_worker
+    init: true # Python 以 PID 1 執行時會忽略 SIGTERM，交給 init 轉送，stop 才不必等到 SIGKILL
     env_file:
       - .env
-    environment:
-      - CELERY_BROKER_URL=sqs://x:x@sqs:9324
-      - POSTGRES_HOST=postgres
+    environment: *queue-environment
     depends_on:
       postgres:
         condition: service_healthy

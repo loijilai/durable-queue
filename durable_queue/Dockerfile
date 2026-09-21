@@ -1,4 +1,9 @@
 # 後端 image：api 與 worker 共用同一份（build once, run many）
+# ---------------------------------------------------------------------
+# API 在 ECS/Fargate 上跑 gunicorn（見 infra/api.tf 的 command），Worker 是
+# Lambda，由 infra/worker.tf 的 image_config 覆寫 entrypoint 指向
+# requirements.txt 裝好的 awslambdaric 與 handler。兩個角色共用同一個 tag，
+# 不可能跑到不同的程式碼，所以這裡不設 ENTRYPOINT——啟動指令都從外面給。
 FROM python:3.13-slim
 
 # PYTHONDONTWRITEBYTECODE=1
@@ -16,7 +21,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# 依賴套件
+# 依賴套件（含 awslambdaric：Lambda 的 runtime interface client）
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

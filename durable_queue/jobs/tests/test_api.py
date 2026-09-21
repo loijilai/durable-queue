@@ -17,14 +17,16 @@ class TranscriptionJobAPITests(APITestCase):
         self.user = User.objects.create_user(username="tester", password="x")
         self.client.force_authenticate(user=self.user)
 
-    @patch("jobs.views.execute_job.delay")
-    def test_create_job(self, mock_execute_job):
+    @patch("jobs.views.enqueue_job")
+    def test_create_job(self, mock_enqueue_job):
         # Arrange
         url = reverse("job-list-create")
         data = {"video_url": self.VALID_URL}
 
-        # Act
-        response = self.client.post(url, data, format="json")
+        # Act：on-commit callback 在 block 結束時才執行，模擬 DB commit
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(url, data, format="json")
+            mock_enqueue_job.assert_not_called()
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -33,6 +35,7 @@ class TranscriptionJobAPITests(APITestCase):
         job = TranscriptionJob.objects.get()
         self.assertEqual(job.status, response.data["status"])
         self.assertEqual(response.data["id"], job.id)
+        mock_enqueue_job.assert_called_once_with(job.id)
 
     def test_invalid_url_create_job(self):
         # Arrange
@@ -47,17 +50,19 @@ class TranscriptionJobAPITests(APITestCase):
         self.assertEqual(TranscriptionJob.objects.count(), 0)
         self.assertIn("video_url", response.data)
 
-    @patch("jobs.views.execute_job.delay")
-    def test_retry_failed_job_dispatches_task(self, mock_execute_job):
+    @patch("jobs.views.enqueue_job")
+    def test_retry_failed_job_enqueues_after_commit(self, mock_enqueue_job):
         # Arrange
         job = TranscriptionJob.objects.create(
             owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.FAILED
         )
         url = reverse("job-retry", kwargs={"job_id": job.id})
 
-        # Act：POST job-retry
-        response = self.client.post(url)
+        # Act：POST job-retry，commit 之前不得送出
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(url)
+            mock_enqueue_job.assert_not_called()
 
-        # Assert：202 + execute_job.delay 有被呼叫（用 job.id）
+        # Assert：202 + commit 後以 job.id 送進佇列
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        mock_execute_job.assert_called_once_with(job.id)
+        mock_enqueue_job.assert_called_once_with(job.id)

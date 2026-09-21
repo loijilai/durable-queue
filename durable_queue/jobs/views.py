@@ -1,7 +1,7 @@
 from rest_framework import generics
 from jobs.serializers import TranscriptionJobSerializer, UserRegisterSerializer
 from jobs.models import TranscriptionJob
-from jobs.tasks import execute_job
+from jobs.queue import enqueue_job
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -50,7 +50,8 @@ class JobCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         job = serializer.save(owner=self.request.user)
-        execute_job.delay(job.id)
+        # Worker 收到的 job id 必須已經存在於 DB，所以等 commit 之後才送出
+        transaction.on_commit(lambda: enqueue_job(job.id))
 
 
 @extend_schema_view(
@@ -82,7 +83,7 @@ class JobRetryView(APIView):
         get_object_or_404(TranscriptionJob, id=job_id, owner=request.user)
         try:
             job = retry_job(job_id)
-            execute_job.delay(job_id)  # dispatch 必定在 DB commit 後，此處需要順序保證
+            transaction.on_commit(lambda: enqueue_job(job.id))
         except ValueError as e:
             return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
         except TranscriptionJob.DoesNotExist:

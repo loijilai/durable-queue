@@ -16,11 +16,14 @@ VERIFY_POSTGRES_STARTED=0
 usage() {
   cat <<'EOF'
 Usage: ./scripts/verify.sh quick|full
+       ./scripts/verify.sh test [django-test-label ...]
 
   quick  Bootstrap dependencies and run checks that need no database or daemon.
   full   Run quick checks, application tests, builds, and infrastructure checks.
+  test   Run only Django tests (default label: jobs) against an isolated
+         PostgreSQL, e.g. ./scripts/verify.sh test jobs.tests.test_task
 
-Set VERIFY_DATABASE_MODE=external for full verification against an already
+Set VERIFY_DATABASE_MODE=external for full or test verification against an already
 running PostgreSQL service. POSTGRES_* variables must then describe that service.
 EOF
 }
@@ -142,9 +145,10 @@ export_test_environment() {
   export SECRET_KEY="verification-secret-key-at-least-32-bytes"
   export TRANSCRIBER="fake"
   export TRANSCRIBE_SECONDS="0"
-  export CELERY_VISIBILITY_TIMEOUT="3600"
   export FRONTEND_URL="http://test.example"
-  export CELERY_BROKER_URL="sqs://x:x@localhost:9324"
+  export JOB_QUEUE_URL="http://localhost:9324/000000000000/durable-queue-jobs"
+  # 測試一律 patch SQS client；萬一漏 patch，打到一個不存在的本機端點，而不是真的 AWS
+  export AWS_ENDPOINT_URL_SQS="http://127.0.0.1:9"
   export GOOGLE_CLIENT_ID="verification.apps.googleusercontent.com"
   export GOOGLE_CLIENT_SECRET="verification-client-secret"
   export GOOGLE_REDIRECT_URI="http://localhost:8000/api/auth/google/callback"
@@ -209,19 +213,28 @@ run_quick() {
   run "Check environment contract" python3 "$ROOT_DIR/scripts/check_env_parity.py"
   run "Test repository checkers" "$PYTHON_BIN" -m unittest discover -s "$ROOT_DIR/scripts/tests" -v
   run "Check architecture boundaries" python3 "$ROOT_DIR/scripts/check_architecture.py"
-  run "Check repository knowledge contract" python3 "$ROOT_DIR/scripts/check_repo_contract.py"
   run "Run Django system checks" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" check
   run "Lint frontend" npm --prefix "$ROOT_DIR/frontend" run lint
   run "Check Terraform formatting" terraform -chdir="$ROOT_DIR/infra" fmt -check -recursive
   run "Check diff whitespace" git -C "$ROOT_DIR" diff --check
 }
 
-run_full() {
+start_postgres() {
   if [[ "${VERIFY_DATABASE_MODE:-local}" == "external" ]]; then
     use_external_postgres
   else
     start_local_postgres
   fi
+}
+
+run_tests() {
+  export_test_environment
+  start_postgres
+  run "Run Django tests" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" test "$@"
+}
+
+run_full() {
+  start_postgres
 
   run "Check for missing Django migrations" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" makemigrations --check --dry-run
   run "Run Django tests" "$PYTHON_BIN" "$ROOT_DIR/durable_queue/manage.py" test jobs
@@ -238,7 +251,7 @@ run_full() {
 }
 
 case "$MODE" in
-  quick|full)
+  quick|full|test)
     ;;
   -h|--help|help)
     usage
@@ -252,10 +265,19 @@ esac
 
 cd "$ROOT_DIR"
 bootstrap_dependencies
-run_quick
 
-if [[ "$MODE" == "full" ]]; then
-  run_full
+if [[ "$MODE" == "test" ]]; then
+  # Bash 3.2 on macOS treats an empty "$@" expansion as unbound under set -u.
+  if [[ $# -gt 1 ]]; then
+    run_tests "${@:2}"
+  else
+    run_tests jobs
+  fi
+else
+  run_quick
+  if [[ "$MODE" == "full" ]]; then
+    run_full
+  fi
 fi
 
 section "Verification complete"

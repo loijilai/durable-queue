@@ -9,6 +9,18 @@
 # 容量固定，不設 scaling policy：沒有量測指出需要它。
 # =====================================================================
 
+# cluster 裡只剩 API 與一次性的 migrate task——Worker 是 Lambda（worker.tf）。
+# Container Insights 關閉：它唯一的讀者是舊 dashboard 的 RunningTaskCount，
+# 用來數 Worker，現在 Worker 數量由 Lambda 自己的 ConcurrentExecutions 提供。
+resource "aws_ecs_cluster" "main" {
+  name = "durable-queue"
+
+  setting {
+    name  = "containerInsights"
+    value = "disabled"
+  }
+}
+
 locals {
   # API 沒有 02 那樣的量測依據，選 Fargate 上可用的最小檔位之上一階：
   # 0.5 vCPU / 1GiB，比原本 t3.micro（2 vCPU 突發 / 1GiB，OS 常駐吃掉一截）
@@ -18,14 +30,13 @@ locals {
 
   # API 和 Worker 共用同一份 Django settings.py，需要的環境變數集合完全
   # 相同（見 scripts/check_env_parity.py 的說明）。這裡跟 worker.tf 的
-  # container_definitions 手動保持一致，對帳只盯著 worker.tf 那一份。
+  # Lambda 環境手動保持一致，對帳只盯著 worker.tf 那一份。
   app_environment = [
     { name = "POSTGRES_DB", value = aws_db_instance.postgres.db_name },
     { name = "POSTGRES_USER", value = aws_db_instance.postgres.username },
     { name = "POSTGRES_HOST", value = aws_db_instance.postgres.address },
     { name = "POSTGRES_PORT", value = tostring(aws_db_instance.postgres.port) },
-    { name = "CELERY_BROKER_URL", value = local.celery_broker_url },
-    { name = "CELERY_VISIBILITY_TIMEOUT", value = tostring(local.celery_visibility_timeout) },
+    { name = "JOB_QUEUE_URL", value = aws_sqs_queue.jobs.url },
     { name = "TRANSCRIBER", value = local.transcriber },
     { name = "TRANSCRIBE_SECONDS", value = tostring(local.transcribe_seconds) },
     { name = "GOOGLE_REDIRECT_URI", value = local.google_redirect_uri },
@@ -48,8 +59,8 @@ resource "aws_cloudwatch_log_group" "api" {
 }
 
 
-# ── Execution role：跟 worker 的 execution role 同構——ECS agent 用它 pull
-#    image、寫 CloudWatch Logs、解析 `secrets` 欄位 ────────────────────
+# ── Execution role：ECS agent 用它 pull image、寫 CloudWatch Logs、在容器
+#    啟動時解析 `secrets` 欄位指向的 Secrets Manager 值 ─────────────────
 resource "aws_iam_role" "api_execution" {
   name = "durable-queue-api-execution"
 
@@ -86,10 +97,11 @@ resource "aws_iam_role_policy" "api_execution_secrets" {
 }
 
 
-# ── Task role：API 透過 tasks.execute_job.delay() 送出 Job，只准對
-#    celery 這一個佇列發布訊息（不含 Receive/Delete/ChangeVisibility ——
-#    那是 Worker 的權限，API 從不消費自己送出的訊息）不再依賴虛擬機的
-#    instance profile ──────────────────────────────────────────────────
+# ── Task role：API 透過 jobs.queue.enqueue_job() 送出 Job，只准對 Job 佇列
+#    發布訊息。boto3 拿著完整的佇列 URL 呼叫 SendMessage，不需要先解析名稱，
+#    所以沒有 GetQueueUrl / GetQueueAttributes / ListQueues；也沒有
+#    Receive/Delete/ChangeVisibility——那是 Worker 的權限，API 從不消費自己
+#    送出的訊息 ────────────────────────────────────────────────────────
 resource "aws_iam_role" "api_task" {
   name = "durable-queue-api-task"
 
@@ -104,35 +116,16 @@ resource "aws_iam_role" "api_task" {
 }
 
 resource "aws_iam_role_policy" "api_task_sqs" {
-  name = "publish-to-celery-queue"
+  name = "publish-to-job-queue"
   role = aws_iam_role.api_task.id
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "sqs:GetQueueUrl",
-          # kombu 發佈訊息前一定會呼叫 maybe_declare → queue_declare，內部
-          # 呼叫 GetQueueAttributes 查佇列狀態（實測過：沒這條，POST
-          # /api/jobs/ 直接 500，AccessDenied on sqs:getqueueattributes）。
-          # worker.tf 的 worker_task_sqs 本來就有這條（因為它還要
-          # ReceiveMessage 前查屬性），這裡漏掉是疏忽，不是刻意省略。
-          "sqs:GetQueueAttributes",
-          "sqs:SendMessage"
-        ]
-        Resource = aws_sqs_queue.celery.arn
-      },
-      {
-        # 跟 worker.tf 的 worker_task_sqs 同構、同一個理由：kombu 的 SQS
-        # transport 建連線一定會呼叫 ListQueues，帳號層級 API，不能綁在單一
-        # 佇列 ARN 上。
-        Effect   = "Allow"
-        Action   = "sqs:ListQueues"
-        Resource = "*"
-      }
-    ]
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "sqs:SendMessage"
+      Resource = aws_sqs_queue.jobs.arn
+    }]
   })
 }
 
@@ -214,8 +207,8 @@ resource "aws_ecs_service" "api" {
 # ---------------------------------------------------------------------
 # 修正既有的競爭條件：原本 migrate 塞在 API 的啟動指令裡，多個實例／滾動
 # 部署可能同時跑 migrate。這裡只註冊 task definition，不建 service——由
-# 部署流程在更新 api/worker service 之前，明確跑一次 `aws ecs run-task`
-# 並等它跑完。
+# 部署流程在更新 API service 與 Lambda function 之前，明確跑一次
+# `aws ecs run-task` 並等它跑完。
 # =====================================================================
 resource "aws_ecs_task_definition" "migrate" {
   family                   = "durable-queue-migrate"
