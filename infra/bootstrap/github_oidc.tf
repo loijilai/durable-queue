@@ -99,18 +99,21 @@ resource "aws_iam_role_policy" "github_actions" {
           # resource-level 限制（曾實測：綁定單一 log-group ARN 一樣被拒），
           # 只能放這裡跟其他 Describe* 一起用 Resource = "*"。
           "logs:DescribeLogGroups",
-          # 07 的 observability / autoscaling 資源在 refresh 階段要讀回自己的
-          # 現狀。這幾個同樣是帳號層級 API：CloudWatch 的 DescribeAlarms、
-          # ListDashboards 和 Application Auto Scaling 全系列都不支援
-          # resource-level 限制，只能用 Resource = "*"。
-          "cloudwatch:DescribeAlarms",
+          # observability 與 Lambda 資源在 refresh 階段要讀回自己的現狀。這幾個
+          # 同樣是帳號層級 API，不支援 resource-level 限制，只能用 Resource = "*"。
           "cloudwatch:GetDashboard",
           "cloudwatch:ListDashboards",
-          "cloudwatch:ListTagsForResource",
           "logs:DescribeMetricFilters",
-          "logs:DescribeQueryDefinitions",
-          "application-autoscaling:DescribeScalableTargets",
-          "application-autoscaling:DescribeScalingPolicies"
+          # Lambda 的讀取類 API 大多不支援 resource-level 限制（ListVersionsByFunction、
+          # GetEventSourceMapping 的資源是 mapping uuid，建立前不存在）。
+          "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
+          "lambda:GetFunctionCodeSigningConfig",
+          "lambda:ListVersionsByFunction",
+          "lambda:GetPolicy",
+          "lambda:ListTags",
+          "lambda:GetEventSourceMapping",
+          "lambda:ListEventSourceMappings"
         ]
         Resource = "*"
       },
@@ -246,11 +249,7 @@ resource "aws_iam_role_policy" "github_actions" {
           StringEquals = {
             "iam:AWSServiceName" = [
               "elasticloadbalancing.amazonaws.com",
-              "rds.amazonaws.com",
-              # 帳號裡第一次 RegisterScalableTarget 時，Application Auto
-              # Scaling 會順手建自己的 service-linked role；沒有這條會讓
-              # worker_autoscaling.tf 的第一次 apply 失敗。
-              "ecs.application-autoscaling.amazonaws.com"
+              "rds.amazonaws.com"
             ]
           }
         }
@@ -292,8 +291,8 @@ resource "aws_iam_role_policy" "github_actions" {
           "sqs:ListQueueTags"
         ]
         Resource = [
-          "arn:aws:sqs:ap-northeast-1:461346075470:celery",
-          "arn:aws:sqs:ap-northeast-1:461346075470:celery-dlq"
+          "arn:aws:sqs:ap-northeast-1:461346075470:durable-queue-jobs",
+          "arn:aws:sqs:ap-northeast-1:461346075470:durable-queue-jobs-dlq"
         ]
       },
       {
@@ -308,10 +307,10 @@ resource "aws_iam_role_policy" "github_actions" {
           "logs:ListTagsForResource",
           "logs:TagResource"
         ]
-        Resource = "arn:aws:logs:ap-northeast-1:461346075470:log-group:/ecs/durable-queue-worker*"
+        Resource = "arn:aws:logs:ap-northeast-1:461346075470:log-group:/aws/lambda/durable-queue-worker*"
       },
       {
-        Sid    = "TfWriteWorkerRoles"
+        Sid    = "TfWriteWorkerRole"
         Effect = "Allow"
         Action = [
           "iam:CreateRole",
@@ -323,22 +322,18 @@ resource "aws_iam_role_policy" "github_actions" {
           "iam:DetachRolePolicy",
           "iam:TagRole"
         ]
-        Resource = [
-          "arn:aws:iam::461346075470:role/durable-queue-worker-execution",
-          "arn:aws:iam::461346075470:role/durable-queue-worker-task"
-        ]
+        Resource = "arn:aws:iam::461346075470:role/durable-queue-worker"
       },
       {
-        Sid    = "TfPassWorkerRoles"
-        Effect = "Allow"
-        Action = "iam:PassRole"
-        Resource = [
-          "arn:aws:iam::461346075470:role/durable-queue-worker-execution",
-          "arn:aws:iam::461346075470:role/durable-queue-worker-task"
-        ]
+        # Worker 是 Lambda：建立/更新 function 時要把 execution role 交給
+        # Lambda 服務，所以 PassedToService 是 lambda，不是 ecs-tasks。
+        Sid      = "TfPassWorkerRole"
+        Effect   = "Allow"
+        Action   = "iam:PassRole"
+        Resource = "arn:aws:iam::461346075470:role/durable-queue-worker"
         Condition = {
           StringEquals = {
-            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+            "iam:PassedToService" = "lambda.amazonaws.com"
           }
         }
       },
@@ -389,7 +384,7 @@ resource "aws_iam_role_policy" "github_actions" {
         }
       },
       {
-        # 07：observability.tf 的 metric filter 把 worker 的結構化日誌轉成
+        # observability.tf 的 metric filter 把 Worker 的結構化日誌轉成
         # QueueWaitSeconds metric。metric filter 掛在 log group 底下，所以
         # 這裡沿用 TfWriteWorkerLogGroup 的 ARN 前綴收斂範圍。
         Sid    = "TfWriteWorkerMetricFilter"
@@ -398,34 +393,7 @@ resource "aws_iam_role_policy" "github_actions" {
           "logs:PutMetricFilter",
           "logs:DeleteMetricFilter"
         ]
-        Resource = "arn:aws:logs:ap-northeast-1:461346075470:log-group:/ecs/durable-queue-worker*"
-      },
-      {
-        # Logs Insights 的 saved query 不屬於任何 log group——實測 AWS 傳回的
-        # 拒絕訊息裡資源是空的 `log-group::log-stream:`，代表它不吃
-        # resource-level 限制，只能開 "*"。
-        Sid    = "TfWriteQueryDefinition"
-        Effect = "Allow"
-        Action = [
-          "logs:PutQueryDefinition",
-          "logs:DeleteQueryDefinition"
-        ]
-        Resource = "*"
-      },
-      {
-        # 07：observability.tf 的 alarm/dashboard 與 worker_autoscaling.tf 的
-        # step scaling。alarm 與 dashboard 收斂到 durable-queue 前綴；
-        # Application Auto Scaling 整組 API 都不支援 resource-level 限制
-        # （RegisterScalableTarget 的資源永遠是 scalable-target/*），只能開 "*"。
-        Sid    = "TfWriteScalingAndAlarms"
-        Effect = "Allow"
-        Action = [
-          "cloudwatch:PutMetricAlarm",
-          "cloudwatch:DeleteAlarms",
-          "cloudwatch:TagResource",
-          "cloudwatch:UntagResource"
-        ]
-        Resource = "arn:aws:cloudwatch:ap-northeast-1:461346075470:alarm:durable-queue-*"
+        Resource = "arn:aws:logs:ap-northeast-1:461346075470:log-group:/aws/lambda/durable-queue-worker*"
       },
       {
         Sid    = "TfWriteDashboard"
@@ -437,18 +405,38 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "arn:aws:cloudwatch::461346075470:dashboard/durable-queue"
       },
       {
-        Sid    = "TfWriteAutoscaling"
+        # Worker 的 Lambda function。UpdateFunctionCode 也是每次 deploy 都會
+        # 用到的常態權限：CD 在 migrate task 之後拿本次 image tag 更新它。
+        Sid    = "TfWriteWorkerFunction"
         Effect = "Allow"
         Action = [
-          "application-autoscaling:RegisterScalableTarget",
-          "application-autoscaling:DeregisterScalableTarget",
-          "application-autoscaling:PutScalingPolicy",
-          "application-autoscaling:DeleteScalingPolicy",
-          "application-autoscaling:TagResource",
-          "application-autoscaling:UntagResource",
-          "application-autoscaling:ListTagsForResource"
+          "lambda:CreateFunction",
+          "lambda:DeleteFunction",
+          "lambda:UpdateFunctionCode",
+          "lambda:UpdateFunctionConfiguration",
+          "lambda:TagResource",
+          "lambda:UntagResource",
+          "lambda:AddPermission",
+          "lambda:RemovePermission"
+        ]
+        Resource = "arn:aws:lambda:ap-northeast-1:461346075470:function:durable-queue-worker"
+      },
+      {
+        # Event source mapping：Job 佇列 → function。mapping 的 ARN 是建立時
+        # 才產生的 uuid，綁不住，只能用 "*"，改由條件限定它指向哪個 function。
+        Sid    = "TfWriteWorkerEventSourceMapping"
+        Effect = "Allow"
+        Action = [
+          "lambda:CreateEventSourceMapping",
+          "lambda:UpdateEventSourceMapping",
+          "lambda:DeleteEventSourceMapping"
         ]
         Resource = "*"
+        Condition = {
+          ArnEquals = {
+            "lambda:FunctionArn" = "arn:aws:lambda:ap-northeast-1:461346075470:function:durable-queue-worker"
+          }
+        }
       }
     ]
   })

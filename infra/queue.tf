@@ -1,35 +1,35 @@
 # =====================================================================
-# SQS：真實佇列與它的 dead-letter queue
+# SQS：Job 佇列與它的 dead-letter queue
 # ---------------------------------------------------------------------
-# 佇列名稱固定為 "celery"：這是 Celery 的預設 task_default_queue，應用
-# 程式從未自訂過，broker URL 也不帶佇列名稱 —— kombu 直接用這個名字呼叫
-# GetQueueUrl 解析佇列，所以名稱不能改，也不需要 predefined_queue_urls。
+# API 把 {"job_id": <id>} 送進這個佇列，event source mapping（worker.tf）
+# 把每一則訊息交給一次 Lambda invocation。名稱不再與任何函式庫綁定。
 # =====================================================================
 
-resource "aws_sqs_queue" "celery" {
-  name                       = "celery"
-  visibility_timeout_seconds = local.celery_visibility_timeout
+resource "aws_sqs_queue" "jobs" {
+  name = "durable-queue-jobs"
 
-  # maxReceiveCount 是基礎設施層的投遞次數上限，與應用層 tasks.py 的
-  # max_retries=3 是兩個獨立的計數器（ADR-0008）：應用層的 autoretry_for
-  # 重試會發出一則新訊息、ack 掉舊的，不會增加這個計數；只有 Worker 根本
-  # 沒機會執行到 except block 就死掉（OOM、被強制終止、卡死）時，同一則
-  # 訊息才會在這裡累加接收次數。5 給了「Worker 剛好在被替換」這種良性
-  # 重複一點餘裕，同時仍遠低於「毒訊息無限迴圈」。
+  # 函式最長就跑這麼久（worker.tf），訊息在它結束之前都不該被重送。取用同一個
+  # local 而不是各寫一個 900，兩者相等就不必靠註解維持。
+  visibility_timeout_seconds = local.worker_timeout_seconds
+
+  # 投遞次數上限，也是唯一的重試計數器——Celery 那層應用層重試已經不存在。
+  # 4 = 第一次加三次重試，與 handler 的 MAX_ATTEMPTS 相同，讓最後一次暫時性
+  # 失敗由 handler 記成 failed；只有 handler 根本沒機會記錄結果就死掉（OOM、
+  # 逾時、進程被殺）的訊息才會用完四次投遞落到 DLQ。
   redrive_policy = jsonencode({
-    deadLetterTargetArn = aws_sqs_queue.celery_dlq.arn
-    maxReceiveCount     = 5
+    deadLetterTargetArn = aws_sqs_queue.jobs_dlq.arn
+    maxReceiveCount     = 4
   })
 
-  tags = { Name = "durable-queue-celery" }
+  tags = { Name = "durable-queue-jobs" }
 }
 
-# DLQ：接住兩層重試都救不回來的訊息，不再消耗 Worker 容量。保留到 AWS
-# 上限的 14 天，讓一則死訊息有充分時間被人工檢視，而不是在下一次
+# DLQ：接住連 handler 都沒能記錄結果的訊息，不再消耗 Worker 容量。保留到
+# AWS 上限的 14 天，讓一則死訊息有充分時間被人工檢視，而不是在下一次
 # apply/destroy 循環前就默默消失。
-resource "aws_sqs_queue" "celery_dlq" {
-  name                      = "celery-dlq"
+resource "aws_sqs_queue" "jobs_dlq" {
+  name                      = "durable-queue-jobs-dlq"
   message_retention_seconds = 1209600
 
-  tags = { Name = "durable-queue-celery-dlq" }
+  tags = { Name = "durable-queue-jobs-dlq" }
 }
