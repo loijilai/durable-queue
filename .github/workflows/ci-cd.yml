@@ -138,8 +138,12 @@ jobs:
             exit 1
           fi
 
-      # force-new-deployment 只是排入滾動更新；service 本身的零停機保證
-      # 來自 infra/api.tf 的 deployment_minimum_healthy_percent 設定。
+      # Terraform 只註冊新的 task definition revision（service 忽略
+      # task_definition 的漂移，見 infra/api.tf 的 lifecycle），這一步才把
+      # service 換到最新 revision，所以滾動更新只有一輪，而且在 migrate 之後。
+      # 只給 family 名稱就是取最新的 ACTIVE revision。同一個 commit 重跑時
+      # revision 不變，ECS 不會重啟任務。零停機保證來自 infra/api.tf 的
+      # deployment_minimum_healthy_percent 設定。
       # `wait services-stable` 讓這步等到新任務全部通過 health check、
       # 舊任務下線為止，部署失敗（新任務一直起不來）才會讓這步逾時失敗。
       - name: Deploy API service
@@ -148,7 +152,7 @@ jobs:
             --region "$AWS_REGION" \
             --cluster durable-queue \
             --service durable-queue-api \
-            --force-new-deployment
+            --task-definition durable-queue-api >/dev/null
 
           aws ecs wait services-stable \
             --region "$AWS_REGION" \

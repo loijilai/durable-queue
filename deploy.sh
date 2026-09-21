@@ -50,10 +50,11 @@ EXIT_CODE="$(aws ecs describe-tasks --region "$REGION" --cluster "$ECS_CLUSTER" 
   --query 'tasks[0].containers[0].exitCode' --output text)"
 [ "$EXIT_CODE" = "0" ] || { echo "Migration task failed (exit code $EXIT_CODE)" >&2; exit 1; }
 
-# ── 5. 讓 api service 抓新 image ───────────────────────────────────────
+# ── 5. 讓 api service 換到 apply 註冊的最新 task definition revision
+#       （service 忽略 task_definition 的漂移，見 infra/api.tf 的 lifecycle）──
 aws ecs update-service --region "$REGION" \
   --cluster "$ECS_CLUSTER" --service durable-queue-api \
-  --force-new-deployment >/dev/null
+  --task-definition durable-queue-api >/dev/null
 
 # ── 6. Worker 是 Lambda：image_uri 的漂移由 Terraform 忽略，程式碼只在這裡
 #       更新（見 infra/worker.tf 的 lifecycle），順序在 migrate 之後 ────────

@@ -199,6 +199,18 @@ resource "aws_ecs_service" "api" {
   health_check_grace_period_seconds = 60
 
   depends_on = [aws_lb_listener.https]
+
+  # 與 Worker 的 image_uri 同一個理由（見 worker.tf）：apply 只註冊新的 task
+  # definition revision，不讓 service 換上去。否則 apply 會在 migrate task 之前
+  # 就開始滾動更新，新版 API 可能對著舊 schema 服務；部署流程的第二次
+  # update-service 也會讓滾動更新做兩輪。service 換到新 revision 只發生在部署
+  # 流程的 Deploy API service（ci-cd.yml 與 deploy.sh），順序在 migrate 之後。
+  #
+  # 代價與 Worker 相同：Terraform 不再收斂 API 跑的是哪個 revision，`terraform
+  # apply` 也不能用來回退它。
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }
 
 
