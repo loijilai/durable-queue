@@ -17,4 +17,4 @@ Status: done
 - [x] review 補上：手動 retry（`retry_job`）後重新計算執行次數。`worker_attempts_before_retry` 記下 retry 前的筆數，`worker_attempts` 保留完整歷史給 audit trail，handler 依 `attempts_since_retry` 判斷。
 - [x] visibility timeout 維持 900 秒，與 Lambda timeout 一致。
 - [x] `./scripts/verify.sh full` 通過。
-- [ ] 部署到正式環境後：ESM 的 `maximum_concurrency` 查得到 10、佇列的 redrive policy 查得到 `maxReceiveCount` 10；送出一份 Job 由 Lambda 執行至 succeeded，兩個 dashboard widget 皆有資料。
+- [x] 部署到正式環境後：ESM 的 `maximum_concurrency` 查得到 10、佇列的 redrive policy 查得到 `maxReceiveCount` 10；送出一份 Job 由 Lambda 執行至 succeeded，兩個 dashboard widget 皆有資料。
