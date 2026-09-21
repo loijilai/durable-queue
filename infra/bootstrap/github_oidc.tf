@@ -60,6 +60,18 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "arn:aws:ecr:ap-northeast-1:461346075470:repository/durable-queue"
       },
       {
+        # infra/worker.tf 的 aws_ecr_repository_policy.lambda_pull：讓 Lambda
+        # 服務能拉 Worker 的 image。repo 本身不歸 Terraform 管，只管它的 policy。
+        Sid    = "TfWriteEcrRepositoryPolicy"
+        Effect = "Allow"
+        Action = [
+          "ecr:GetRepositoryPolicy",
+          "ecr:SetRepositoryPolicy",
+          "ecr:DeleteRepositoryPolicy"
+        ]
+        Resource = "arn:aws:ecr:ap-northeast-1:461346075470:repository/durable-queue"
+      },
+      {
         Sid      = "TfStateList"
         Effect   = "Allow"
         Action   = "s3:ListBucket"

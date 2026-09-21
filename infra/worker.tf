@@ -129,6 +129,34 @@ resource "aws_iam_role_policy" "worker_secrets" {
 }
 
 
+# ── Image pull：Lambda 服務在建立與更新函式時要從 ECR 拉 image，repo 沒有允許
+#    它的 policy 時，Lambda 會試著自己寫一份，但那要求呼叫端（CD role）有
+#    SetRepositoryPolicy，而且寫出來的內容不在 Terraform 裡。所以明確宣告。
+#    repo 本身是 data source（見 shared.tf），但這份 policy 只在函式存在時
+#    才有意義，跟著這一層建立與刪除 ─────────────────────────────────────
+resource "aws_ecr_repository_policy" "lambda_pull" {
+  repository = data.aws_ecr_repository.registry.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "LambdaImagePull"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action = [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+      ]
+      Condition = {
+        StringLike = {
+          "aws:sourceArn" = "arn:aws:lambda:ap-northeast-1:461346075470:function:durable-queue-worker"
+        }
+      }
+    }]
+  })
+}
+
+
 # =====================================================================
 # Function
 # ---------------------------------------------------------------------
@@ -191,7 +219,7 @@ resource "aws_lambda_function" "worker" {
     }
   }
 
-  depends_on = [aws_cloudwatch_log_group.worker]
+  depends_on = [aws_cloudwatch_log_group.worker, aws_ecr_repository_policy.lambda_pull]
 
   # 部署順序的保證：terraform apply 跑在一次性 migrate task 之前，而改
   # image_uri 會讓 Lambda 立刻換程式碼——那就成了「Worker 跑在 schema 之前」。
