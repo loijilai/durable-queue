@@ -1,0 +1,627 @@
+[
+  {
+    "timestamp": "2026-09-21 06:26:06.145",
+    "job_id": "4",
+    "queue_wait_seconds": 0.074692
+  },
+  {
+    "timestamp": "2026-09-21 06:26:08.408",
+    "job_id": "3",
+    "queue_wait_seconds": 2.353798
+  },
+  {
+    "timestamp": "2026-09-21 06:26:08.431",
+    "job_id": "9",
+    "queue_wait_seconds": 2.218354
+  },
+  {
+    "timestamp": "2026-09-21 06:26:08.458",
+    "job_id": "10",
+    "queue_wait_seconds": 2.229711
+  },
+  {
+    "timestamp": "2026-09-21 06:26:08.541",
+    "job_id": "5",
+    "queue_wait_seconds": 2.420657
+  },
+  {
+    "timestamp": "2026-09-21 06:26:08.565",
+    "job_id": "8",
+    "queue_wait_seconds": 2.370626
+  },
+  {
+    "timestamp": "2026-09-21 06:26:08.574",
+    "job_id": "6",
+    "queue_wait_seconds": 2.418705
+  },
+  {
+    "timestamp": "2026-09-21 06:26:08.662",
+    "job_id": "15",
+    "queue_wait_seconds": 2.33317
+  },
+  {
+    "timestamp": "2026-09-21 06:26:08.735",
+    "job_id": "7",
+    "queue_wait_seconds": 2.579605
+  },
+  {
+    "timestamp": "2026-09-21 06:26:14.375",
+    "job_id": "22",
+    "queue_wait_seconds": 7.905302
+  },
+  {
+    "timestamp": "2026-09-21 06:26:31.997",
+    "job_id": "77",
+    "queue_wait_seconds": 24.228826
+  },
+  {
+    "timestamp": "2026-09-21 06:26:36.040",
+    "job_id": "28",
+    "queue_wait_seconds": 29.431456
+  },
+  {
+    "timestamp": "2026-09-21 06:26:39.185",
+    "job_id": "30",
+    "queue_wait_seconds": 32.543429
+  },
+  {
+    "timestamp": "2026-09-21 06:26:39.663",
+    "job_id": "81",
+    "queue_wait_seconds": 31.782088
+  },
+  {
+    "timestamp": "2026-09-21 06:26:39.989",
+    "job_id": "82",
+    "queue_wait_seconds": 32.098336
+  },
+  {
+    "timestamp": "2026-09-21 06:26:40.362",
+    "job_id": "32",
+    "queue_wait_seconds": 33.680277
+  },
+  {
+    "timestamp": "2026-09-21 06:26:40.368",
+    "job_id": "33",
+    "queue_wait_seconds": 33.65955
+  },
+  {
+    "timestamp": "2026-09-21 06:26:40.378",
+    "job_id": "87",
+    "queue_wait_seconds": 32.339793
+  },
+  {
+    "timestamp": "2026-09-21 06:26:40.387",
+    "job_id": "95",
+    "queue_wait_seconds": 32.122768
+  },
+  {
+    "timestamp": "2026-09-21 06:26:40.392",
+    "job_id": "103",
+    "queue_wait_seconds": 31.925093
+  },
+  {
+    "timestamp": "2026-09-21 06:26:56.554",
+    "job_id": "111",
+    "queue_wait_seconds": 47.849701
+  },
+  {
+    "timestamp": "2026-09-21 06:27:00.352",
+    "job_id": "183",
+    "queue_wait_seconds": 49.695289
+  },
+  {
+    "timestamp": "2026-09-21 06:27:03.310",
+    "job_id": "139",
+    "queue_wait_seconds": 53.794684
+  },
+  {
+    "timestamp": "2026-09-21 06:27:03.900",
+    "job_id": "93",
+    "queue_wait_seconds": 55.701337
+  },
+  {
+    "timestamp": "2026-09-21 06:27:04.222",
+    "job_id": "129",
+    "queue_wait_seconds": 54.987146
+  },
+  {
+    "timestamp": "2026-09-21 06:27:04.541",
+    "job_id": "83",
+    "queue_wait_seconds": 56.608682
+  },
+  {
+    "timestamp": "2026-09-21 06:27:04.642",
+    "job_id": "170",
+    "queue_wait_seconds": 54.339036
+  },
+  {
+    "timestamp": "2026-09-21 06:27:04.667",
+    "job_id": "138",
+    "queue_wait_seconds": 55.202184
+  },
+  {
+    "timestamp": "2026-09-21 06:27:04.829",
+    "job_id": "105",
+    "queue_wait_seconds": 56.287451
+  },
+  {
+    "timestamp": "2026-09-21 06:27:05.123",
+    "job_id": "212",
+    "queue_wait_seconds": 53.623473
+  },
+  {
+    "timestamp": "2026-09-21 06:27:20.658",
+    "job_id": "134",
+    "queue_wait_seconds": 71.280823
+  },
+  {
+    "timestamp": "2026-09-21 06:27:27.156",
+    "job_id": "149",
+    "queue_wait_seconds": 77.387137
+  },
+  {
+    "timestamp": "2026-09-21 06:27:29.303",
+    "job_id": "151",
+    "queue_wait_seconds": 79.481424
+  },
+  {
+    "timestamp": "2026-09-21 06:27:30.248",
+    "job_id": "145",
+    "queue_wait_seconds": 80.579304
+  },
+  {
+    "timestamp": "2026-09-21 06:27:30.420",
+    "job_id": "153",
+    "queue_wait_seconds": 80.545321
+  },
+  {
+    "timestamp": "2026-09-21 06:27:30.791",
+    "job_id": "150",
+    "queue_wait_seconds": 81.008753
+  },
+  {
+    "timestamp": "2026-09-21 06:27:30.929",
+    "job_id": "155",
+    "queue_wait_seconds": 81.013085
+  },
+  {
+    "timestamp": "2026-09-21 06:27:31.075",
+    "job_id": "160",
+    "queue_wait_seconds": 81.026341
+  },
+  {
+    "timestamp": "2026-09-21 06:27:31.096",
+    "job_id": "188",
+    "queue_wait_seconds": 80.2805
+  },
+  {
+    "timestamp": "2026-09-21 06:27:31.199",
+    "job_id": "194",
+    "queue_wait_seconds": 80.209218
+  },
+  {
+    "timestamp": "2026-09-21 06:27:46.889",
+    "job_id": "238",
+    "queue_wait_seconds": 94.634454
+  },
+  {
+    "timestamp": "2026-09-21 06:27:51.205",
+    "job_id": "248",
+    "queue_wait_seconds": 98.393617
+  },
+  {
+    "timestamp": "2026-09-21 06:41:14.885",
+    "job_id": "24",
+    "queue_wait_seconds": 908.362253
+  },
+  {
+    "timestamp": "2026-09-21 06:41:15.063",
+    "job_id": "31",
+    "queue_wait_seconds": 908.38785
+  },
+  {
+    "timestamp": "2026-09-21 06:41:15.842",
+    "job_id": "35",
+    "queue_wait_seconds": 909.098787
+  },
+  {
+    "timestamp": "2026-09-21 06:41:16.375",
+    "job_id": "11",
+    "queue_wait_seconds": 910.11251
+  },
+  {
+    "timestamp": "2026-09-21 06:41:16.530",
+    "job_id": "12",
+    "queue_wait_seconds": 910.263782
+  },
+  {
+    "timestamp": "2026-09-21 06:41:17.875",
+    "job_id": "27",
+    "queue_wait_seconds": 911.299653
+  },
+  {
+    "timestamp": "2026-09-21 06:41:18.265",
+    "job_id": "13",
+    "queue_wait_seconds": 911.968974
+  },
+  {
+    "timestamp": "2026-09-21 06:41:18.605",
+    "job_id": "23",
+    "queue_wait_seconds": 912.100287
+  },
+  {
+    "timestamp": "2026-09-21 06:41:18.711",
+    "job_id": "16",
+    "queue_wait_seconds": 912.346645
+  },
+  {
+    "timestamp": "2026-09-21 06:41:18.827",
+    "job_id": "29",
+    "queue_wait_seconds": 912.196742
+  },
+  {
+    "timestamp": "2026-09-21 06:41:40.398",
+    "job_id": "131",
+    "queue_wait_seconds": 931.121075
+  },
+  {
+    "timestamp": "2026-09-21 06:41:40.402",
+    "job_id": "84",
+    "queue_wait_seconds": 932.460461
+  },
+  {
+    "timestamp": "2026-09-21 06:41:40.417",
+    "job_id": "34",
+    "queue_wait_seconds": 933.683669
+  },
+  {
+    "timestamp": "2026-09-21 06:41:40.418",
+    "job_id": "88",
+    "queue_wait_seconds": 932.356874
+  },
+  {
+    "timestamp": "2026-09-21 06:41:40.635",
+    "job_id": "96",
+    "queue_wait_seconds": 932.35017
+  },
+  {
+    "timestamp": "2026-09-21 06:41:42.239",
+    "job_id": "99",
+    "queue_wait_seconds": 933.869023
+  },
+  {
+    "timestamp": "2026-09-21 06:41:43.493",
+    "job_id": "94",
+    "queue_wait_seconds": 935.261062
+  },
+  {
+    "timestamp": "2026-09-21 06:41:43.512",
+    "job_id": "92",
+    "queue_wait_seconds": 935.333234
+  },
+  {
+    "timestamp": "2026-09-21 06:41:43.998",
+    "job_id": "44",
+    "queue_wait_seconds": 937.058355
+  },
+  {
+    "timestamp": "2026-09-21 06:41:44.944",
+    "job_id": "100",
+    "queue_wait_seconds": 936.553225
+  },
+  {
+    "timestamp": "2026-09-21 06:42:04.457",
+    "job_id": "137",
+    "queue_wait_seconds": 955.013006
+  },
+  {
+    "timestamp": "2026-09-21 06:42:04.955",
+    "job_id": "122",
+    "queue_wait_seconds": 955.907041
+  },
+  {
+    "timestamp": "2026-09-21 06:42:05.372",
+    "job_id": "221",
+    "queue_wait_seconds": 953.628826
+  },
+  {
+    "timestamp": "2026-09-21 06:42:05.611",
+    "job_id": "229",
+    "queue_wait_seconds": 953.624467
+  },
+  {
+    "timestamp": "2026-09-21 06:42:05.908",
+    "job_id": "148",
+    "queue_wait_seconds": 956.15987
+  },
+  {
+    "timestamp": "2026-09-21 06:42:06.291",
+    "job_id": "116",
+    "queue_wait_seconds": 957.4118
+  },
+  {
+    "timestamp": "2026-09-21 06:42:07.521",
+    "job_id": "141",
+    "queue_wait_seconds": 957.955261
+  },
+  {
+    "timestamp": "2026-09-21 06:42:09.749",
+    "job_id": "89",
+    "queue_wait_seconds": 961.644955
+  },
+  {
+    "timestamp": "2026-09-21 06:42:10.234",
+    "job_id": "179",
+    "queue_wait_seconds": 959.649712
+  },
+  {
+    "timestamp": "2026-09-21 06:42:11.963",
+    "job_id": "176",
+    "queue_wait_seconds": 961.500375
+  },
+  {
+    "timestamp": "2026-09-21 06:42:29.402",
+    "job_id": "167",
+    "queue_wait_seconds": 979.152432
+  },
+  {
+    "timestamp": "2026-09-21 06:42:31.215",
+    "job_id": "169",
+    "queue_wait_seconds": 980.929065
+  },
+  {
+    "timestamp": "2026-09-21 06:42:31.293",
+    "job_id": "211",
+    "queue_wait_seconds": 979.823499
+  },
+  {
+    "timestamp": "2026-09-21 06:42:31.378",
+    "job_id": "162",
+    "queue_wait_seconds": 981.280825
+  },
+  {
+    "timestamp": "2026-09-21 06:42:31.412",
+    "job_id": "168",
+    "queue_wait_seconds": 981.161471
+  },
+  {
+    "timestamp": "2026-09-21 06:42:31.443",
+    "job_id": "213",
+    "queue_wait_seconds": 979.92063
+  },
+  {
+    "timestamp": "2026-09-21 06:42:31.725",
+    "job_id": "175",
+    "queue_wait_seconds": 981.277143
+  },
+  {
+    "timestamp": "2026-09-21 06:42:34.120",
+    "job_id": "208",
+    "queue_wait_seconds": 982.719744
+  },
+  {
+    "timestamp": "2026-09-21 06:42:34.480",
+    "job_id": "198",
+    "queue_wait_seconds": 983.384771
+  },
+  {
+    "timestamp": "2026-09-21 06:42:36.043",
+    "job_id": "186",
+    "queue_wait_seconds": 985.268258
+  },
+  {
+    "timestamp": "2026-09-21 06:42:53.431",
+    "job_id": "232",
+    "queue_wait_seconds": 1001.333595
+  },
+  {
+    "timestamp": "2026-09-21 06:42:55.449",
+    "job_id": "247",
+    "queue_wait_seconds": 1002.687997
+  },
+  {
+    "timestamp": "2026-09-21 06:42:58.512",
+    "job_id": "236",
+    "queue_wait_seconds": 1006.308772
+  },
+  {
+    "timestamp": "2026-09-21 06:56:18.776",
+    "job_id": "37",
+    "queue_wait_seconds": 1811.991933
+  },
+  {
+    "timestamp": "2026-09-21 06:56:18.809",
+    "job_id": "36",
+    "queue_wait_seconds": 1812.031556
+  },
+  {
+    "timestamp": "2026-09-21 06:56:18.820",
+    "job_id": "38",
+    "queue_wait_seconds": 1812.008204
+  },
+  {
+    "timestamp": "2026-09-21 06:56:18.907",
+    "job_id": "18",
+    "queue_wait_seconds": 1812.508198
+  },
+  {
+    "timestamp": "2026-09-21 06:56:19.021",
+    "job_id": "41",
+    "queue_wait_seconds": 1812.141636
+  },
+  {
+    "timestamp": "2026-09-21 06:56:24.666",
+    "job_id": "20",
+    "queue_wait_seconds": 1818.233996
+  },
+  {
+    "timestamp": "2026-09-21 06:56:25.184",
+    "job_id": "48",
+    "queue_wait_seconds": 1818.162324
+  },
+  {
+    "timestamp": "2026-09-21 06:56:25.350",
+    "job_id": "45",
+    "queue_wait_seconds": 1818.40071
+  },
+  {
+    "timestamp": "2026-09-21 06:56:26.061",
+    "job_id": "39",
+    "queue_wait_seconds": 1819.225382
+  },
+  {
+    "timestamp": "2026-09-21 06:56:26.820",
+    "job_id": "53",
+    "queue_wait_seconds": 1819.697974
+  },
+  {
+    "timestamp": "2026-09-21 06:56:45.422",
+    "job_id": "54",
+    "queue_wait_seconds": 1838.271091
+  },
+  {
+    "timestamp": "2026-09-21 06:56:45.682",
+    "job_id": "47",
+    "queue_wait_seconds": 1838.69027
+  },
+  {
+    "timestamp": "2026-09-21 06:56:45.795",
+    "job_id": "107",
+    "queue_wait_seconds": 1837.19723
+  },
+  {
+    "timestamp": "2026-09-21 06:56:46.074",
+    "job_id": "120",
+    "queue_wait_seconds": 1837.079684
+  },
+  {
+    "timestamp": "2026-09-21 06:56:46.294",
+    "job_id": "144",
+    "queue_wait_seconds": 1836.676763
+  },
+  {
+    "timestamp": "2026-09-21 06:56:49.967",
+    "job_id": "157",
+    "queue_wait_seconds": 1839.991966
+  },
+  {
+    "timestamp": "2026-09-21 06:56:51.613",
+    "job_id": "123",
+    "queue_wait_seconds": 1842.546319
+  },
+  {
+    "timestamp": "2026-09-21 06:56:51.878",
+    "job_id": "126",
+    "queue_wait_seconds": 1842.726722
+  },
+  {
+    "timestamp": "2026-09-21 06:56:52.367",
+    "job_id": "135",
+    "queue_wait_seconds": 1842.957248
+  },
+  {
+    "timestamp": "2026-09-21 06:56:52.511",
+    "job_id": "98",
+    "queue_wait_seconds": 1844.17401
+  },
+  {
+    "timestamp": "2026-09-21 06:57:09.471",
+    "job_id": "195",
+    "queue_wait_seconds": 1858.474595
+  },
+  {
+    "timestamp": "2026-09-21 06:57:09.716",
+    "job_id": "164",
+    "queue_wait_seconds": 1859.565997
+  },
+  {
+    "timestamp": "2026-09-21 06:57:10.115",
+    "job_id": "202",
+    "queue_wait_seconds": 1858.882447
+  },
+  {
+    "timestamp": "2026-09-21 06:57:12.145",
+    "job_id": "154",
+    "queue_wait_seconds": 1862.263032
+  },
+  {
+    "timestamp": "2026-09-21 06:57:13.263",
+    "job_id": "191",
+    "queue_wait_seconds": 1862.365969
+  },
+  {
+    "timestamp": "2026-09-21 06:57:13.999",
+    "job_id": "117",
+    "queue_wait_seconds": 1865.10907
+  },
+  {
+    "timestamp": "2026-09-21 06:57:15.641",
+    "job_id": "159",
+    "queue_wait_seconds": 1865.600848
+  },
+  {
+    "timestamp": "2026-09-21 06:57:16.391",
+    "job_id": "214",
+    "queue_wait_seconds": 1864.824202
+  },
+  {
+    "timestamp": "2026-09-21 06:57:17.007",
+    "job_id": "104",
+    "queue_wait_seconds": 1868.512431
+  },
+  {
+    "timestamp": "2026-09-21 06:57:17.845",
+    "job_id": "108",
+    "queue_wait_seconds": 1869.200669
+  },
+  {
+    "timestamp": "2026-09-21 06:57:34.156",
+    "job_id": "205",
+    "queue_wait_seconds": 1882.848476
+  },
+  {
+    "timestamp": "2026-09-21 06:57:34.214",
+    "job_id": "209",
+    "queue_wait_seconds": 1882.797024
+  },
+  {
+    "timestamp": "2026-09-21 06:57:34.770",
+    "job_id": "181",
+    "queue_wait_seconds": 1884.153554
+  },
+  {
+    "timestamp": "2026-09-21 06:57:36.940",
+    "job_id": "189",
+    "queue_wait_seconds": 1886.114412
+  },
+  {
+    "timestamp": "2026-09-21 06:57:37.350",
+    "job_id": "219",
+    "queue_wait_seconds": 1885.658692
+  },
+  {
+    "timestamp": "2026-09-21 06:57:38.171",
+    "job_id": "200",
+    "queue_wait_seconds": 1887.000779
+  },
+  {
+    "timestamp": "2026-09-21 06:57:40.305",
+    "job_id": "235",
+    "queue_wait_seconds": 1888.148537
+  },
+  {
+    "timestamp": "2026-09-21 06:57:40.851",
+    "job_id": "206",
+    "queue_wait_seconds": 1889.512665
+  },
+  {
+    "timestamp": "2026-09-21 06:57:41.513",
+    "job_id": "239",
+    "queue_wait_seconds": 1889.203894
+  },
+  {
+    "timestamp": "2026-09-21 06:57:42.557",
+    "job_id": "207",
+    "queue_wait_seconds": 1891.192257
+  }
+]

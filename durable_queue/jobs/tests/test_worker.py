@@ -8,6 +8,7 @@ from django.test import TestCase, override_settings
 
 from durable_queue.logging_context import JobIdFilter
 from jobs.models import TranscriptionJob
+from jobs.services import retry_job
 from jobs.transcribers import InvalidMediaError, TranscriptionTimeoutError
 from jobs.worker import handler
 
@@ -52,6 +53,12 @@ class WorkerHandlerTests(TestCase):
             owner=self.user, video_url=self.VALID_URL, status=status, **fields
         )
 
+    def prior_attempts(self, count):
+        """worker_attempts entries left by earlier executions of the same Job."""
+        return [
+            {"host": "worker-host", "at": "2026-01-01T00:00:00+00:00"}
+        ] * count
+
     def test_successful_transcription_marks_job_succeeded(self):
         # Arrange
         job = self.make_job()
@@ -71,7 +78,7 @@ class WorkerHandlerTests(TestCase):
         job = self.make_job()
 
         # Act: returns normally, no exception
-        handler(sqs_event(job.id, receive_count=1), None)
+        handler(sqs_event(job.id), None)
 
         # Assert
         job.refresh_from_db()
@@ -85,9 +92,12 @@ class WorkerHandlerTests(TestCase):
         raise so the message is not deleted."""
         for error_type in (TranscriptionTimeoutError, ConnectionError, TimeoutError):
             with self.subTest(error_type=error_type.__name__):
-                # Arrange
+                # Arrange: this delivery is the second execution
                 self.sqs.reset_mock()
-                job = self.make_job()
+                job = self.make_job(
+                    status=TranscriptionJob.RUNNING,
+                    worker_attempts=self.prior_attempts(1),
+                )
 
                 # Act
                 with patch(
@@ -95,10 +105,7 @@ class WorkerHandlerTests(TestCase):
                     side_effect=error_type(self.ERROR),
                 ):
                     with self.assertRaises(error_type):
-                        handler(
-                            sqs_event(job.id, receive_count=2, receipt_handle="rh-2"),
-                            None,
-                        )
+                        handler(sqs_event(job.id, receipt_handle="rh-2"), None)
 
                 # Assert
                 job.refresh_from_db()
@@ -108,29 +115,80 @@ class WorkerHandlerTests(TestCase):
                 self.assertEqual(kwargs["QueueUrl"], QUEUE_URL)
                 self.assertEqual(kwargs["ReceiptHandle"], "rh-2")
                 self.assertIsInstance(kwargs["VisibilityTimeout"], int)
-                # receive count 2 -> ceiling 60s; equal jitter never retries immediately
+                # attempt 2 -> ceiling 60s; equal jitter never retries immediately
                 self.assertGreaterEqual(kwargs["VisibilityTimeout"], 30)
-                self.assertLessEqual(kwargs["VisibilityTimeout"], 300)
+                self.assertLessEqual(kwargs["VisibilityTimeout"], 60)
+
+    @patch(
+        "jobs.transcribers.fake_transcribe",
+        side_effect=TranscriptionTimeoutError(ERROR),
+    )
+    def test_high_receive_count_does_not_consume_attempts(self, mock_transcribe):
+        """Deliveries spent waiting for capacity (throttled invocations, expired
+        visibility) are not executions, so they never make an attempt the last one."""
+        # Arrange: delivered many times, but executed only once before
+        job = self.make_job(
+            status=TranscriptionJob.RUNNING, worker_attempts=self.prior_attempts(1)
+        )
+
+        # Act
+        with self.assertRaises(TranscriptionTimeoutError):
+            handler(sqs_event(job.id, receive_count=9), None)
+
+        # Assert
+        job.refresh_from_db()
+        self.assertEqual(job.status, TranscriptionJob.RUNNING)
+        self.assertEqual(len(job.worker_attempts), 2)
+        self.sqs.change_message_visibility.assert_called_once()
 
     @patch(
         "jobs.transcribers.fake_transcribe",
         side_effect=TranscriptionTimeoutError(ERROR),
     )
     def test_transient_error_on_last_attempt_fails_job(self, mock_transcribe):
-        """Fourth delivery still fails: the handler records failed rather than the
-        message silently moving to the DLQ."""
-        # Arrange
-        job = self.make_job(status=TranscriptionJob.RUNNING)
+        """Fourth execution still fails: the handler records failed rather than the
+        message cycling on toward the DLQ."""
+        # Arrange: three earlier executions; this delivery arrives with a low
+        # receive count so only the execution count can make it the last attempt
+        job = self.make_job(
+            status=TranscriptionJob.RUNNING, worker_attempts=self.prior_attempts(3)
+        )
 
         # Act: returns normally
-        handler(sqs_event(job.id, receive_count=4), None)
+        handler(sqs_event(job.id), None)
 
         # Assert
         job.refresh_from_db()
         self.assertEqual(job.status, TranscriptionJob.FAILED)
         self.assertEqual(job.error, self.ERROR)
         self.assertIsNotNone(job.finished_at)
+        self.assertEqual(len(job.worker_attempts), 4)
         self.sqs.change_message_visibility.assert_not_called()
+
+    @patch(
+        "jobs.transcribers.fake_transcribe",
+        side_effect=TranscriptionTimeoutError(ERROR),
+    )
+    def test_manual_retry_starts_a_fresh_attempt_budget(self, mock_transcribe):
+        """Executions before a manual retry stay in the audit trail but no longer
+        count toward MAX_ATTEMPTS."""
+        # Arrange: a Job that used up all its attempts, then retried by its owner
+        job = self.make_job(
+            status=TranscriptionJob.FAILED,
+            error=self.ERROR,
+            worker_attempts=self.prior_attempts(4),
+        )
+        retry_job(job.id)
+
+        # Act
+        with self.assertRaises(TranscriptionTimeoutError):
+            handler(sqs_event(job.id), None)
+
+        # Assert
+        job.refresh_from_db()
+        self.assertEqual(job.status, TranscriptionJob.RUNNING)
+        self.assertEqual(len(job.worker_attempts), 5)
+        self.sqs.change_message_visibility.assert_called_once()
 
     def test_redelivery_to_terminal_job_has_no_effect(self):
         """Redelivery to a terminal Job: no re-transcription, no overwritten result."""
@@ -144,7 +202,7 @@ class WorkerHandlerTests(TestCase):
 
                 # Act
                 with patch("jobs.transcribers.fake_transcribe") as mock_transcribe:
-                    handler(sqs_event(job.id, receive_count=2), None)
+                    handler(sqs_event(job.id), None)
 
                 # Assert
                 mock_transcribe.assert_not_called()
@@ -212,7 +270,7 @@ class WorkerHandlerTests(TestCase):
         job = self.make_job()
 
         # Act
-        handler(sqs_event(job.id, receive_count=1), None)
+        handler(sqs_event(job.id), None)
 
         # Assert
         job.refresh_from_db()

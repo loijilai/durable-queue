@@ -74,6 +74,7 @@ def retry_job(job_id):
         job.status = TranscriptionJob.PENDING
         job.error = None
         job.finished_at = None
+        job.worker_attempts_before_retry = len(job.worker_attempts)
         job.save()
 
     return job

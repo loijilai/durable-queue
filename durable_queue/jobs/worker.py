@@ -20,9 +20,11 @@ from jobs.transcribers import (
 logger = logging.getLogger(__name__)
 
 TRANSIENT_ERRORS = (TranscriptionRetryableError, ConnectionError, TimeoutError)
-# The first attempt plus three retries. Must equal the queue's maxReceiveCount,
-# so the last transient failure is recorded as failed by the handler instead
-# of the message silently moving to the DLQ.
+# The first attempt plus three retries, counted as executions since the last
+# manual retry (TranscriptionJob.attempts_since_retry), not SQS deliveries: a
+# delivery that waited for capacity, or was throttled, never ran the Job and
+# must not spend a retry. The queue's maxReceiveCount sits above this, so the
+# DLQ only catches messages the handler never managed to record a result for.
 MAX_ATTEMPTS = 4
 BACKOFF_BASE_SECONDS = 30
 BACKOFF_CAP_SECONDS = 300
@@ -49,28 +51,27 @@ def _fail(job_id, exc):
     )
 
 
-def _backoff_seconds(receive_count):
+def _backoff_seconds(attempt):
     """Exponential backoff with equal jitter: at least half the ceiling, so a
     retry is never immediate, and capped far below the queue's visibility timeout."""
-    ceiling = min(BACKOFF_CAP_SECONDS, BACKOFF_BASE_SECONDS * 2 ** (receive_count - 1))
+    ceiling = min(BACKOFF_CAP_SECONDS, BACKOFF_BASE_SECONDS * 2 ** (attempt - 1))
     return ceiling // 2 + random.randint(0, ceiling // 2)
 
 
 def handler(event, context):
     [record] = event["Records"]
     job_id = json.loads(record["body"])["job_id"]
-    receive_count = int(record["attributes"]["ApproximateReceiveCount"])
 
     # Every log line during execution carries the job id. A warm Lambda reuses the
     # process, so the id must be cleared when the invocation ends.
     token = job_id_var.set(job_id)
     try:
-        _execute(record, job_id, receive_count)
+        _execute(record, job_id)
     finally:
         job_id_var.reset(token)
 
 
-def _execute(record, job_id, receive_count):
+def _execute(record, job_id):
     job = mark_running(job_id)
     if job is None:
         return
@@ -80,18 +81,20 @@ def _execute(record, job_id, receive_count):
         "job picked up by worker",
         extra={"queue_wait_seconds": (timezone.now() - job.created_at).total_seconds()},
     )
+    # mark_running has just recorded this execution.
+    attempt = job.attempts_since_retry
     try:
         transcript = get_transcriber()(job.video_url)
     except TRANSIENT_ERRORS as exc:
-        if receive_count >= MAX_ATTEMPTS:
+        if attempt >= MAX_ATTEMPTS:
             _fail(job.id, exc)
             return
         # Keep the message: shorten its visibility so SQS redelivers it after the
-        # backoff. The receive count is the retry counter.
+        # backoff.
         queue.sqs_client().change_message_visibility(
             QueueUrl=queue.job_queue_url(),
             ReceiptHandle=record["receiptHandle"],
-            VisibilityTimeout=_backoff_seconds(receive_count),
+            VisibilityTimeout=_backoff_seconds(attempt),
         )
         raise
     except Exception as exc:

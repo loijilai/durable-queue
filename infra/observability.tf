@@ -37,12 +37,21 @@ locals {
 
 
 # =====================================================================
-# 單一 dashboard、單一 widget：四條線同一時間軸
+# 單一 dashboard、兩個上下對齊的 widget
 # ---------------------------------------------------------------------
-# 左軸放三個計數、右軸放 Queue Wait 的秒數，才能做「容量變化有沒有真的影響
-# 等待時間」的因果推論。「Backlog 大於零而 Worker Count 為零」是系統停擺的
-# 辨識特徵，兩個計數都在這裡。
+# 上面是佇列這一側：Backlog 與已被 ESM 領走的訊息數。下面是執行這一側：
+# Worker Count 與 Queue Wait（右軸）。兩個 widget 同寬、同 period、同一個
+# dashboard 時間範圍，上下對照即可做「容量變化有沒有真的影響等待時間」的因果
+# 推論。「Backlog 大於零而 Worker Count 為零」是系統停擺的辨識特徵。
+#
+# 被領走的訊息不等於執行中的 Job：invocation 被 throttle 時，訊息照樣算在
+# NotVisible 裡直到 visibility timeout 到期，所以它不叫 In-flight Jobs。
 # =====================================================================
+locals {
+  dashboard_region = "ap-northeast-1"
+  dashboard_period = 60
+}
+
 resource "aws_cloudwatch_dashboard" "main" {
   dashboard_name = "durable-queue"
 
@@ -55,17 +64,35 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 24
         height = 8
         properties = {
-          title  = "Backlog / In-flight Jobs / Worker Count / Queue Wait"
+          title  = "Backlog / Received by poller"
           view   = "timeSeries"
-          region = "ap-northeast-1"
-          period = 60
+          region = local.dashboard_region
+          period = local.dashboard_period
           metrics = [
             ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", aws_sqs_queue.jobs.name,
-              { label = "Backlog", stat = "Maximum", yAxis = "left" }
+              { label = "Backlog", stat = "Maximum" }
             ],
             ["AWS/SQS", "ApproximateNumberOfMessagesNotVisible", "QueueName", aws_sqs_queue.jobs.name,
-              { label = "In-flight Jobs", stat = "Maximum", yAxis = "left" }
+              { label = "Received by poller", stat = "Maximum" }
             ],
+          ]
+          yAxis = {
+            left = { label = "messages", min = 0 }
+          }
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 8
+        width  = 24
+        height = 8
+        properties = {
+          title  = "Worker Count / Queue Wait"
+          view   = "timeSeries"
+          region = local.dashboard_region
+          period = local.dashboard_period
+          metrics = [
             # 一次 invocation 就是一個 Worker（ESM batch_size = 1），所以同時
             # 執行數就是 Worker 數量，也是看得出有沒有打到 Scaling Ceiling 的線。
             ["AWS/Lambda", "ConcurrentExecutions", "FunctionName", aws_lambda_function.worker.function_name,
@@ -76,7 +103,7 @@ resource "aws_cloudwatch_dashboard" "main" {
             ],
           ]
           yAxis = {
-            left  = { label = "count", min = 0 }
+            left  = { label = "workers", min = 0 }
             right = { label = "seconds", min = 0 }
           }
         }
