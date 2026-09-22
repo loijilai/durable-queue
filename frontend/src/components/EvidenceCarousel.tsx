@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent, type ReactNode } from "react";
+import { useState, type KeyboardEvent } from "react";
 
 /* 一疊截圖，一次只露出一張。證據攤開來排會把頁面拉得比它們撐起的宣稱還長；
    疊起來則是每一張都拿到整個版面的寬度。
@@ -11,8 +11,6 @@ import { useState, type KeyboardEvent, type ReactNode } from "react";
 export type EvidenceSlide = {
   src: string;
   alt: string;
-  /* 圖說可以是一段話，也可以是帶粗體標出線名的段落。 */
-  caption: ReactNode;
 };
 
 function EvidenceCarousel({
@@ -90,11 +88,6 @@ function EvidenceCarousel({
           />
         ))}
       </div>
-
-      {/* 圖換了，圖說也換 —— 讀螢幕的人要聽得到這件事，所以這一塊是 live 的。 */}
-      <figcaption className="ev-caption" aria-live="polite">
-        {slides[index].caption}
-      </figcaption>
     </figure>
   );
 }

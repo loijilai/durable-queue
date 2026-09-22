@@ -2760,55 +2760,6 @@ a {
   }
 }
 
-/* 證據區的數字卡：一張卡一個數字，標籤在上、數字在中、一行註解在下。
-   底色用 canvas-lifted 而不是白，才能在白色卡片裡浮出來又不需要陰影。 */
-.scl-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
-  gap: 12px;
-  margin: 0;
-}
-
-/* 每張卡跨三列並沿用外層的列（subgrid）：標籤有的一行、有的兩行，
-   數字仍然對齊在同一條水平線上。 */
-.scl-stat {
-  display: grid;
-  grid-row: span 3;
-  grid-template-rows: subgrid;
-  row-gap: 6px;
-  padding: 16px;
-  border-radius: 12px;
-  background: var(--canvas-lifted);
-  border: 1px solid var(--dust);
-}
-
-.scl-stat dt {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--slate);
-}
-
-.scl-stat dd {
-  margin: 0;
-}
-
-.scl-stat-value {
-  font-size: 28px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.scl-stat-note {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--charcoal);
-}
-
 /* ── 證據：burst 實驗的截圖（EvidenceCarousel） ────────────────
    截圖是原圖照放，所以版面只能繞著它走：不裁、不套濾鏡。框吃固定比例、
    圖用 contain 擺進去 —— 換頁時版面不動，是這一疊看起來像同一疊的唯一
@@ -2916,16 +2867,6 @@ a {
 
 .ev-dot.is-current {
   background: var(--signal-orange);
-}
-
-/* 圖說會隨著圖換掉，長短不一 —— 給一個下限，換頁時底下的東西才不會跳。 */
-.ev-caption {
-  min-height: 108px;
-  margin-top: 12px;
-  max-width: 68ch;
-  color: var(--charcoal);
-  font-size: 15px;
-  line-height: 1.65;
 }
 
 /* ── Site footer（DESIGN.md §4 Footer） ───────────────────────── */
