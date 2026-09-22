@@ -1,20 +1,18 @@
 import { useState } from "react";
+import LensFigure, { type Lens } from "../components/LensFigure.tsx";
+import {
+  SectionHead,
+  SectionSpine,
+  type SpineSection,
+} from "../components/SectionSpine.tsx";
 
 // =====================================================================
-// 全頁的組織原則：攻擊者進得來的三條路——公開網路、部署管線、一個合法
-// 帳號——各由一種控制關上。三節的存在是被這三條路決定的，不是隨便切的。
+// 全頁的組織原則：攻擊者進得來的兩條路——公開網路、一個合法帳號——各由一種
+// 控制關上。部署管線那一條搬到了 Appendix（不在主路線上，被問到再翻）。
 // 每一節：主題（h2）→ 證據（圖 / 表 / 可跑的東西）。
 // =====================================================================
 
-// 一份資料同時餵給上方導覽 tile 和各節標題——導覽和內文因此不可能對不上。
-interface Layer {
-  id: string;
-  index: string;
-  tier: string;
-  title: string;
-}
-
-const LAYERS: Layer[] = [
+const LAYERS: SpineSection[] = [
   {
     id: "infra",
     index: "01",
@@ -22,14 +20,8 @@ const LAYERS: Layer[] = [
     title: "Network Isolation & Security Group",
   },
   {
-    id: "cicd",
-    index: "02",
-    tier: "CI/CD",
-    title: "Pipeline Identity & Secret Management",
-  },
-  {
     id: "app",
-    index: "03",
+    index: "02",
     tier: "APP",
     title: "Authorization",
   },
@@ -41,13 +33,6 @@ const LAYERS: Layer[] = [
 // 圖源 docs/diagrams/sources/security-topology.drawio 的 master 頁。
 // 改圖後執行 python3 tools/diagrams/build_security_topology.py --export。
 // --export，它會重算三個鏡頭頁並覆寫下面這三張 SVG。
-interface Lens {
-  id: string;
-  tab: string;
-  caption: string;
-  src?: string | null;
-}
-
 const TOPOLOGY_LENSES: Lens[] = [
   {
     id: "network",
@@ -72,81 +57,7 @@ const TOPOLOGY_LENSES: Lens[] = [
   },
 ];
 
-// ── ② CI/CD：一次部署的完整路徑、五個步驟 ─────────────────────────
-// 跟 ① 的差別是維度：① 是空間（同一張拓撲的三個切面，彼此平行），
-// ② 是時間（同一條管線的五個先後步驟）。畫面以右側 next overlay 依序推進，
-// 第五步再前進會回到第一步。
-// 圖源 docs/diagrams/sources/deploy-pipeline.drawio 的 master 頁。
-// 改圖後執行 python3 tools/diagrams/build_deploy_pipeline.py --export。
-const PIPELINE_LENSES: Lens[] = [
-  {
-    id: "seed",
-    tab: "1",
-    src: "/diagrams/sec-pipeline-1-seed.svg",
-    caption:
-      "The only plaintext copy of the app secrets sits in a local .env file. One manual put-secret-value writes it into Secrets Manager — it never enters the repository, and it never travels down the pipeline in the steps that follow.",
-  },
-  {
-    id: "identity",
-    tab: "2",
-    src: "/diagrams/sec-pipeline-2-identity.svg",
-    caption:
-      "The runner holds no AWS key. It presents a GitHub OIDC id_token and STS hands back credentials that expire with the job — so there is nothing in the repository to leak, and nothing to rotate. The role it lands in is least-privilege, with iam:PassRole pinned to a single role ARN.",
-  },
-  {
-    id: "image",
-    tab: "3",
-    src: "/diagrams/sec-pipeline-3-image.svg",
-    caption:
-      "Those credentials push one artifact, tagged with the commit SHA. The thing that ships is addressable back to the commit that was tested, and a redeploy of the same SHA is the same bytes.",
-  },
-  {
-    id: "state",
-    tab: "4",
-    src: "/diagrams/sec-pipeline-4-state.svg",
-    caption:
-      "The same credentials read and write Terraform's state, which records real infrastructure and resolved secret ARNs. That makes the bucket a secret in its own right: encrypted at rest, versioned, and blocked from public access.",
-  },
-  {
-    id: "boot",
-    tab: "5",
-    src: "/diagrams/sec-pipeline-5-boot.svg",
-    caption:
-      "update-service --force-new-deployment starts the rollout, after one standalone migration task on the same image. Two identities split the work: the execution role resolves the secrets into environment variables at start-up; the task role the application runs as gets the queue, and nothing from Secrets Manager.",
-  },
-];
-
-// 這張表真正要說的話是最後一欄：task definition 有兩個欄位，`environment`
-// 的值明文寫在定義裡，任何讀得到 task definition 的人就讀得到；`secrets` 只
-// 放 ARN，由 execution role 在啟動時去解析。所以「該進 environment 還是進
-// secrets」就是機密與否的判準——而且這條界線是平台強制的二分，不是靠自律。
-// secrets / secrets / environment 讀完，三個來源為什麼走兩條不同的路就講完了。
-interface ConfigSource {
-  source: string;
-  origin: string;
-  delivery: string;
-  note?: string;
-}
-
-const CONFIG_SOURCES: ConfigSource[] = [
-  {
-    source: "RDS master password",
-    origin: "AWS (manage_master_user_password = true)",
-    delivery: "secrets: → Secrets Manager ARN",
-  },
-  {
-    source: "App secret",
-    origin: "Developer",
-    delivery: "secrets: → Secrets Manager ARN",
-  },
-  {
-    source: "Config & endpoints",
-    origin: "Terraform, computed from other resources",
-    delivery: "environment: → literal value in the task definition",
-  },
-];
-
-// ── ③ APP：對真 API 開三槍 ─────────────────────────────────────────
+// ── ② APP：對真 API 開三槍 ─────────────────────────────────────────
 // 順序有意義：先證明沒 token 什麼都拿不到（401），再打出那個 404——此時
 // 讀者已經登入了，「我明明有 token，系統連它存在都不告訴我」才有衝擊力，
 // 最後 200 當對照組證明系統是活的。
@@ -189,107 +100,6 @@ function mockProbe(probe: Probe): Promise<number> {
 }
 
 // =====================================================================
-// 共用小元件
-// =====================================================================
-
-function LensFigure({
-  lenses,
-  label,
-  navigation = "tabs",
-}: {
-  lenses: Lens[];
-  label: string;
-  navigation?: "tabs" | "overlay-arrows";
-}) {
-  const [lensId, setLensId] = useState(lenses[0].id);
-  const lensIndex = Math.max(
-    lenses.findIndex((lens) => lens.id === lensId),
-    0,
-  );
-  const lens = lenses[lensIndex];
-  const previousLens = lenses[(lensIndex - 1 + lenses.length) % lenses.length];
-  const nextLens = lenses[(lensIndex + 1) % lenses.length];
-  const usesOverlayNavigation = navigation === "overlay-arrows";
-
-  return (
-    <div className="sec-lens">
-      {!usesOverlayNavigation && (
-        <div className="sec-lens-tabs" role="tablist" aria-label={label}>
-          {lenses.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={item.id === lensId}
-              aria-label={item.tab}
-              className={`sec-lens-tab${
-                item.id === lensId ? " is-active" : ""
-              }`}
-              onClick={() => setLensId(item.id)}
-            >
-              {item.tab}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <figure className="sec-lens-frame">
-        <div className="sec-lens-visual">
-          {lens.src ? (
-            <img src={lens.src} alt={lens.tab} />
-          ) : (
-            <div
-              className="sec-mock"
-              role="img"
-              aria-label={`${lens.tab} diagram placeholder`}
-            >
-              <span className="sec-mock-tag">DIAGRAM PENDING</span>
-              <span className="sec-mock-name">{lens.tab}</span>
-              <span className="sec-mock-hint">
-                one .drawio, three layers, three SVG exports
-              </span>
-            </div>
-          )}
-          {usesOverlayNavigation && (
-            <>
-              <button
-                type="button"
-                className="sec-lens-nav sec-lens-prev"
-                onClick={() => setLensId(previousLens.id)}
-                aria-label={`Previous ${label}: ${previousLens.tab}`}
-              >
-                <span aria-hidden="true">{"<"}</span>
-              </button>
-              <button
-                type="button"
-                className="sec-lens-nav sec-lens-next"
-                onClick={() => setLensId(nextLens.id)}
-                aria-label={`Next ${label}: ${nextLens.tab}`}
-              >
-                <span aria-hidden="true">{">"}</span>
-              </button>
-            </>
-          )}
-        </div>
-        <figcaption>{lens.caption}</figcaption>
-      </figure>
-    </div>
-  );
-}
-
-function SectionHead({ layer }: { layer: Layer }) {
-  return (
-    <div className="sec-section-head">
-      <p className="eyebrow sec-section-tag">
-        <span className="eyebrow-dot" />
-        {layer.index} · {layer.tier}
-      </p>
-      <h2 className="sec-section-title">{layer.title}</h2>
-    </div>
-  );
-}
-
-// =====================================================================
 // 頁面
 // =====================================================================
 function SecurityPage() {
@@ -312,77 +122,23 @@ function SecurityPage() {
       </p>
       <h1>Security Control</h1>
       <p className="placeholder-body sec-thesis">
-        Network isolation, short-lived deploy credentials, and default-deny
-        authorization protect the system from infrastructure to individual jobs.
+        Network isolation and default-deny authorization protect the system
+        from infrastructure to individual jobs.
       </p>
 
-      {/* ── SPINE：三張導覽 tile，也是全頁目錄 ──────────────────── */}
-      <nav className="sec-spine" aria-label="security layers">
-        {LAYERS.map((layer) => (
-          <a key={layer.id} href={`#${layer.id}`} className="sec-spine-tile">
-            <span className="sec-spine-index">{layer.index}</span>
-            <span className="sec-spine-tier">{layer.tier}</span>
-            <span className="sec-spine-title">{layer.title}</span>
-          </a>
-        ))}
-      </nav>
+      {/* ── SPINE：兩張導覽 tile，也是全頁目錄 ──────────────────── */}
+      <SectionSpine sections={LAYERS} label="security layers" />
 
       {/* ── ① INFRA ─────────────────────────────────────────────── */}
       <section id="infra" className="sec-section">
-        <SectionHead layer={LAYERS[0]} />
+        <SectionHead section={LAYERS[0]} />
 
         <LensFigure lenses={TOPOLOGY_LENSES} label="topology lenses" />
       </section>
 
-      {/* ── ② CI/CD ─────────────────────────────────────────────── */}
-      <section id="cicd" className="sec-section">
-        <SectionHead layer={LAYERS[1]} />
-
-        <LensFigure
-          lenses={PIPELINE_LENSES}
-          label="deploy pipeline"
-          navigation="overlay-arrows"
-        />
-
-        {/* 三個來源匯流成同一組環境變數；分類的依據放在最後一欄 */}
-        <div className="sec-secrets">
-          <p className="eyebrow sec-subsection-tag">
-            <span className="eyebrow-dot" />
-            THREE SOURCES, ONE PROCESS
-          </p>
-          <div className="sec-table-scroll">
-            <table className="sec-secret-table">
-              <thead>
-                <tr>
-                  <th>Source</th>
-                  <th>Who creates the value</th>
-                  <th>Task definition field</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CONFIG_SOURCES.map((c) => (
-                  <tr key={c.source}>
-                    <td className="sec-secret-stage">{c.source}</td>
-                    <td className="sec-secret-produced">
-                      {c.origin}
-                      {c.note ? (
-                        <span className="sec-secret-note">{c.note}</span>
-                      ) : null}
-                    </td>
-                    <td className="sec-secret-produced">
-                      <code>{c.delivery}</code>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* ── ③ APP ───────────────────────────────────────────────── */}
+      {/* ── ② APP ───────────────────────────────────────────────── */}
       <section id="app" className="sec-section">
-        <SectionHead layer={LAYERS[2]} />
+        <SectionHead section={LAYERS[1]} />
 
         <div className="sec-prober">
           <p className="eyebrow sec-subsection-tag">

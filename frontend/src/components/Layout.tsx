@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/useAuth.ts";
 import BackendStatus from "./BackendStatus.tsx";
 import BrandMark from "./BrandMark.tsx";
@@ -17,15 +17,28 @@ const NAV_ITEMS = [
   { to: "/auth", label: "Authentication" },
   { to: "/queue", label: "Distributed Queue" },
   { to: "/durability", label: "Durability" },
-  { to: "/high-availability", label: "High Availability" },
   { to: "/scalability", label: "Scalability" },
   { to: "/security", label: "Security" },
 ];
 
+// Appendix 不在主路線上（nav 與首頁都不列），只從頁尾進入，直接跳到被問到的那一章。
+const APPENDIX_ITEMS = [
+  { to: "/appendix#api-availability", label: "API Availability" },
+  { to: "/appendix#pipeline", label: "Pipeline Identity & Secret Management" },
+];
+
 function Layout() {
   const { user } = useAuth();
-  const { pathname } = useLocation();
+  const { pathname, hash, key } = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // BrowserRouter 換頁時不會自己捲到 #錨點；頁尾的 Appendix 連結要直達章節，
+  // 所以在這裡補上。依 location.key 觸發，同一個連結再點一次也會重新捲過去。
+  // 子頁的 effect 先於 Layout 執行，這時目標節點已經在 DOM 裡。
+  useEffect(() => {
+    if (!hash) return;
+    document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
+  }, [pathname, hash, key]);
 
   // 換頁後收起 mobile menu；導覽不該遮住使用者剛選到的內容。
   useEffect(() => {
@@ -140,6 +153,14 @@ function Layout() {
                 >
                   {item.label}
                 </NavLink>
+              ))}
+            </div>
+            <div className="site-footer-col">
+              <p className="site-footer-head">APPENDIX</p>
+              {APPENDIX_ITEMS.map((item) => (
+                <Link key={item.to} to={item.to} className="site-footer-link">
+                  {item.label}
+                </Link>
               ))}
             </div>
             <div className="site-footer-col">

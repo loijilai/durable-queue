@@ -1437,57 +1437,11 @@ a {
   color: var(--signal-orange);
 }
 
-/* High Availability page — scenario A */
+/* 內頁共用的版心（Security / Scalability / Appendix） */
 .ha-page {
   padding-top: 32px;
   max-width: 760px;
   margin: 0 auto;
-}
-
-.ha-demo {
-  display: flex;
-  flex-direction: column;
-}
-
-.ha-demo-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.ha-badge {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-variant-numeric: tabular-nums;
-  background: var(--canvas-lifted);
-  color: var(--slate);
-}
-
-.ha-badge-running {
-  background: rgba(243, 115, 56, 0.15);
-  color: var(--light-orange);
-}
-
-.ha-badge-succeeded {
-  background: rgba(47, 122, 61, 0.15);
-  color: var(--signal-green);
-}
-
-.ha-badge-failed {
-  background: rgba(207, 69, 0, 0.15);
-  color: var(--signal-orange);
-}
-
-.ha-audit {
-  margin-top: 20px;
-}
-
-.ha-hint {
-  margin-top: 16px;
-  margin-bottom: 0;
 }
 
 .ha-columns {
@@ -1560,25 +1514,9 @@ a {
   color: var(--ink);
 }
 
-/* HA scenario sections + SPOF footer */
-.ha-scenario {
-  margin-top: 56px;
-  padding-top: 40px;
-  border-top: 1.5px solid var(--dust);
-  scroll-margin-top: 96px;
-}
-
-.ha-scenario-tag {
-  color: var(--signal-orange);
-}
-
-.ha-scenario-title {
-  margin: 8px 0 12px;
-}
-
-/* Scenario B 底下的兩條路徑（graceful / ungraceful）。它們共用 probe 和架構圖，
-   所以是同一個 scenario 內的子區塊，不是各自獨立的 scenario——用左側細線把兩者
-   收在一起，視覺上就讀得出「同一套基礎設施的兩種走法」。 */
+/* Appendix「API Availability」一章底下的兩條路徑（graceful / ungraceful）。它們
+   共用 probe 和架構圖，所以是同一章內的子區塊，不是各自獨立的一章——用左側細線
+   把兩者收在一起，視覺上就讀得出「同一套基礎設施的兩種走法」。 */
 .ha-block {
   margin-top: 44px;
   padding-left: 20px;
@@ -2100,7 +2038,7 @@ a {
   height: auto;
 }
 
-/* Scenario B keeps the topology available as reference without repeating it. */
+/* API Availability 一章把拓撲圖留作參考，不重複畫一次。 */
 .ha-architecture-reference {
   margin-top: 20px;
 }
@@ -2109,7 +2047,7 @@ a {
   width: auto;
 }
 
-/* Scenario B — live health probe (shared by both shutdown paths) */
+/* API Availability — live health probe (shared by both shutdown paths) */
 .hp-card {
   display: flex;
   flex-direction: column;
@@ -3059,7 +2997,7 @@ a {
 }
 
 /* ── 錄影卡片（RecordingSlot） ─────────────────────────────────
-   HighAvailability 與 Scalability 兩頁共用，所以不掛任何一頁的前綴，
+   Appendix 與 Scalability 兩頁共用，所以不掛任何一頁的前綴，
    也不放在任何一頁的區段裡。 */
 .recording {
   margin: 24px 0 0;

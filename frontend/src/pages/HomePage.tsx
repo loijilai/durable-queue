@@ -207,20 +207,14 @@ const ROUTE = [
     title: "Why every piece of this queue exists",
   },
   {
-    to: "/high-availability",
-    index: "04",
-    eyebrow: "HIGH AVAILABILITY",
-    title: "Surviving Task Loss",
-  },
-  {
     to: "/scalability",
-    index: "05",
+    index: "04",
     eyebrow: "SCALABILITY",
     title: "Throughput Scales With the Worker Pool",
   },
   {
     to: "/security",
-    index: "06",
+    index: "05",
     eyebrow: "SECURITY",
     title: "Security Control",
   },
@@ -274,7 +268,7 @@ function HomePage() {
         </span>
         <p className="eyebrow route-eyebrow">
           <span className="eyebrow-dot" />
-          SIX SECTIONS, IN ORDER
+          FIVE SECTIONS, IN ORDER
         </p>
 
         <div className="route-grid">

@@ -1,4 +1,4 @@
-/* 指向一支 YouTube 錄影的卡片，HighAvailability 與 Scalability 兩頁共用 ——
+/* 指向一支 YouTube 錄影的卡片，Appendix 與 Scalability 兩頁共用 ——
    兩頁指的都是「這段是對真實 AWS 錄下來的」。class 不帶頁面前綴，否則下一個
    使用者會以為自己在借用別頁的樣式。 */
 
