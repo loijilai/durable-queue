@@ -1,5 +1,4 @@
 import {
-  CeleryIcon,
   DjangoIcon,
   DockerIcon,
   KubernetesIcon,
@@ -9,7 +8,6 @@ import {
 
 const BRAND_ICONS = {
   django: DjangoIcon,
-  celery: CeleryIcon,
   docker: DockerIcon,
   kubernetes: KubernetesIcon,
   terraform: TerraformIcon,

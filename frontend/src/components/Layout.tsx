@@ -144,9 +144,7 @@ function Layout() {
             </div>
             <div className="site-footer-col">
               <p className="site-footer-head">STACK</p>
-              <span className="site-footer-note">
-                Django REST Framework · Celery
-              </span>
+              <span className="site-footer-note">Django REST Framework</span>
               <span className="site-footer-note">Postgres · SQS</span>
               <span className="site-footer-note">
                 React · Vite · TypeScript
