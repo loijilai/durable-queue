@@ -127,10 +127,6 @@ export function createJob(
   });
 }
 
-export function getJob(token: string, id: number): Promise<TranscriptionJob> {
-  return authedRequest(token, `/api/jobs/${id}/`);
-}
-
 // JobCreateView 是 ListCreateAPIView，GET 已經內建 list（依 owner 過濾）能力。
 export function listJobs(token: string): Promise<TranscriptionJob[]> {
   return authedRequest(token, "/api/jobs/");
