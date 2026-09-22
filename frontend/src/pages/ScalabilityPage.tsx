@@ -1,60 +1,77 @@
-import ControlLoop from "../components/ControlLoop.tsx";
 import EvidenceCarousel, {
   type EvidenceSlide,
 } from "../components/EvidenceCarousel.tsx";
 import ExcalidrawDiagram from "../components/ExcalidrawDiagram.tsx";
-import RecordingSlot from "../components/RecordingSlot.tsx";
 import { twoSubmittersScene } from "../lib/diagramScenes.ts";
 
-/* 三張都來自同一次執行，各回答一個不同的問題，順序就是問題的順序：
-   消化掉了嗎 → 是因為容量變多嗎 → 有 Job 被卡住嗎。 */
-const EVIDENCE_SLIDES: EvidenceSlide[] = [
+/* 數字卡只放這次實驗實測成立的形狀：Job 很快開始執行、Worker Count 爬到
+   上限、全程零失敗。數字全部取自 issues/lambda-worker/
+   04-burst-experiment-results.md 的 2026-09-22 正式實驗。 */
+const BURST_STATS: { label: string; value: string; note: string }[] = [
   {
-    src: "/evidence/backlog-inflight.png",
-    alt: "Dashboard widget covering 09:05–09:34 UTC with four series on one time axis",
-    caption: (
-      <ul className="scl-legend">
-        <li>
-          <span className="scl-swatch scl-swatch--backlog" />
-          <strong>Backlog</strong> — Jobs accepted but not yet picked up by a
-          Worker.
-        </li>
-        <li>
-          <span className="scl-swatch scl-swatch--inflight" />
-          <strong>In-flight Jobs</strong> — Jobs a Worker has picked up but not
-          yet finished.
-        </li>
-        <li>
-          <span className="scl-swatch scl-swatch--worker" />
-          <strong>Worker Count</strong> — how many Workers are running.
-        </li>
-        <li>
-          <span className="scl-swatch scl-swatch--wait" />
-          <strong>Queue Wait</strong> — the time between a Job being accepted
-          and a Worker picking it up.
-        </li>
-      </ul>
-    ),
+    label: "First Job's Queue Wait",
+    value: "3.8s",
+    note: "Accepted to picked up, including a cold start",
   },
   {
-    src: "/evidence/sqs-messages-received.png",
-    alt: "Messages received per minute over the same window, rising from 2 to 33",
-    caption: "Messages taken off the queue per minute.",
+    label: "Worker Count reaches 67",
+    value: "41.5s",
+    note: "After T0, the burst's first Acceptance",
   },
   {
-    src: "/evidence/oldest-unfinished-job.png",
-    alt: "Age of the oldest unfinished Job over the same window, peaking well below the alarm threshold",
-    caption:
-      "Age of the oldest unfinished Job, against the alarm threshold on the same axis.",
+    label: "Peak Worker Count",
+    value: "67",
+    note: "The concurrency ceiling",
+  },
+  {
+    label: "Failed Jobs",
+    value: "0",
+    note: "All 250 succeeded, each run once",
+  },
+  {
+    label: "Dead-letter queue",
+    value: "0",
+    note: "No message exhausted its retries",
   },
 ];
 
-const EVIDENCE_LABEL = "Screenshots from the acceptance run";
+/* 兩張都是同一次 burst 的 dashboard widget。圖說除了說明線是什麼，還要先把
+   讀圖的陷阱講清楚 —— 截圖原樣放，不修圖，所以會誤導人的地方只能靠文字補。 */
+const EVIDENCE_SLIDES: EvidenceSlide[] = [
+  {
+    src: "/evidence/lambda-burst-queue.png",
+    alt: "Dashboard widget covering 04:23–04:30 UTC: the Backlog jumps to about 210 at 04:25 and drains to zero by 04:28, while messages received by the poller stay below 67 per minute",
+    caption: (
+      <>
+        <strong>Backlog</strong> is the number of Jobs accepted but not yet
+        picked up by a Worker; <strong>Received by poller</strong> is how many
+        messages the event source mapping took off the queue each minute. The
+        250 Jobs arrive faster than 67 Workers can run them, so the excess
+        waits in the queue and drains round by round.
+      </>
+    ),
+  },
+  {
+    src: "/evidence/lambda-burst-workers.png",
+    alt: "Dashboard widget covering 04:23–04:30 UTC: Worker Count rises to 67 at 04:25 and reads 66 at 04:26, where the line ends; the per-minute average Queue Wait rises from about 21 to about 69 seconds",
+    caption: (
+      <>
+        <strong>Worker Count</strong> climbs to 67 in about 40 seconds, then
+        dips between rounds as Jobs finish and the next ones are picked up —
+        the per-minute maximum hides those dips. The line stops at 04:26
+        because the datapoint for the last minute never appeared, though
+        Workers were still running then. <strong>Queue Wait</strong> is a
+        per-minute average, not a distribution: Jobs later in the burst wait
+        longer, and a single line cannot show that spread.
+      </>
+    ),
+  },
+];
 
-const RUN_RECORDING_URL = "https://youtu.be/-sCn0tKnO98";
+const EVIDENCE_LABEL = "Screenshots from the 250-Job burst";
 
 const WORKLOAD_DIAGRAM_LABEL =
-  "Two Submitters reach the Django API — the Interactive Submitter through the Frontend, the Batch Submitter directly — which enqueues onto SQS; the Worker pool scales from 1 to 67 to drain it";
+  "Two Submitters reach the Django API — the Interactive Submitter through the Frontend, the Batch Submitter directly — which enqueues onto SQS; the event source mapping invokes up to 67 concurrent Lambda Workers to drain it";
 
 function ScalabilityPage() {
   return (
@@ -65,11 +82,11 @@ function ScalabilityPage() {
       </p>
       <h1>Throughput Scales With the Worker Pool</h1>
       <p className="placeholder-body">
-        A Closed Loop Between Backlog and Capacity
+        SQS Drives Lambda Up to 67 Concurrent Workers
       </p>
 
-      {/* 開場不從機制開始，從工作負載開始 —— 讀者要先知道這條迴路是為了誰而存在，
-          才有辦法判斷它設計得對不對。CONTEXT.md 的兩種 Submitter 就是這一段。
+      {/* 開場不從機制開始，從工作負載開始 —— 讀者要先知道容量是為了誰而存在，
+          才有辦法判斷它設計得對不對。
           這裡刻意用圖不用文字：兩條路徑（一條經過 Frontend、一條繞過它）擺在一起
           看，比兩段敘述更快講完「兩種 Submitter」這件事。 */}
       <div className="scl-scenario">
@@ -92,30 +109,28 @@ function ScalabilityPage() {
         </p>
       </div>
 
-      {/* 容量由 Backlog 決定，不由人去撥 —— 這張圖是這一頁的主角，
-          所以緊接在工作負載之後、證據之前。 */}
-      <ControlLoop />
-
-      {/* 迴路圖負責讓人懂，這一區負責讓人信 —— 所以它排在迴路圖之後。
-          素材全部來自 2026-08-31 的驗收實驗（issues/scaling-control-loop/
-          11-acceptance-experiment-results.md）。那次的基礎設施已經銷毀，這些
-          截圖與錄影是僅存的證據，因此原圖照放，不修改內容。
-          三張圖各回答一個不同的問題，圖說只說明圖上有什麼，不替讀者判讀。
-          它們疊成一疊而不是排成一列：證據多了不該讓頁面跟著變長。 */}
+      {/* 工作負載之後直接接證據：素材來自 2026-09-22 在 Lambda 上跑的 250 jobs
+          burst（issues/lambda-worker/04-burst-experiment-results.md）。
+          數字卡先給結論，截圖在後面讓人自己對。截圖疊成一疊而不是排成一列：
+          證據多了不該讓頁面跟著變長。 */}
       <div className="scl-evidence">
         <p className="eyebrow">
           <span className="eyebrow-dot" />
           THE EVIDENCE
         </p>
+        <h2 className="scl-card-title">A 250-Job Burst on Lambda</h2>
+
+        <dl className="scl-stats">
+          {BURST_STATS.map((stat) => (
+            <div key={stat.label} className="scl-stat">
+              <dt>{stat.label}</dt>
+              <dd className="scl-stat-value">{stat.value}</dd>
+              <dd className="scl-stat-note">{stat.note}</dd>
+            </div>
+          ))}
+        </dl>
 
         <EvidenceCarousel slides={EVIDENCE_SLIDES} label={EVIDENCE_LABEL} />
-
-        <RecordingSlot
-          url={RUN_RECORDING_URL}
-          title="The Control Loop on Real AWS"
-          description="A screen recording of the same run the panels above are taken from: the burst arrives, the Worker pool grows, the Backlog drains, and capacity scales back in."
-          slotHint="burst → scale out → drain → scale in"
-        />
       </div>
     </section>
   );
