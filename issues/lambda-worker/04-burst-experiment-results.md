@@ -178,15 +178,14 @@ ticket 03 把重試計數改為 Job 實際被執行的次數，並把 `maxReceiv
 對應的 125 份 Job 因此永遠停在 pending。這是人為中止實驗的預期結果，不是系統行為：
 它們的訊息被刪除，沒有任何 Worker 會再取走它們。
 
-Lambda function、ESM、佇列與 dashboard 全部保留不動，正式實驗會用同一套設定。
+帳號的 Lambda 併發配額已調升為 1000，ESM `maximum_concurrency` 改回 RDS 連線預算推導出的 67。部署完成後 Lambda function、ESM、佇列與 dashboard 全部保留不動，正式實驗用同一套設定。
 
 ---
 
 ## 正式實驗：待執行
 
-前置條件：ticket 03 部署完成——ESM `maximum_concurrency` 對齊帳號配額 10、
-`maxReceiveCount` 10、重試改數實際執行次數。
-
-不等帳號配額調升。上限是一個設定值，這個主張在 10 與 67 之下同樣成立。
+前置條件：ticket 03 部署完成——`maxReceiveCount` 10、重試改數實際執行次數。
+帳號的 Lambda 併發配額在預跑後調升為 1000，ESM `maximum_concurrency` 因此改回
+RDS 連線預算推導出的 67，不再被配額壓低。
 
 _待執行_
