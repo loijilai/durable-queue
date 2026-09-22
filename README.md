@@ -35,25 +35,31 @@ A distributed system built to answer one question : **how to make sure a job tha
 
 - **Durability** — a worker crash must not lose a job; state survives in the database, not in process memory.
 - **Scalability** — the promise is made on **Queue Wait**: the time between a job being accepted and a worker picking it up. It deliberately excludes execution time, which is set by the length of the video and which no capacity decision can move.
-- **Availability** — the system keeps serving through individual API or worker task failures, and through deploys.
+- **Availability** — the system keeps serving through individual API task or worker invocation failures, and through deploys.
 - **Security** — secrets, network paths, and user data are isolated at the appropriate boundaries.
 
 ## Architecture
 
 ![AWS infrastructure diagram](frontend/public/diagrams/aws-infra.svg)
 
-![Dashboard from the acceptance run: Backlog peaks at 245 and drains to zero over 18 minutes, Queue Wait climbs to 17 minutes, Worker Count rises from 1 to 17](frontend/public/evidence/backlog-inflight.png)
+The API runs on ECS/Fargate behind an ALB. Accepted jobs go onto an SQS queue, and each message triggers one AWS Lambda invocation of the worker (event source mapping, batch size 1). Lambda adds workers as the Backlog grows, up to a **Scaling Ceiling of 67** — the RDS connection budget left for workers. Jobs beyond the ceiling wait on the queue instead of being throttled.
+
+A burst of 250 jobs (24 s each): Worker Count reaches the ceiling of 67 and the rest wait in the Backlog. All 250 succeeded on their first attempt, with zero throttles and an empty DLQ.
+
+![Backlog peaks at 210 and drains to zero within three minutes](frontend/public/evidence/lambda-burst-queue.png)
+
+![Worker Count reaches 67 in the first minute; per-minute average Queue Wait rises from 21 s to 69 s](frontend/public/evidence/lambda-burst-workers.png)
 
 ## Deep dives
 
 1. **[Durability](https://app.loijilai.site/durability)**
 2. **[Concurrency](https://app.loijilai.site/durability)** — at-least-once delivery means two workers can legitimately hold the same job at once.
-3. **[Scalability](https://app.loijilai.site/scalability)** — capacity reacts to **Backlog**, the number of visible messages on the queue.
+3. **[Scalability](https://app.loijilai.site/scalability)** — Lambda scales with the **Backlog** up to a Scaling Ceiling set by the database, not by compute.
 4. **[Security](https://app.loijilai.site/security)**
 
 ## Deployment pipeline
 
-`git push` → one Docker image is built and pushed, tagged by commit SHA → Terraform applies the declared infrastructure → **database migrations run as a single one-off ECS task** → the API and worker services roll onto the new task definition, and the deploy waits for each to become stable.
+`git push` → one Docker image is built and pushed, tagged by commit SHA → Terraform applies the declared infrastructure → **database migrations run as a single one-off ECS task** → the API service rolls onto the new task definition and the worker Lambda function onto the new image, and the deploy waits for each to become stable.
 
 Defined in [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml); infrastructure lives in [`infra/`](infra).
 
@@ -73,16 +79,16 @@ installed; the Docker daemon only needs to be running for `full`.
 
 ## Tech stack
 
-| Layer                  | Technology                                                                  |
-| ---------------------- | --------------------------------------------------------------------------- |
-| API                    | Python 3.13, Django 6, Django REST Framework                                |
-| Async task queue       | Celery on Amazon SQS (ElasticMQ locally); no result backend                 |
-| Database               | PostgreSQL (RDS in prod)                                                    |
-| Frontend               | React, TypeScript, Vite                                                     |
-| Observability          | CloudWatch dashboard and alarm, JSON structured logs, log metric filters    |
-| Infrastructure as Code | Terraform (S3 remote state)                                                 |
-| Cloud                  | AWS — ALB, ECS/Fargate, SQS, RDS, CloudWatch, Secrets Manager, Route 53/ACM |
-| CI/CD                  | GitHub Actions, OIDC-based AWS auth                                         |
+| Layer                  | Technology                                                                          |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| API                    | Python 3.13, Django 6, Django REST Framework                                        |
+| Job queue and worker   | Amazon SQS triggering AWS Lambda (ElasticMQ and a polling shim locally)             |
+| Database               | PostgreSQL (RDS in prod)                                                            |
+| Frontend               | React, TypeScript, Vite                                                             |
+| Observability          | CloudWatch dashboard, JSON structured logs, log metric filters                      |
+| Infrastructure as Code | Terraform (S3 remote state)                                                         |
+| Cloud                  | AWS — ALB, ECS/Fargate, Lambda, SQS, RDS, CloudWatch, Secrets Manager, Route 53/ACM |
+| CI/CD                  | GitHub Actions, OIDC-based AWS auth                                                 |
 
 ## Running locally
 

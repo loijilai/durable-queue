@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Batch Submitter for issues/scaling-control-loop/10-burst-submitter.md.
+"""Batch Submitter: submits a burst of Jobs against a running stack.
 
-Plays the Batch Submitter role from issues/scaling-control-loop/spec.md: a
-scheduled service that submits several hundred Jobs in a short window and
-cares about throughput, not any single Job's latency (see CONTEXT.md).
+Plays the Batch Submitter role: a scheduled service that submits several
+hundred Jobs in a short window and cares about throughput, not any single
+Job's latency.
 
 Deliberately a minimal script, not a load-testing framework: what's under
-test is the queue's absorption capacity and the scaling policy it drives,
+test is the queue's absorption capacity and the Scaling Ceiling behind it,
 not requests-per-second the API can serve. It submits `--count` Jobs at a
 fixed concurrency (a thread pool of `--concurrency` workers, no ramp-up, no
 pacing) and records the timestamp of each submission attempt — not
@@ -64,10 +64,9 @@ def _result(index: int, submitted_at: str, status_code, job_id, error: str | Non
 def submit_job(api_url: str, token: str, video_url: str, index: int) -> dict:
     """Submits one Job and records the timestamp of the submission attempt
     (just before the request goes out) — not Acceptance, which the server
-    already timestamps as the Job's created_at (see spec.md's testing
-    decisions). This script's timestamp exists to place each submission on
-    the same time axis as the capacity dashboard, independent of how long
-    the API itself took to respond."""
+    already timestamps as the Job's created_at. This script's timestamp
+    exists to place each submission on the same time axis as the capacity
+    dashboard, independent of how long the API itself took to respond."""
     submitted_at = datetime.now(timezone.utc).isoformat()
     try:
         response = requests.post(

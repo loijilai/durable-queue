@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Fits the Execution Time model from samples recorded by
-scripts/measure_execution_time.py and writes the ticket's report.
+scripts/measure_execution_time.py and writes a Markdown report.
 
     python3 scripts/analyze_execution_time.py
 
-Reads issues/scaling-control-loop/execution-time-samples.json and writes
-issues/scaling-control-loop/02-measure-execution-time-results.md.
+Reads execution-time-samples.json and writes execution-time-results.md, both
+in the current directory unless --samples-file / --output say otherwise.
 """
 
 from __future__ import annotations
@@ -15,13 +15,8 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_SAMPLES_FILE = (
-    ROOT / "issues" / "scaling-control-loop" / "execution-time-samples.json"
-)
-DEFAULT_OUTPUT = (
-    ROOT / "issues" / "scaling-control-loop" / "02-measure-execution-time-results.md"
-)
+DEFAULT_SAMPLES_FILE = Path("execution-time-samples.json")
+DEFAULT_OUTPUT = Path("execution-time-results.md")
 # jobs/.env.example's REAL_TRANSCRIBE_MAX_DURATION_SECONDS default: the
 # admission gate past which a video is rejected as PermanentInputError.
 DEFAULT_ADMISSION_LIMIT_SECONDS = 14400

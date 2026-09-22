@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 # Default chunk length: at 64kbps mono this is ~9.6MB/chunk, comfortably
 # under OpenAI's 25MB per-request limit (~2.5x margin).
 DEFAULT_CHUNK_SECONDS = 1200
-# Bounded per-chunk retry count, mirroring execute_job's max_retries=3. Keeps
-# a transient failure on one chunk from forcing a whole-task Celery retry
-# that would re-transcribe (and re-bill) already-succeeded chunks.
+# Bounded per-chunk attempt count. Keeps a transient failure on one chunk from
+# forcing a whole-Job retry (jobs/worker.py) that would re-transcribe (and
+# re-bill) already-succeeded chunks.
 CHUNK_MAX_ATTEMPTS = 3
 
 
 class TranscriptionRetryableError(Exception):
-    """External failure that Celery should retry."""
+    """External failure that the worker should retry."""
 
 
 class TranscriptionTimeoutError(TranscriptionRetryableError):
@@ -216,7 +216,7 @@ def _call_openai(audio_path, timeout_seconds):
 
 def _transcribe_chunk_with_retry(chunk_path, timeout_seconds):
     """Bounded in-process retry for one chunk's retryable failures, so a
-    transient blip doesn't force a whole-task Celery retry that re-transcribes
+    transient blip doesn't force a whole-Job retry that re-transcribes
     already-succeeded chunks. Permanent failures propagate immediately."""
     for attempt in range(1, CHUNK_MAX_ATTEMPTS + 1):
         try:

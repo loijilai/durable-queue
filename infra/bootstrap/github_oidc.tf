@@ -267,7 +267,7 @@ resource "aws_iam_role_policy" "github_actions" {
         }
       },
       {
-        # 05 把 worker、06 把 API 都換成 ECS/Fargate：task definition 每次
+        # API 跑在 ECS/Fargate：task definition 每次
         # `image_tag` 換值都要註冊新的 revision、讓 service 指過去，這是每次
         # deploy 都會觸發的 terraform apply 的一部分，是常態權限。RunTask /
         # DescribeTasks 給部署流程執行一次性的資料庫遷移 task 並等它跑完用。
@@ -350,7 +350,7 @@ resource "aws_iam_role_policy" "github_actions" {
         }
       },
       {
-        # 06：API 也搬上 Fargate，跟 TfWriteWorkerLogGroup 同構。
+        # API 的 log group，跟 TfWriteWorkerLogGroup 同構。
         Sid    = "TfWriteApiLogGroup"
         Effect = "Allow"
         Action = [

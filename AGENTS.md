@@ -38,6 +38,6 @@ external service container.
 
 ## Language
 
-- Specs, tickets, CONTEXT.md, ADRs: Traditional Chinese prose, English domain terms.
+- Specs, tickets, ADRs: Traditional Chinese prose, English domain terms.
 - Code, comments, tests, commit messages: whatever the repo's documented coding standards say — `CODING_STANDARDS.md` or the like. Where none say, match the surrounding code; English when it is new.
 - docs/agents/*: English, verbatim from the skill seeds — do not translate.

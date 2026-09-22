@@ -32,10 +32,10 @@
                 <mxCell id="exec_role" value="execution role&#10;used by the ECS agent" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;" parent="cloud" vertex="1">
                     <mxGeometry x="30" y="500" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="task_role" value="task role&#10;used by the application" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;" parent="cloud" vertex="1">
+                <mxCell id="task_role" value="task role&#10;used by the API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;" parent="cloud" vertex="1">
                     <mxGeometry x="170" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="sqs" value="Amazon SQS&#10;celery queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;" parent="cloud" vertex="1">
+                <mxCell id="sqs" value="Amazon SQS&#10;job queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;" parent="cloud" vertex="1">
                     <mxGeometry x="470" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
                 <mxCell id="secrets" value="Secrets Manager" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;" parent="cloud" vertex="1">
@@ -96,7 +96,7 @@
                         <mxPoint as="offset" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_sqs" value="SendMessage · ReceiveMessage&#10;on the celery queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="task_role" target="sqs" edge="1">
+                <mxCell id="e_sqs" value="SendMessage&#10;on the job queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="task_role" target="sqs" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
             </root>
@@ -134,10 +134,10 @@
                 <mxCell id="exec_role" value="execution role&#10;used by the ECS agent" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="30" y="500" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="task_role" value="task role&#10;used by the application" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
+                <mxCell id="task_role" value="task role&#10;used by the API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="170" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="sqs" value="Amazon SQS&#10;celery queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
+                <mxCell id="sqs" value="Amazon SQS&#10;job queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="470" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
                 <mxCell id="secrets" value="Secrets Manager" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;" parent="cloud" vertex="1">
@@ -198,7 +198,7 @@
                         <mxPoint as="offset" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_sqs" value="SendMessage · ReceiveMessage&#10;on the celery queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=25;textOpacity=25;" parent="1" source="task_role" target="sqs" edge="1">
+                <mxCell id="e_sqs" value="SendMessage&#10;on the job queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=25;textOpacity=25;" parent="1" source="task_role" target="sqs" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
             </root>
@@ -236,10 +236,10 @@
                 <mxCell id="exec_role" value="execution role&#10;used by the ECS agent" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="30" y="500" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="task_role" value="task role&#10;used by the application" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
+                <mxCell id="task_role" value="task role&#10;used by the API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="170" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="sqs" value="Amazon SQS&#10;celery queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
+                <mxCell id="sqs" value="Amazon SQS&#10;job queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="470" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
                 <mxCell id="secrets" value="Secrets Manager" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
@@ -300,7 +300,7 @@
                         <mxPoint as="offset" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_sqs" value="SendMessage · ReceiveMessage&#10;on the celery queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=25;textOpacity=25;" parent="1" source="task_role" target="sqs" edge="1">
+                <mxCell id="e_sqs" value="SendMessage&#10;on the job queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=25;textOpacity=25;" parent="1" source="task_role" target="sqs" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
             </root>
@@ -338,10 +338,10 @@
                 <mxCell id="exec_role" value="execution role&#10;used by the ECS agent" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="30" y="500" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="task_role" value="task role&#10;used by the application" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
+                <mxCell id="task_role" value="task role&#10;used by the API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="170" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="sqs" value="Amazon SQS&#10;celery queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
+                <mxCell id="sqs" value="Amazon SQS&#10;job queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="470" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
                 <mxCell id="secrets" value="Secrets Manager" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
@@ -402,7 +402,7 @@
                         <mxPoint as="offset" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_sqs" value="SendMessage · ReceiveMessage&#10;on the celery queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=25;textOpacity=25;" parent="1" source="task_role" target="sqs" edge="1">
+                <mxCell id="e_sqs" value="SendMessage&#10;on the job queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=25;textOpacity=25;" parent="1" source="task_role" target="sqs" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
             </root>
@@ -440,10 +440,10 @@
                 <mxCell id="exec_role" value="execution role&#10;used by the ECS agent" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="30" y="500" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="task_role" value="task role&#10;used by the application" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
+                <mxCell id="task_role" value="task role&#10;used by the API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="170" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="sqs" value="Amazon SQS&#10;celery queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
+                <mxCell id="sqs" value="Amazon SQS&#10;job queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
                     <mxGeometry x="470" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
                 <mxCell id="secrets" value="Secrets Manager" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;opacity=25;textOpacity=25;" parent="cloud" vertex="1">
@@ -504,7 +504,7 @@
                         <mxPoint as="offset" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_sqs" value="SendMessage · ReceiveMessage&#10;on the celery queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=25;textOpacity=25;" parent="1" source="task_role" target="sqs" edge="1">
+                <mxCell id="e_sqs" value="SendMessage&#10;on the job queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;opacity=25;textOpacity=25;" parent="1" source="task_role" target="sqs" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
             </root>
@@ -542,10 +542,10 @@
                 <mxCell id="exec_role" value="execution role&#10;used by the ECS agent" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;" parent="cloud" vertex="1">
                     <mxGeometry x="30" y="500" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="task_role" value="task role&#10;used by the application" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;" parent="cloud" vertex="1">
+                <mxCell id="task_role" value="task role&#10;used by the API" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.role;" parent="cloud" vertex="1">
                     <mxGeometry x="170" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
-                <mxCell id="sqs" value="Amazon SQS&#10;celery queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;" parent="cloud" vertex="1">
+                <mxCell id="sqs" value="Amazon SQS&#10;job queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.sqs;" parent="cloud" vertex="1">
                     <mxGeometry x="470" y="690" width="72" height="72" as="geometry" />
                 </mxCell>
                 <mxCell id="secrets" value="Secrets Manager" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=13;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.secrets_manager;" parent="cloud" vertex="1">
@@ -606,7 +606,7 @@
                         <mxPoint as="offset" />
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_sqs" value="SendMessage · ReceiveMessage&#10;on the celery queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="task_role" target="sqs" edge="1">
+                <mxCell id="e_sqs" value="SendMessage&#10;on the job queue" style="verticalAlign=bottom;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#E7157B;strokeWidth=2;fontSize=12;fontColor=#E7157B;endArrow=blockThin;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="task_role" target="sqs" edge="1">
                     <mxGeometry relative="1" as="geometry" />
                 </mxCell>
             </root>
