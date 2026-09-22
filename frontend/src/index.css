@@ -1437,57 +1437,11 @@ a {
   color: var(--signal-orange);
 }
 
-/* High Availability page — scenario A */
+/* 內頁共用的版心（Security / Scalability / Appendix） */
 .ha-page {
   padding-top: 32px;
   max-width: 760px;
   margin: 0 auto;
-}
-
-.ha-demo {
-  display: flex;
-  flex-direction: column;
-}
-
-.ha-demo-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.ha-badge {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-variant-numeric: tabular-nums;
-  background: var(--canvas-lifted);
-  color: var(--slate);
-}
-
-.ha-badge-running {
-  background: rgba(243, 115, 56, 0.15);
-  color: var(--light-orange);
-}
-
-.ha-badge-succeeded {
-  background: rgba(47, 122, 61, 0.15);
-  color: var(--signal-green);
-}
-
-.ha-badge-failed {
-  background: rgba(207, 69, 0, 0.15);
-  color: var(--signal-orange);
-}
-
-.ha-audit {
-  margin-top: 20px;
-}
-
-.ha-hint {
-  margin-top: 16px;
-  margin-bottom: 0;
 }
 
 .ha-columns {
@@ -1560,25 +1514,9 @@ a {
   color: var(--ink);
 }
 
-/* HA scenario sections + SPOF footer */
-.ha-scenario {
-  margin-top: 56px;
-  padding-top: 40px;
-  border-top: 1.5px solid var(--dust);
-  scroll-margin-top: 96px;
-}
-
-.ha-scenario-tag {
-  color: var(--signal-orange);
-}
-
-.ha-scenario-title {
-  margin: 8px 0 12px;
-}
-
-/* Scenario B 底下的兩條路徑（graceful / ungraceful）。它們共用 probe 和架構圖，
-   所以是同一個 scenario 內的子區塊，不是各自獨立的 scenario——用左側細線把兩者
-   收在一起，視覺上就讀得出「同一套基礎設施的兩種走法」。 */
+/* Appendix「API Availability」一章底下的兩條路徑（graceful / ungraceful）。它們
+   共用 probe 和架構圖，所以是同一章內的子區塊，不是各自獨立的一章——用左側細線
+   把兩者收在一起，視覺上就讀得出「同一套基礎設施的兩種走法」。 */
 .ha-block {
   margin-top: 44px;
   padding-left: 20px;
@@ -2100,7 +2038,7 @@ a {
   height: auto;
 }
 
-/* Scenario B keeps the topology available as reference without repeating it. */
+/* API Availability 一章把拓撲圖留作參考，不重複畫一次。 */
 .ha-architecture-reference {
   margin-top: 20px;
 }
@@ -2109,7 +2047,7 @@ a {
   width: auto;
 }
 
-/* Scenario B — live health probe (shared by both shutdown paths) */
+/* API Availability — live health probe (shared by both shutdown paths) */
 .hp-card {
   display: flex;
   flex-direction: column;
@@ -2755,25 +2693,6 @@ a {
   color: var(--slate);
 }
 
-/* Node 6: retry backoff bars */
-.diagram-retry {
-  align-items: flex-end;
-  gap: 20px;
-}
-
-.retry-bar-track {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.retry-bar {
-  width: 20px;
-  background: var(--light-orange);
-  border-radius: 6px 6px 0 0;
-}
-
 /* Node 7: synthesis */
 .diagram-synthesis {
   flex-direction: column;
@@ -2794,7 +2713,7 @@ a {
   }
 }
 
-/* ── Scalability (Backlog → capacity control loop) ──────────────
+/* ── Scalability (SQS → ESM → Lambda) ───────────────────────────
    這一頁的段落都是同一種卡片，差別只在裝什麼；共用的殼寫成一條規則，
    各段只補自己不一樣的地方。 */
 .scl-scenario,
@@ -2841,17 +2760,17 @@ a {
   }
 }
 
-/* ── 證據：驗收實驗的截圖（EvidenceCarousel） ─────────────────
-   截圖是原圖照放，所以版面只能繞著它走：不裁、不套濾鏡。四張的長寬比
-   各不相同，框因此吃固定比例、圖用 contain 擺進去 —— 換頁時版面不動，
-   是這一疊看起來像同一疊的唯一原因。 */
+/* ── 證據：burst 實驗的截圖（EvidenceCarousel） ────────────────
+   截圖是原圖照放，所以版面只能繞著它走：不裁、不套濾鏡。框吃固定比例、
+   圖用 contain 擺進去 —— 換頁時版面不動，是這一疊看起來像同一疊的唯一
+   原因。比例跟著 dashboard widget 的 3:1 走，圖才不會縮在一片留白中間。 */
 .ev-carousel {
   margin: 28px 0 0;
 }
 
 .ev-frame {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 3 / 1;
   overflow: hidden;
   border: 1.5px solid var(--dust);
   border-radius: 12px;
@@ -2950,229 +2869,6 @@ a {
   background: var(--signal-orange);
 }
 
-/* 圖說會隨著圖換掉，長短不一 —— 給一個下限，換頁時底下的東西才不會跳。 */
-.ev-caption {
-  min-height: 108px;
-  margin-top: 12px;
-  max-width: 68ch;
-  color: var(--charcoal);
-  font-size: 15px;
-  line-height: 1.65;
-}
-
-/* 主圖的圖說就是 legend：一條線一行，說明它是什麼，不說它發生了什麼。 */
-.scl-legend {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.scl-legend li {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.scl-legend li + li {
-  margin-top: 6px;
-}
-
-/* 色塊照抄截圖上的線色，讓每一行對得回圖上的哪一條。 */
-.scl-swatch {
-  flex: none;
-  width: 22px;
-  height: 3px;
-  border-radius: 2px;
-  transform: translateY(-4px);
-}
-
-.scl-swatch--backlog {
-  background: #3b76af;
-}
-
-.scl-swatch--inflight {
-  background: #ef8636;
-}
-
-.scl-swatch--worker {
-  background: #529e3f;
-}
-
-.scl-swatch--wait {
-  background: #c53b33;
-}
-
-/* ── 控制迴路圖 ─────────────────────────────────────────────────
-   節點與邊都是可點亮的元素，作法與 .jl-（Job lifecycle）同源；兩張圖的
-   class 分開命名，是因為這張圖沒有旁邊的說明欄，整塊就是一張圖，共用一組
-   class 會讓其中一張的規則變成另一張的例外。 */
-.cl-frame {
-  margin-top: 40px;
-}
-
-/* 圖吃滿整個框：這一塊沒有第二欄要分寬度。 */
-.cl-svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin-top: 16px;
-  overflow: visible;
-}
-
-.cl-svg text {
-  font-family: var(--sans);
-  font-weight: 500;
-  fill: var(--ink);
-  text-anchor: middle;
-  dominant-baseline: middle;
-}
-
-/* 對齊要用 class 而不是 text-anchor 屬性：這個 <svg> 底下已經有一條
-   `text { text-anchor: middle }` 的 CSS 規則，而 CSS 一律蓋過 presentation
-   attribute —— 寫在元素上的 textAnchor="start" 會靜靜地不生效。 */
-.cl-svg .cl-anchor-start {
-  text-anchor: start;
-}
-
-/* ── 節點 ─────────────────────────────────────────────────── */
-.cl-node rect {
-  fill: var(--white);
-  stroke: var(--dust);
-  stroke-width: 1.5;
-  transition:
-    fill 0.4s ease,
-    stroke 0.4s ease,
-    stroke-width 0.4s ease;
-}
-
-.cl-node-name {
-  font-size: 19px;
-  fill: var(--slate);
-  transition: fill 0.4s ease;
-}
-
-/* 每個節點的實測數字：跟著節點名走，但比它輕一級 —— 它是註腳不是標題。 */
-.cl-node-value {
-  font-size: 13px;
-  font-weight: 500;
-  fill: var(--slate);
-}
-
-.cl-node.is-lit rect {
-  stroke: var(--charcoal);
-  stroke-width: 2.5;
-}
-
-.cl-node.is-lit .cl-node-name {
-  fill: var(--ink);
-}
-
-/* alarm 是圖上唯一會「響」的東西，點亮時轉紅 —— 這是它與其他三個節點的
-   差別：其餘三個是常態運作，只有這一個代表某條線被越過了。 */
-.cl-node--alarm.is-lit rect {
-  fill: rgba(163, 35, 43, 0.08);
-  stroke: var(--error-red);
-}
-
-.cl-node--alarm.is-lit .cl-node-name,
-.cl-node--alarm.is-lit .cl-node-value {
-  fill: var(--error-red);
-}
-
-/* Worker 是圖上唯一在動工的東西，點亮時走 running 的藍（DESIGN.md §2
-   Job Status Colors）—— in-progress 是資訊，不是確認。 */
-.cl-node--worker.is-lit rect {
-  fill: rgba(56, 96, 190, 0.1);
-  stroke: var(--status-running);
-}
-
-/* ── 邊 ───────────────────────────────────────────────────── */
-.cl-edge {
-  stroke: var(--dust);
-  stroke-width: 1.5;
-  marker-end: url(#cl-mk-dust);
-  fill: none;
-  transition:
-    stroke 0.4s ease,
-    stroke-width 0.4s ease;
-}
-
-.cl-edge.is-lit {
-  stroke-width: 2.5;
-}
-
-.cl-edge--ink.is-lit {
-  stroke: var(--charcoal);
-  marker-end: url(#cl-mk-ink);
-}
-
-/* 回到起點的那一段常駐上色：環之所以是環就在這條線上，它不能只有在
-   被 hover 到時才存在。 */
-.cl-edge--loop {
-  stroke: var(--status-running);
-  stroke-width: 2;
-  marker-end: url(#cl-mk-loop);
-}
-
-.cl-edge--loop.is-lit {
-  stroke-width: 3.5;
-}
-
-.cl-edge-label {
-  font-size: 13px;
-  font-weight: 500;
-  fill: var(--slate);
-}
-
-/* ── 圖形即控制項 ─────────────────────────────────────────
-   方塊本身就是按鈕，所以要給出可點的訊號，並自己補上鍵盤焦點框
-   —— SVG 的 <g> 沒有內建 focus ring。 */
-.cl-control {
-  cursor: pointer;
-  outline: none;
-}
-
-.cl-control:hover rect {
-  stroke: var(--slate);
-}
-
-.cl-control:focus-visible rect {
-  stroke: var(--signal-orange);
-  stroke-width: 2.5;
-}
-
-/* 釘住的那一格要看得出來：點擊會讓這個 <g> 拿到 focus，hover 與 pinned
-   因此在圖上長得一模一樣，取消釘選就變成沒有回應的操作。 */
-.cl-control[aria-pressed="true"] rect {
-  stroke: var(--charcoal);
-  stroke-width: 3.5;
-}
-
-/* 縮容不在環上，用一顆畫在環中央的 chip 當開關 */
-.cl-chip rect {
-  fill: var(--white);
-  stroke: var(--dust);
-  stroke-width: 1.5;
-  transition:
-    fill 0.4s ease,
-    stroke 0.4s ease;
-}
-
-.cl-chip text {
-  font-size: 13px;
-  font-weight: 500;
-  fill: var(--slate);
-  transition: fill 0.4s ease;
-}
-
-.cl-chip.is-lit rect {
-  stroke: var(--charcoal);
-}
-
-.cl-chip.is-lit text {
-  fill: var(--ink);
-}
-
 /* ── Site footer（DESIGN.md §4 Footer） ───────────────────────── */
 .site-footer {
   background: var(--footer-black);
@@ -3242,7 +2938,7 @@ a {
 }
 
 /* ── 錄影卡片（RecordingSlot） ─────────────────────────────────
-   HighAvailability 與 Scalability 兩頁共用，所以不掛任何一頁的前綴，
+   Appendix 與 Scalability 兩頁共用，所以不掛任何一頁的前綴，
    也不放在任何一頁的區段裡。 */
 .recording {
   margin: 24px 0 0;

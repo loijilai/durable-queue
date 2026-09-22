@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Timing harness for issues/scaling-control-loop/02-measure-execution-time.md.
+"""Timing harness for the Execution Time model.
 
 A one-shot tool, deliberately outside the jobs/ production-code boundary
 (scripts/check_architecture.py only walks durable_queue/jobs) and outside the
-Celery task path: it calls jobs/transcribers.py's download/split/transcribe
+worker path: it calls jobs/transcribers.py's download/split/transcribe
 functions directly and puts a timer around each phase, since real_transcribe()
 itself does not expose phase-level timings.
 
@@ -12,8 +12,8 @@ OpenAI API, and costs money/time):
 
     python3 scripts/measure_execution_time.py <video_url> --label 2m08s
 
-Each run appends one JSON record to
-issues/scaling-control-loop/execution-time-samples.json. Run
+Each run appends one JSON record to execution-time-samples.json in the
+current directory (override with --samples-file). Run
 scripts/analyze_execution_time.py once samples are collected to fit the
 model.
 """
@@ -35,9 +35,7 @@ sys.path.insert(0, str(APP))
 
 from jobs import transcribers  # noqa: E402
 
-DEFAULT_SAMPLES_FILE = (
-    ROOT / "issues" / "scaling-control-loop" / "execution-time-samples.json"
-)
+DEFAULT_SAMPLES_FILE = Path("execution-time-samples.json")
 
 # yt-dlp's default client currently gets 403'd on download by YouTube's
 # PO-token/SABR requirement in this environment (see

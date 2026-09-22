@@ -4,9 +4,11 @@ import { BRAND_ICONS, type BrandIconKey } from "../components/brandIconRegistry.
 import DiagramLightbox from "../components/DiagramLightbox.tsx";
 import JobLifecycle from "../components/JobLifecycle.tsx";
 
+// 圖源 docs/diagrams/sources/aws-infra.drawio（使用者維護，只有一頁）。
+// 改圖後執行 drawio -x -f svg -b 10 -o frontend/public/diagrams/aws-infra.svg docs/diagrams/sources/aws-infra.drawio。
 const AWS_DIAGRAM_LABEL = "AWS infrastructure diagram";
 const AWS_DIAGRAM_ALT =
-  "AWS infrastructure: an ALB fronting api Fargate tasks across two availability zones, worker Fargate tasks alongside them, both egressing through the NAT gateway that carries their SQS calls out to the queue drawn outside the VPC, and RDS Postgres in the private subnets";
+  "AWS infrastructure in ap-northeast-1: users resolve durable-queue.loijilai.site through Route 53 and reach an ALB over HTTPS :443 via the internet gateway; the ALB spreads requests across the two api tasks of the ECS service in the private subnets of two availability zones; Amazon SQS, outside the VPC, invokes the durable-queue-worker Lambda through an event source mapping, and its worker invocations run in the same private subnets; the api tasks and the worker both write to RDS PostgreSQL 16 and egress through the NAT gateway in the public subnet, which carries their calls out to SQS";
 
 /* Hero 圖：hover 左邊的技術層，右邊亮起作用到該層的 deploy stages。
    一層可以對應多個 stage；這是 stack 與 pipeline 的多對多關係，不硬畫成
@@ -27,9 +29,9 @@ type Layer = {
 const STACK: Layer[] = [
   {
     tier: "APPLICATION",
-    icons: ["django", "celery", "postgresql"],
+    icons: ["django", "postgresql"],
     marks: ["SQS"],
-    primary: "Django REST Framework · Celery",
+    primary: "Django REST Framework · SQS",
     detail:
       "A push starts the workflow, then Django tests against Postgres before an image is built.",
   },
@@ -43,11 +45,11 @@ const STACK: Layer[] = [
   {
     tier: "ORCHESTRATION",
     marks: ["ECS"],
-    primary: "ECS Fargate · ALB",
+    primary: "ECS Fargate · Lambda · ALB",
     // 這一格不是空的，是「還沒升級」。用 whisper 色標，視覺上就分得出來。
     next: { label: "Kubernetes", icon: "kubernetes" },
     detail:
-      "A rolling deployment starts the replacement tasks first and keeps the full desired count healthy throughout.",
+      "A rolling deployment starts the replacement API tasks first and keeps the full desired count healthy throughout. The Worker is a Lambda function that SQS invokes, so its new code takes over from the next invocation.",
   },
   {
     tier: "INFRASTRUCTURE AS CODE",
@@ -83,7 +85,7 @@ const PIPELINE = [
     targets: [3, 4],
   },
   {
-    label: "roll ECS services",
+    label: "roll API + update Lambda",
     targets: [2],
   },
 ];
@@ -205,20 +207,14 @@ const ROUTE = [
     title: "Why every piece of this queue exists",
   },
   {
-    to: "/high-availability",
-    index: "04",
-    eyebrow: "HIGH AVAILABILITY",
-    title: "Surviving Task Loss",
-  },
-  {
     to: "/scalability",
-    index: "05",
+    index: "04",
     eyebrow: "SCALABILITY",
     title: "Throughput Scales With the Worker Pool",
   },
   {
     to: "/security",
-    index: "06",
+    index: "05",
     eyebrow: "SECURITY",
     title: "Security Control",
   },
@@ -272,7 +268,7 @@ function HomePage() {
         </span>
         <p className="eyebrow route-eyebrow">
           <span className="eyebrow-dot" />
-          SIX SECTIONS, IN ORDER
+          FIVE SECTIONS, IN ORDER
         </p>
 
         <div className="route-grid">

@@ -6,8 +6,8 @@ import GoogleCallbackPage from './pages/GoogleCallbackPage.tsx'
 import QueuePage from './pages/QueuePage.tsx'
 import DurabilityWalkthroughPage from './pages/DurabilityWalkthroughPage.tsx'
 import ScalabilityPage from './pages/ScalabilityPage.tsx'
-import HighAvailabilityPage from './pages/HighAvailabilityPage.tsx'
 import SecurityPage from './pages/SecurityPage.tsx'
+import AppendixPage from './pages/AppendixPage.tsx'
 
 function App() {
   return (
@@ -19,8 +19,8 @@ function App() {
         <Route path="/queue" element={<QueuePage />} />
         <Route path="/durability" element={<DurabilityWalkthroughPage />} />
         <Route path="/scalability" element={<ScalabilityPage />} />
-        <Route path="/high-availability" element={<HighAvailabilityPage />} />
         <Route path="/security" element={<SecurityPage />} />
+        <Route path="/appendix" element={<AppendixPage />} />
       </Route>
     </Routes>
   )

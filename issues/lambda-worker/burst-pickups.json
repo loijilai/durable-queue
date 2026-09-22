@@ -1,0 +1,1252 @@
+[
+  {
+    "timestamp": "2026-09-22T04:25:14+0000",
+    "job_id": 5,
+    "queue_wait_seconds": 0.041811
+  },
+  {
+    "timestamp": "2026-09-22T04:25:16+0000",
+    "job_id": 6,
+    "queue_wait_seconds": 2.312745
+  },
+  {
+    "timestamp": "2026-09-22T04:25:16+0000",
+    "job_id": 7,
+    "queue_wait_seconds": 2.332076
+  },
+  {
+    "timestamp": "2026-09-22T04:25:16+0000",
+    "job_id": 9,
+    "queue_wait_seconds": 2.231915
+  },
+  {
+    "timestamp": "2026-09-22T04:25:16+0000",
+    "job_id": 8,
+    "queue_wait_seconds": 2.346162
+  },
+  {
+    "timestamp": "2026-09-22T04:25:17+0000",
+    "job_id": 11,
+    "queue_wait_seconds": 2.84582
+  },
+  {
+    "timestamp": "2026-09-22T04:25:17+0000",
+    "job_id": 27,
+    "queue_wait_seconds": 2.869703
+  },
+  {
+    "timestamp": "2026-09-22T04:25:18+0000",
+    "job_id": 14,
+    "queue_wait_seconds": 3.399828
+  },
+  {
+    "timestamp": "2026-09-22T04:25:18+0000",
+    "job_id": 4,
+    "queue_wait_seconds": 3.794565
+  },
+  {
+    "timestamp": "2026-09-22T04:25:18+0000",
+    "job_id": 35,
+    "queue_wait_seconds": 2.891579
+  },
+  {
+    "timestamp": "2026-09-22T04:25:18+0000",
+    "job_id": 15,
+    "queue_wait_seconds": 3.438392
+  },
+  {
+    "timestamp": "2026-09-22T04:25:18+0000",
+    "job_id": 25,
+    "queue_wait_seconds": 3.269585
+  },
+  {
+    "timestamp": "2026-09-22T04:25:18+0000",
+    "job_id": 26,
+    "queue_wait_seconds": 3.228745
+  },
+  {
+    "timestamp": "2026-09-22T04:25:18+0000",
+    "job_id": 10,
+    "queue_wait_seconds": 4.190656
+  },
+  {
+    "timestamp": "2026-09-22T04:25:18+0000",
+    "job_id": 20,
+    "queue_wait_seconds": 3.963485
+  },
+  {
+    "timestamp": "2026-09-22T04:25:18+0000",
+    "job_id": 43,
+    "queue_wait_seconds": 3.460874
+  },
+  {
+    "timestamp": "2026-09-22T04:25:19+0000",
+    "job_id": 21,
+    "queue_wait_seconds": 4.07956
+  },
+  {
+    "timestamp": "2026-09-22T04:25:19+0000",
+    "job_id": 39,
+    "queue_wait_seconds": 3.665208
+  },
+  {
+    "timestamp": "2026-09-22T04:25:19+0000",
+    "job_id": 12,
+    "queue_wait_seconds": 4.338671
+  },
+  {
+    "timestamp": "2026-09-22T04:25:19+0000",
+    "job_id": 13,
+    "queue_wait_seconds": 4.31164
+  },
+  {
+    "timestamp": "2026-09-22T04:25:19+0000",
+    "job_id": 24,
+    "queue_wait_seconds": 4.117093
+  },
+  {
+    "timestamp": "2026-09-22T04:25:19+0000",
+    "job_id": 18,
+    "queue_wait_seconds": 4.285297
+  },
+  {
+    "timestamp": "2026-09-22T04:25:19+0000",
+    "job_id": 16,
+    "queue_wait_seconds": 4.832813
+  },
+  {
+    "timestamp": "2026-09-22T04:25:19+0000",
+    "job_id": 33,
+    "queue_wait_seconds": 4.443866
+  },
+  {
+    "timestamp": "2026-09-22T04:25:19+0000",
+    "job_id": 17,
+    "queue_wait_seconds": 4.875436
+  },
+  {
+    "timestamp": "2026-09-22T04:25:20+0000",
+    "job_id": 30,
+    "queue_wait_seconds": 4.849231
+  },
+  {
+    "timestamp": "2026-09-22T04:25:20+0000",
+    "job_id": 37,
+    "queue_wait_seconds": 4.880298
+  },
+  {
+    "timestamp": "2026-09-22T04:25:23+0000",
+    "job_id": 41,
+    "queue_wait_seconds": 7.720716
+  },
+  {
+    "timestamp": "2026-09-22T04:25:24+0000",
+    "job_id": 49,
+    "queue_wait_seconds": 8.881468
+  },
+  {
+    "timestamp": "2026-09-22T04:25:25+0000",
+    "job_id": 23,
+    "queue_wait_seconds": 10.521047
+  },
+  {
+    "timestamp": "2026-09-22T04:25:25+0000",
+    "job_id": 56,
+    "queue_wait_seconds": 10.060509
+  },
+  {
+    "timestamp": "2026-09-22T04:25:26+0000",
+    "job_id": 42,
+    "queue_wait_seconds": 10.943335
+  },
+  {
+    "timestamp": "2026-09-22T04:25:26+0000",
+    "job_id": 34,
+    "queue_wait_seconds": 11.186977
+  },
+  {
+    "timestamp": "2026-09-22T04:25:26+0000",
+    "job_id": 28,
+    "queue_wait_seconds": 11.333411
+  },
+  {
+    "timestamp": "2026-09-22T04:25:26+0000",
+    "job_id": 32,
+    "queue_wait_seconds": 11.358527
+  },
+  {
+    "timestamp": "2026-09-22T04:25:26+0000",
+    "job_id": 19,
+    "queue_wait_seconds": 11.82477
+  },
+  {
+    "timestamp": "2026-09-22T04:25:26+0000",
+    "job_id": 22,
+    "queue_wait_seconds": 11.905994
+  },
+  {
+    "timestamp": "2026-09-22T04:25:29+0000",
+    "job_id": 46,
+    "queue_wait_seconds": 13.628858
+  },
+  {
+    "timestamp": "2026-09-22T04:25:29+0000",
+    "job_id": 29,
+    "queue_wait_seconds": 14.301887
+  },
+  {
+    "timestamp": "2026-09-22T04:25:31+0000",
+    "job_id": 31,
+    "queue_wait_seconds": 16.787749
+  },
+  {
+    "timestamp": "2026-09-22T04:25:32+0000",
+    "job_id": 45,
+    "queue_wait_seconds": 16.799649
+  },
+  {
+    "timestamp": "2026-09-22T04:25:32+0000",
+    "job_id": 47,
+    "queue_wait_seconds": 16.907509
+  },
+  {
+    "timestamp": "2026-09-22T04:25:32+0000",
+    "job_id": 44,
+    "queue_wait_seconds": 17.084435
+  },
+  {
+    "timestamp": "2026-09-22T04:25:34+0000",
+    "job_id": 38,
+    "queue_wait_seconds": 18.662673
+  },
+  {
+    "timestamp": "2026-09-22T04:25:34+0000",
+    "job_id": 48,
+    "queue_wait_seconds": 18.488469
+  },
+  {
+    "timestamp": "2026-09-22T04:25:34+0000",
+    "job_id": 50,
+    "queue_wait_seconds": 18.972397
+  },
+  {
+    "timestamp": "2026-09-22T04:25:34+0000",
+    "job_id": 58,
+    "queue_wait_seconds": 19.161771
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 57,
+    "queue_wait_seconds": 19.244906
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 52,
+    "queue_wait_seconds": 19.387722
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 70,
+    "queue_wait_seconds": 19.074775
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 59,
+    "queue_wait_seconds": 19.480316
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 51,
+    "queue_wait_seconds": 19.655042
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 40,
+    "queue_wait_seconds": 20.168827
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 71,
+    "queue_wait_seconds": 19.461461
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 53,
+    "queue_wait_seconds": 19.917258
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 36,
+    "queue_wait_seconds": 20.316995
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 76,
+    "queue_wait_seconds": 19.406549
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 74,
+    "queue_wait_seconds": 19.579381
+  },
+  {
+    "timestamp": "2026-09-22T04:25:35+0000",
+    "job_id": 61,
+    "queue_wait_seconds": 20.047527
+  },
+  {
+    "timestamp": "2026-09-22T04:25:37+0000",
+    "job_id": 66,
+    "queue_wait_seconds": 21.027221
+  },
+  {
+    "timestamp": "2026-09-22T04:25:37+0000",
+    "job_id": 75,
+    "queue_wait_seconds": 21.528471
+  },
+  {
+    "timestamp": "2026-09-22T04:25:41+0000",
+    "job_id": 84,
+    "queue_wait_seconds": 25.200952
+  },
+  {
+    "timestamp": "2026-09-22T04:25:43+0000",
+    "job_id": 91,
+    "queue_wait_seconds": 26.455425
+  },
+  {
+    "timestamp": "2026-09-22T04:25:43+0000",
+    "job_id": 79,
+    "queue_wait_seconds": 26.754522
+  },
+  {
+    "timestamp": "2026-09-22T04:25:43+0000",
+    "job_id": 68,
+    "queue_wait_seconds": 27.176606
+  },
+  {
+    "timestamp": "2026-09-22T04:25:43+0000",
+    "job_id": 85,
+    "queue_wait_seconds": 26.914067
+  },
+  {
+    "timestamp": "2026-09-22T04:25:43+0000",
+    "job_id": 93,
+    "queue_wait_seconds": 27.283172
+  },
+  {
+    "timestamp": "2026-09-22T04:25:44+0000",
+    "job_id": 60,
+    "queue_wait_seconds": 28.164092
+  },
+  {
+    "timestamp": "2026-09-22T04:25:44+0000",
+    "job_id": 65,
+    "queue_wait_seconds": 28.400017
+  },
+  {
+    "timestamp": "2026-09-22T04:25:44+0000",
+    "job_id": 80,
+    "queue_wait_seconds": 28.22134
+  },
+  {
+    "timestamp": "2026-09-22T04:25:44+0000",
+    "job_id": 92,
+    "queue_wait_seconds": 27.946054
+  },
+  {
+    "timestamp": "2026-09-22T04:25:44+0000",
+    "job_id": 81,
+    "queue_wait_seconds": 28.321534
+  },
+  {
+    "timestamp": "2026-09-22T04:25:44+0000",
+    "job_id": 83,
+    "queue_wait_seconds": 28.350553
+  },
+  {
+    "timestamp": "2026-09-22T04:25:44+0000",
+    "job_id": 67,
+    "queue_wait_seconds": 28.752199
+  },
+  {
+    "timestamp": "2026-09-22T04:25:44+0000",
+    "job_id": 55,
+    "queue_wait_seconds": 29.173175
+  },
+  {
+    "timestamp": "2026-09-22T04:25:44+0000",
+    "job_id": 99,
+    "queue_wait_seconds": 28.190636
+  },
+  {
+    "timestamp": "2026-09-22T04:25:46+0000",
+    "job_id": 90,
+    "queue_wait_seconds": 29.623911
+  },
+  {
+    "timestamp": "2026-09-22T04:25:46+0000",
+    "job_id": 104,
+    "queue_wait_seconds": 29.63952
+  },
+  {
+    "timestamp": "2026-09-22T04:25:47+0000",
+    "job_id": 96,
+    "queue_wait_seconds": 31.05352
+  },
+  {
+    "timestamp": "2026-09-22T04:25:49+0000",
+    "job_id": 54,
+    "queue_wait_seconds": 33.455428
+  },
+  {
+    "timestamp": "2026-09-22T04:25:49+0000",
+    "job_id": 105,
+    "queue_wait_seconds": 32.560507
+  },
+  {
+    "timestamp": "2026-09-22T04:25:49+0000",
+    "job_id": 109,
+    "queue_wait_seconds": 32.699308
+  },
+  {
+    "timestamp": "2026-09-22T04:25:50+0000",
+    "job_id": 110,
+    "queue_wait_seconds": 32.95965
+  },
+  {
+    "timestamp": "2026-09-22T04:25:50+0000",
+    "job_id": 119,
+    "queue_wait_seconds": 32.958134
+  },
+  {
+    "timestamp": "2026-09-22T04:25:50+0000",
+    "job_id": 69,
+    "queue_wait_seconds": 34.427224
+  },
+  {
+    "timestamp": "2026-09-22T04:25:50+0000",
+    "job_id": 123,
+    "queue_wait_seconds": 33.235784
+  },
+  {
+    "timestamp": "2026-09-22T04:25:50+0000",
+    "job_id": 88,
+    "queue_wait_seconds": 34.043478
+  },
+  {
+    "timestamp": "2026-09-22T04:25:50+0000",
+    "job_id": 89,
+    "queue_wait_seconds": 34.240633
+  },
+  {
+    "timestamp": "2026-09-22T04:25:50+0000",
+    "job_id": 106,
+    "queue_wait_seconds": 33.960649
+  },
+  {
+    "timestamp": "2026-09-22T04:25:50+0000",
+    "job_id": 122,
+    "queue_wait_seconds": 33.652761
+  },
+  {
+    "timestamp": "2026-09-22T04:25:51+0000",
+    "job_id": 72,
+    "queue_wait_seconds": 34.849581
+  },
+  {
+    "timestamp": "2026-09-22T04:25:51+0000",
+    "job_id": 62,
+    "queue_wait_seconds": 35.11658
+  },
+  {
+    "timestamp": "2026-09-22T04:25:51+0000",
+    "job_id": 97,
+    "queue_wait_seconds": 34.290769
+  },
+  {
+    "timestamp": "2026-09-22T04:25:51+0000",
+    "job_id": 126,
+    "queue_wait_seconds": 33.678223
+  },
+  {
+    "timestamp": "2026-09-22T04:25:51+0000",
+    "job_id": 73,
+    "queue_wait_seconds": 35.132833
+  },
+  {
+    "timestamp": "2026-09-22T04:25:51+0000",
+    "job_id": 116,
+    "queue_wait_seconds": 34.267477
+  },
+  {
+    "timestamp": "2026-09-22T04:25:52+0000",
+    "job_id": 129,
+    "queue_wait_seconds": 34.759637
+  },
+  {
+    "timestamp": "2026-09-22T04:25:52+0000",
+    "job_id": 98,
+    "queue_wait_seconds": 36.054274
+  },
+  {
+    "timestamp": "2026-09-22T04:25:53+0000",
+    "job_id": 132,
+    "queue_wait_seconds": 35.879556
+  },
+  {
+    "timestamp": "2026-09-22T04:25:53+0000",
+    "job_id": 63,
+    "queue_wait_seconds": 37.944008
+  },
+  {
+    "timestamp": "2026-09-22T04:25:56+0000",
+    "job_id": 133,
+    "queue_wait_seconds": 38.497551
+  },
+  {
+    "timestamp": "2026-09-22T04:25:56+0000",
+    "job_id": 152,
+    "queue_wait_seconds": 38.318957
+  },
+  {
+    "timestamp": "2026-09-22T04:25:56+0000",
+    "job_id": 138,
+    "queue_wait_seconds": 38.894735
+  },
+  {
+    "timestamp": "2026-09-22T04:25:56+0000",
+    "job_id": 141,
+    "queue_wait_seconds": 39.057733
+  },
+  {
+    "timestamp": "2026-09-22T04:25:57+0000",
+    "job_id": 155,
+    "queue_wait_seconds": 39.319606
+  },
+  {
+    "timestamp": "2026-09-22T04:25:57+0000",
+    "job_id": 151,
+    "queue_wait_seconds": 39.415128
+  },
+  {
+    "timestamp": "2026-09-22T04:25:57+0000",
+    "job_id": 64,
+    "queue_wait_seconds": 41.54926
+  },
+  {
+    "timestamp": "2026-09-22T04:25:57+0000",
+    "job_id": 102,
+    "queue_wait_seconds": 41.000026
+  },
+  {
+    "timestamp": "2026-09-22T04:25:59+0000",
+    "job_id": 143,
+    "queue_wait_seconds": 41.227677
+  },
+  {
+    "timestamp": "2026-09-22T04:25:59+0000",
+    "job_id": 135,
+    "queue_wait_seconds": 41.479941
+  },
+  {
+    "timestamp": "2026-09-22T04:25:59+0000",
+    "job_id": 142,
+    "queue_wait_seconds": 41.427165
+  },
+  {
+    "timestamp": "2026-09-22T04:25:59+0000",
+    "job_id": 78,
+    "queue_wait_seconds": 42.988652
+  },
+  {
+    "timestamp": "2026-09-22T04:25:59+0000",
+    "job_id": 77,
+    "queue_wait_seconds": 43.272856
+  },
+  {
+    "timestamp": "2026-09-22T04:26:00+0000",
+    "job_id": 149,
+    "queue_wait_seconds": 42.550984
+  },
+  {
+    "timestamp": "2026-09-22T04:26:00+0000",
+    "job_id": 86,
+    "queue_wait_seconds": 44.047374
+  },
+  {
+    "timestamp": "2026-09-22T04:26:00+0000",
+    "job_id": 107,
+    "queue_wait_seconds": 43.876957
+  },
+  {
+    "timestamp": "2026-09-22T04:26:01+0000",
+    "job_id": 87,
+    "queue_wait_seconds": 44.60276
+  },
+  {
+    "timestamp": "2026-09-22T04:26:01+0000",
+    "job_id": 82,
+    "queue_wait_seconds": 44.893034
+  },
+  {
+    "timestamp": "2026-09-22T04:26:01+0000",
+    "job_id": 161,
+    "queue_wait_seconds": 43.081819
+  },
+  {
+    "timestamp": "2026-09-22T04:26:01+0000",
+    "job_id": 94,
+    "queue_wait_seconds": 44.895136
+  },
+  {
+    "timestamp": "2026-09-22T04:26:01+0000",
+    "job_id": 115,
+    "queue_wait_seconds": 44.545649
+  },
+  {
+    "timestamp": "2026-09-22T04:26:01+0000",
+    "job_id": 95,
+    "queue_wait_seconds": 45.232557
+  },
+  {
+    "timestamp": "2026-09-22T04:26:02+0000",
+    "job_id": 103,
+    "queue_wait_seconds": 45.152359
+  },
+  {
+    "timestamp": "2026-09-22T04:26:02+0000",
+    "job_id": 159,
+    "queue_wait_seconds": 43.921251
+  },
+  {
+    "timestamp": "2026-09-22T04:26:02+0000",
+    "job_id": 147,
+    "queue_wait_seconds": 44.238368
+  },
+  {
+    "timestamp": "2026-09-22T04:26:04+0000",
+    "job_id": 180,
+    "queue_wait_seconds": 46.083029
+  },
+  {
+    "timestamp": "2026-09-22T04:26:07+0000",
+    "job_id": 170,
+    "queue_wait_seconds": 48.770119
+  },
+  {
+    "timestamp": "2026-09-22T04:26:07+0000",
+    "job_id": 182,
+    "queue_wait_seconds": 49.019413
+  },
+  {
+    "timestamp": "2026-09-22T04:26:08+0000",
+    "job_id": 127,
+    "queue_wait_seconds": 50.720102
+  },
+  {
+    "timestamp": "2026-09-22T04:26:08+0000",
+    "job_id": 100,
+    "queue_wait_seconds": 51.68898
+  },
+  {
+    "timestamp": "2026-09-22T04:26:09+0000",
+    "job_id": 101,
+    "queue_wait_seconds": 52.423825
+  },
+  {
+    "timestamp": "2026-09-22T04:26:09+0000",
+    "job_id": 112,
+    "queue_wait_seconds": 52.691806
+  },
+  {
+    "timestamp": "2026-09-22T04:26:10+0000",
+    "job_id": 108,
+    "queue_wait_seconds": 53.143716
+  },
+  {
+    "timestamp": "2026-09-22T04:26:10+0000",
+    "job_id": 128,
+    "queue_wait_seconds": 52.901433
+  },
+  {
+    "timestamp": "2026-09-22T04:26:10+0000",
+    "job_id": 130,
+    "queue_wait_seconds": 53.151695
+  },
+  {
+    "timestamp": "2026-09-22T04:26:11+0000",
+    "job_id": 140,
+    "queue_wait_seconds": 53.359912
+  },
+  {
+    "timestamp": "2026-09-22T04:26:11+0000",
+    "job_id": 111,
+    "queue_wait_seconds": 54.192674
+  },
+  {
+    "timestamp": "2026-09-22T04:26:11+0000",
+    "job_id": 190,
+    "queue_wait_seconds": 52.375694
+  },
+  {
+    "timestamp": "2026-09-22T04:26:11+0000",
+    "job_id": 124,
+    "queue_wait_seconds": 54.089609
+  },
+  {
+    "timestamp": "2026-09-22T04:26:11+0000",
+    "job_id": 148,
+    "queue_wait_seconds": 53.587356
+  },
+  {
+    "timestamp": "2026-09-22T04:26:11+0000",
+    "job_id": 189,
+    "queue_wait_seconds": 52.500636
+  },
+  {
+    "timestamp": "2026-09-22T04:26:11+0000",
+    "job_id": 144,
+    "queue_wait_seconds": 53.71434
+  },
+  {
+    "timestamp": "2026-09-22T04:26:11+0000",
+    "job_id": 195,
+    "queue_wait_seconds": 52.385221
+  },
+  {
+    "timestamp": "2026-09-22T04:26:12+0000",
+    "job_id": 209,
+    "queue_wait_seconds": 52.813938
+  },
+  {
+    "timestamp": "2026-09-22T04:26:12+0000",
+    "job_id": 205,
+    "queue_wait_seconds": 53.4716
+  },
+  {
+    "timestamp": "2026-09-22T04:26:14+0000",
+    "job_id": 210,
+    "queue_wait_seconds": 54.777386
+  },
+  {
+    "timestamp": "2026-09-22T04:26:14+0000",
+    "job_id": 145,
+    "queue_wait_seconds": 56.524398
+  },
+  {
+    "timestamp": "2026-09-22T04:26:14+0000",
+    "job_id": 157,
+    "queue_wait_seconds": 56.615453
+  },
+  {
+    "timestamp": "2026-09-22T04:26:15+0000",
+    "job_id": 217,
+    "queue_wait_seconds": 55.37644
+  },
+  {
+    "timestamp": "2026-09-22T04:26:15+0000",
+    "job_id": 150,
+    "queue_wait_seconds": 57.241183
+  },
+  {
+    "timestamp": "2026-09-22T04:26:15+0000",
+    "job_id": 218,
+    "queue_wait_seconds": 55.828294
+  },
+  {
+    "timestamp": "2026-09-22T04:26:15+0000",
+    "job_id": 113,
+    "queue_wait_seconds": 58.515357
+  },
+  {
+    "timestamp": "2026-09-22T04:26:15+0000",
+    "job_id": 222,
+    "queue_wait_seconds": 55.93742
+  },
+  {
+    "timestamp": "2026-09-22T04:26:15+0000",
+    "job_id": 225,
+    "queue_wait_seconds": 55.982717
+  },
+  {
+    "timestamp": "2026-09-22T04:26:15+0000",
+    "job_id": 220,
+    "queue_wait_seconds": 56.144811
+  },
+  {
+    "timestamp": "2026-09-22T04:26:15+0000",
+    "job_id": 227,
+    "queue_wait_seconds": 56.027451
+  },
+  {
+    "timestamp": "2026-09-22T04:26:16+0000",
+    "job_id": 166,
+    "queue_wait_seconds": 57.618538
+  },
+  {
+    "timestamp": "2026-09-22T04:26:16+0000",
+    "job_id": 114,
+    "queue_wait_seconds": 58.906165
+  },
+  {
+    "timestamp": "2026-09-22T04:26:16+0000",
+    "job_id": 230,
+    "queue_wait_seconds": 56.2845
+  },
+  {
+    "timestamp": "2026-09-22T04:26:16+0000",
+    "job_id": 117,
+    "queue_wait_seconds": 59.457247
+  },
+  {
+    "timestamp": "2026-09-22T04:26:17+0000",
+    "job_id": 169,
+    "queue_wait_seconds": 58.554734
+  },
+  {
+    "timestamp": "2026-09-22T04:26:17+0000",
+    "job_id": 118,
+    "queue_wait_seconds": 60.045969
+  },
+  {
+    "timestamp": "2026-09-22T04:26:17+0000",
+    "job_id": 232,
+    "queue_wait_seconds": 57.736054
+  },
+  {
+    "timestamp": "2026-09-22T04:26:17+0000",
+    "job_id": 125,
+    "queue_wait_seconds": 60.491288
+  },
+  {
+    "timestamp": "2026-09-22T04:26:19+0000",
+    "job_id": 238,
+    "queue_wait_seconds": 58.972795
+  },
+  {
+    "timestamp": "2026-09-22T04:26:20+0000",
+    "job_id": 176,
+    "queue_wait_seconds": 61.346655
+  },
+  {
+    "timestamp": "2026-09-22T04:26:20+0000",
+    "job_id": 177,
+    "queue_wait_seconds": 61.734267
+  },
+  {
+    "timestamp": "2026-09-22T04:26:22+0000",
+    "job_id": 191,
+    "queue_wait_seconds": 62.971412
+  },
+  {
+    "timestamp": "2026-09-22T04:26:22+0000",
+    "job_id": 163,
+    "queue_wait_seconds": 63.948098
+  },
+  {
+    "timestamp": "2026-09-22T04:26:22+0000",
+    "job_id": 137,
+    "queue_wait_seconds": 65.23504
+  },
+  {
+    "timestamp": "2026-09-22T04:26:23+0000",
+    "job_id": 165,
+    "queue_wait_seconds": 64.874082
+  },
+  {
+    "timestamp": "2026-09-22T04:26:23+0000",
+    "job_id": 242,
+    "queue_wait_seconds": 63.036708
+  },
+  {
+    "timestamp": "2026-09-22T04:26:23+0000",
+    "job_id": 250,
+    "queue_wait_seconds": 62.872991
+  },
+  {
+    "timestamp": "2026-09-22T04:26:24+0000",
+    "job_id": 146,
+    "queue_wait_seconds": 66.524684
+  },
+  {
+    "timestamp": "2026-09-22T04:26:25+0000",
+    "job_id": 120,
+    "queue_wait_seconds": 67.827871
+  },
+  {
+    "timestamp": "2026-09-22T04:26:25+0000",
+    "job_id": 175,
+    "queue_wait_seconds": 66.612643
+  },
+  {
+    "timestamp": "2026-09-22T04:26:25+0000",
+    "job_id": 154,
+    "queue_wait_seconds": 67.276166
+  },
+  {
+    "timestamp": "2026-09-22T04:26:25+0000",
+    "job_id": 121,
+    "queue_wait_seconds": 68.327677
+  },
+  {
+    "timestamp": "2026-09-22T04:26:25+0000",
+    "job_id": 244,
+    "queue_wait_seconds": 65.314828
+  },
+  {
+    "timestamp": "2026-09-22T04:26:26+0000",
+    "job_id": 131,
+    "queue_wait_seconds": 69.081081
+  },
+  {
+    "timestamp": "2026-09-22T04:26:26+0000",
+    "job_id": 179,
+    "queue_wait_seconds": 68.277235
+  },
+  {
+    "timestamp": "2026-09-22T04:26:27+0000",
+    "job_id": 194,
+    "queue_wait_seconds": 68.04593
+  },
+  {
+    "timestamp": "2026-09-22T04:26:27+0000",
+    "job_id": 134,
+    "queue_wait_seconds": 69.722322
+  },
+  {
+    "timestamp": "2026-09-22T04:26:27+0000",
+    "job_id": 196,
+    "queue_wait_seconds": 68.186329
+  },
+  {
+    "timestamp": "2026-09-22T04:26:27+0000",
+    "job_id": 247,
+    "queue_wait_seconds": 66.767722
+  },
+  {
+    "timestamp": "2026-09-22T04:26:28+0000",
+    "job_id": 136,
+    "queue_wait_seconds": 70.601376
+  },
+  {
+    "timestamp": "2026-09-22T04:26:29+0000",
+    "job_id": 158,
+    "queue_wait_seconds": 71.154846
+  },
+  {
+    "timestamp": "2026-09-22T04:26:30+0000",
+    "job_id": 164,
+    "queue_wait_seconds": 72.435857
+  },
+  {
+    "timestamp": "2026-09-22T04:26:31+0000",
+    "job_id": 139,
+    "queue_wait_seconds": 73.403652
+  },
+  {
+    "timestamp": "2026-09-22T04:26:31+0000",
+    "job_id": 153,
+    "queue_wait_seconds": 73.754787
+  },
+  {
+    "timestamp": "2026-09-22T04:26:31+0000",
+    "job_id": 253,
+    "queue_wait_seconds": 42.201017
+  },
+  {
+    "timestamp": "2026-09-22T04:26:32+0000",
+    "job_id": 187,
+    "queue_wait_seconds": 73.514818
+  },
+  {
+    "timestamp": "2026-09-22T04:26:32+0000",
+    "job_id": 178,
+    "queue_wait_seconds": 73.817836
+  },
+  {
+    "timestamp": "2026-09-22T04:26:32+0000",
+    "job_id": 181,
+    "queue_wait_seconds": 74.120034
+  },
+  {
+    "timestamp": "2026-09-22T04:26:33+0000",
+    "job_id": 183,
+    "queue_wait_seconds": 74.684115
+  },
+  {
+    "timestamp": "2026-09-22T04:26:34+0000",
+    "job_id": 156,
+    "queue_wait_seconds": 76.214179
+  },
+  {
+    "timestamp": "2026-09-22T04:26:35+0000",
+    "job_id": 160,
+    "queue_wait_seconds": 77.479961
+  },
+  {
+    "timestamp": "2026-09-22T04:26:35+0000",
+    "job_id": 201,
+    "queue_wait_seconds": 76.479076
+  },
+  {
+    "timestamp": "2026-09-22T04:26:35+0000",
+    "job_id": 184,
+    "queue_wait_seconds": 77.078477
+  },
+  {
+    "timestamp": "2026-09-22T04:26:36+0000",
+    "job_id": 188,
+    "queue_wait_seconds": 77.41065
+  },
+  {
+    "timestamp": "2026-09-22T04:26:36+0000",
+    "job_id": 185,
+    "queue_wait_seconds": 77.7438
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 197,
+    "queue_wait_seconds": 77.86881
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 198,
+    "queue_wait_seconds": 78.084215
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 192,
+    "queue_wait_seconds": 78.36848
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 202,
+    "queue_wait_seconds": 78.168988
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 200,
+    "queue_wait_seconds": 78.278662
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 162,
+    "queue_wait_seconds": 79.290073
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 213,
+    "queue_wait_seconds": 78.016136
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 199,
+    "queue_wait_seconds": 78.354764
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 228,
+    "queue_wait_seconds": 77.686845
+  },
+  {
+    "timestamp": "2026-09-22T04:26:37+0000",
+    "job_id": 215,
+    "queue_wait_seconds": 78.025674
+  },
+  {
+    "timestamp": "2026-09-22T04:26:38+0000",
+    "job_id": 219,
+    "queue_wait_seconds": 78.905168
+  },
+  {
+    "timestamp": "2026-09-22T04:26:38+0000",
+    "job_id": 221,
+    "queue_wait_seconds": 79.109372
+  },
+  {
+    "timestamp": "2026-09-22T04:26:40+0000",
+    "job_id": 203,
+    "queue_wait_seconds": 80.786247
+  },
+  {
+    "timestamp": "2026-09-22T04:26:40+0000",
+    "job_id": 229,
+    "queue_wait_seconds": 80.345826
+  },
+  {
+    "timestamp": "2026-09-22T04:26:40+0000",
+    "job_id": 168,
+    "queue_wait_seconds": 82.018317
+  },
+  {
+    "timestamp": "2026-09-22T04:26:41+0000",
+    "job_id": 208,
+    "queue_wait_seconds": 81.553574
+  },
+  {
+    "timestamp": "2026-09-22T04:26:41+0000",
+    "job_id": 211,
+    "queue_wait_seconds": 81.854688
+  },
+  {
+    "timestamp": "2026-09-22T04:26:41+0000",
+    "job_id": 223,
+    "queue_wait_seconds": 81.805359
+  },
+  {
+    "timestamp": "2026-09-22T04:26:41+0000",
+    "job_id": 226,
+    "queue_wait_seconds": 81.803075
+  },
+  {
+    "timestamp": "2026-09-22T04:26:41+0000",
+    "job_id": 234,
+    "queue_wait_seconds": 81.683927
+  },
+  {
+    "timestamp": "2026-09-22T04:26:41+0000",
+    "job_id": 235,
+    "queue_wait_seconds": 81.658023
+  },
+  {
+    "timestamp": "2026-09-22T04:26:41+0000",
+    "job_id": 237,
+    "queue_wait_seconds": 81.622731
+  },
+  {
+    "timestamp": "2026-09-22T04:26:41+0000",
+    "job_id": 167,
+    "queue_wait_seconds": 83.478564
+  },
+  {
+    "timestamp": "2026-09-22T04:26:41+0000",
+    "job_id": 171,
+    "queue_wait_seconds": 83.384878
+  },
+  {
+    "timestamp": "2026-09-22T04:26:42+0000",
+    "job_id": 236,
+    "queue_wait_seconds": 82.357453
+  },
+  {
+    "timestamp": "2026-09-22T04:26:42+0000",
+    "job_id": 172,
+    "queue_wait_seconds": 84.080435
+  },
+  {
+    "timestamp": "2026-09-22T04:26:43+0000",
+    "job_id": 212,
+    "queue_wait_seconds": 83.801126
+  },
+  {
+    "timestamp": "2026-09-22T04:26:43+0000",
+    "job_id": 246,
+    "queue_wait_seconds": 82.930696
+  },
+  {
+    "timestamp": "2026-09-22T04:26:47+0000",
+    "job_id": 231,
+    "queue_wait_seconds": 87.291424
+  },
+  {
+    "timestamp": "2026-09-22T04:26:48+0000",
+    "job_id": 173,
+    "queue_wait_seconds": 89.77104
+  },
+  {
+    "timestamp": "2026-09-22T04:26:48+0000",
+    "job_id": 174,
+    "queue_wait_seconds": 90.198449
+  },
+  {
+    "timestamp": "2026-09-22T04:26:50+0000",
+    "job_id": 233,
+    "queue_wait_seconds": 89.886682
+  },
+  {
+    "timestamp": "2026-09-22T04:26:50+0000",
+    "job_id": 248,
+    "queue_wait_seconds": 89.650656
+  },
+  {
+    "timestamp": "2026-09-22T04:26:50+0000",
+    "job_id": 252,
+    "queue_wait_seconds": 82.518946
+  },
+  {
+    "timestamp": "2026-09-22T04:26:50+0000",
+    "job_id": 239,
+    "queue_wait_seconds": 90.173425
+  },
+  {
+    "timestamp": "2026-09-22T04:26:51+0000",
+    "job_id": 186,
+    "queue_wait_seconds": 92.2138
+  },
+  {
+    "timestamp": "2026-09-22T04:26:51+0000",
+    "job_id": 193,
+    "queue_wait_seconds": 92.391381
+  },
+  {
+    "timestamp": "2026-09-22T04:26:51+0000",
+    "job_id": 204,
+    "queue_wait_seconds": 92.217597
+  },
+  {
+    "timestamp": "2026-09-22T04:26:53+0000",
+    "job_id": 240,
+    "queue_wait_seconds": 93.082619
+  },
+  {
+    "timestamp": "2026-09-22T04:26:53+0000",
+    "job_id": 206,
+    "queue_wait_seconds": 94.501803
+  },
+  {
+    "timestamp": "2026-09-22T04:26:54+0000",
+    "job_id": 243,
+    "queue_wait_seconds": 94.119723
+  },
+  {
+    "timestamp": "2026-09-22T04:26:56+0000",
+    "job_id": 207,
+    "queue_wait_seconds": 96.519297
+  },
+  {
+    "timestamp": "2026-09-22T04:26:56+0000",
+    "job_id": 214,
+    "queue_wait_seconds": 97.075822
+  },
+  {
+    "timestamp": "2026-09-22T04:26:56+0000",
+    "job_id": 216,
+    "queue_wait_seconds": 97.094453
+  },
+  {
+    "timestamp": "2026-09-22T04:26:57+0000",
+    "job_id": 251,
+    "queue_wait_seconds": 89.412354
+  },
+  {
+    "timestamp": "2026-09-22T04:26:57+0000",
+    "job_id": 224,
+    "queue_wait_seconds": 98.107048
+  },
+  {
+    "timestamp": "2026-09-22T04:26:58+0000",
+    "job_id": 245,
+    "queue_wait_seconds": 97.530775
+  },
+  {
+    "timestamp": "2026-09-22T04:26:58+0000",
+    "job_id": 241,
+    "queue_wait_seconds": 97.735891
+  },
+  {
+    "timestamp": "2026-09-22T04:26:58+0000",
+    "job_id": 249,
+    "queue_wait_seconds": 97.469692
+  }
+]

@@ -12,9 +12,8 @@
       → 程式碼從來不讀 = 死設定，一併報出來（LIBRARY_OWNED 例外，見下）
 
 部署來源是可替換的 DeploymentSource：換掉它指到的路徑和解析規則，就能改對帳去對
-別的部署宣告，不必碰其餘的對帳邏輯。05 把預設來源從機器開機腳本換成 Worker 的
-ECS task definition；Worker 改成 Lambda 之後，來源換成那個 function 的環境設定
-（infra/worker.tf），機器開機腳本與 task definition 對應的解析規則一併移除。
+別的部署宣告，不必碰其餘的對帳邏輯。預設來源是 Worker 這個 Lambda function 的
+環境設定（infra/worker.tf）。
 """
 
 from __future__ import annotations

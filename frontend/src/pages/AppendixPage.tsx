@@ -1,28 +1,39 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../context/useAuth.ts";
-import {
-  ApiError,
-  API_BASE_URL,
-  createJob,
-  getJob,
-  pingHealth,
-  type JobStatus,
-  type TranscriptionJob,
-} from "../lib/api.ts";
-import AuditTrail from "../components/AuditTrail.tsx";
+import { API_BASE_URL, pingHealth } from "../lib/api.ts";
 import DiagramLightbox from "../components/DiagramLightbox.tsx";
 import Foldout from "../components/Foldout.tsx";
+import LensFigure, { type Lens } from "../components/LensFigure.tsx";
 import RecordingSlot from "../components/RecordingSlot.tsx";
+import {
+  SectionHead,
+  SectionSpine,
+  type SpineSection,
+} from "../components/SectionSpine.tsx";
 
+// =====================================================================
+// 不在主路線上的補充頁：面試走完五站後，被問到才翻的兩章。只從頁尾進入，
+// 頁尾的連結直達各章錨點（見 Layout 的 APPENDIX 欄）。
+// =====================================================================
+
+const CHAPTERS: SpineSection[] = [
+  {
+    id: "api-availability",
+    index: "01",
+    tier: "API AVAILABILITY",
+    title: "Two Ways to Lose an API Task",
+  },
+  {
+    id: "pipeline",
+    index: "02",
+    tier: "CI/CD",
+    title: "Pipeline Identity & Secret Management",
+  },
+];
+
+// ── 01 API AVAILABILITY ─────────────────────────────────────────────
 const DIAGRAM_LABEL = "AWS infrastructure diagram";
-const POLL_INTERVAL_MS = 2000;
-const TERMINAL_STATUSES: JobStatus[] = ["succeeded", "failed"];
-const DEMO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-// 記住這次 demo 的 job id，切頁 unmount 後回來能重抓還原（後端是真相來源）。
-const DEMO_JOB_KEY = "ha-scenario-a-job-id";
 
-// 場景 B 的兩條路徑都是對真實 AWS、預錄的。放上連結就會取代下方的 placeholder。
+// API tier 的兩條路徑都是對真實 AWS、預錄的。放上連結就會取代下方的 placeholder。
 const GRACEFUL_RECORDING_URL = "https://youtu.be/1IOtkj5hIEo";
 const UNGRACEFUL_RECORDING_URL = "https://youtu.be/s9L_QNKJyRQ";
 // 兩支錄影拍的是 ECS service 之前那一版部署。頁面上的機制描述跟著 infra 走，
@@ -34,28 +45,7 @@ const PROBE_INTERVAL_MS = 1000;
 const PROBE_WINDOW = 39;
 const PROBE_TIMEOUT_MS = 3000;
 // 切頁 unmount 會清掉 probe 狀態，存一份到 sessionStorage，回來還原並自動續跑。
-const PROBE_KEY = "ha-scenario-b-probe";
-
-const HA_CHAPTERS = [
-  {
-    id: "worker-crash",
-    index: "01",
-    tier: "WORKER",
-    title: "Worker Crash",
-  },
-  {
-    id: "graceful-shutdown",
-    index: "02",
-    tier: "API · GRACEFUL",
-    title: "Zero Downtime Deploy",
-  },
-  {
-    id: "unexpected-crash",
-    index: "03",
-    tier: "API · UNGRACEFUL",
-    title: "API Crash",
-  },
-] as const;
+const PROBE_KEY = "appendix-api-probe";
 
 interface Sample {
   ok: boolean;
@@ -189,189 +179,96 @@ function HealthProbe() {
   );
 }
 
-function HighAvailabilityPage() {
-  const { accessToken, authedFetch } = useAuth();
-  const [job, setJob] = useState<TranscriptionJob | null>(null);
-  const [starting, setStarting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+// ── 02 PIPELINE：一次部署的完整路徑、五個步驟 ─────────────────────────
+// 跟 Security 頁拓撲圖的差別是維度：那張是空間（同一張拓撲的三個切面，
+// 彼此平行），這裡是時間（同一條管線的五個先後步驟）。畫面以右側 next overlay 依序推進，
+// 第五步再前進會回到第一步。
+// 圖源 docs/diagrams/sources/deploy-pipeline.drawio 的 master 頁。
+// 改圖後執行 python3 tools/diagrams/build_deploy_pipeline.py --export。
+const PIPELINE_LENSES: Lens[] = [
+  {
+    id: "seed",
+    tab: "1",
+    src: "/diagrams/sec-pipeline-1-seed.svg",
+    caption:
+      "The only plaintext copy of the app secrets sits in a local .env file. One manual put-secret-value writes it into Secrets Manager — it never enters the repository, and it never travels down the pipeline in the steps that follow.",
+  },
+  {
+    id: "identity",
+    tab: "2",
+    src: "/diagrams/sec-pipeline-2-identity.svg",
+    caption:
+      "The runner holds no AWS key. It presents a GitHub OIDC id_token and STS hands back credentials that expire with the job — so there is nothing in the repository to leak, and nothing to rotate. The role it lands in is least-privilege, with iam:PassRole pinned to a single role ARN.",
+  },
+  {
+    id: "image",
+    tab: "3",
+    src: "/diagrams/sec-pipeline-3-image.svg",
+    caption:
+      "Those credentials push one artifact, tagged with the commit SHA. The thing that ships is addressable back to the commit that was tested, and a redeploy of the same SHA is the same bytes.",
+  },
+  {
+    id: "state",
+    tab: "4",
+    src: "/diagrams/sec-pipeline-4-state.svg",
+    caption:
+      "The same credentials read and write Terraform's state, which records real infrastructure and resolved secret ARNs. That makes the bucket a secret in its own right: encrypted at rest, versioned, and blocked from public access.",
+  },
+  {
+    id: "boot",
+    tab: "5",
+    src: "/diagrams/sec-pipeline-5-boot.svg",
+    caption:
+      "update-service --force-new-deployment starts the rollout, after one standalone migration task on the same image, and update-function-code points the worker Lambda at that same image. Two identities split the work: the execution role resolves the secrets into environment variables at start-up; the task role the application runs as gets the queue, and nothing from Secrets Manager.",
+  },
+];
+
+// 這張表真正要說的話是最後一欄：task definition 有兩個欄位，`environment`
+// 的值明文寫在定義裡，任何讀得到 task definition 的人就讀得到；`secrets` 只
+// 放 ARN，由 execution role 在啟動時去解析。所以「該進 environment 還是進
+// secrets」就是機密與否的判準——而且這條界線是平台強制的二分，不是靠自律。
+// secrets / secrets / environment 讀完，三個來源為什麼走兩條不同的路就講完了。
+interface ConfigSource {
+  source: string;
+  origin: string;
+  delivery: string;
+  note?: string;
+}
+
+const CONFIG_SOURCES: ConfigSource[] = [
+  {
+    source: "RDS master password",
+    origin: "AWS (manage_master_user_password = true)",
+    delivery: "secrets: → Secrets Manager ARN",
+  },
+  {
+    source: "App secret",
+    origin: "Developer",
+    delivery: "secrets: → Secrets Manager ARN",
+  },
+  {
+    source: "Config & endpoints",
+    origin: "Terraform, computed from other resources",
+    delivery: "environment: → literal value in the task definition",
+  },
+];
+
+function AppendixPage() {
   const [zoomed, setZoomed] = useState(false);
-
-  const isActive = job !== null && !TERMINAL_STATUSES.includes(job.status);
-
-  // 回到頁面（重新 mount）時，用存下的 id 把上次的 demo job 抓回來。
-  useEffect(() => {
-    if (!accessToken) return;
-    const stored = sessionStorage.getItem(DEMO_JOB_KEY);
-    if (!stored) return;
-    authedFetch((token) => getJob(token, Number(stored)))
-      .then(setJob)
-      .catch(() => sessionStorage.removeItem(DEMO_JOB_KEY));
-  }, [accessToken, authedFetch]);
-
-  // 只追一個 demo job，非 terminal 時每 2 秒打 GET /api/jobs/{id}。
-  useEffect(() => {
-    if (!accessToken || job === null || !isActive) return;
-    const id = setInterval(async () => {
-      try {
-        setJob(await authedFetch((token) => getJob(token, job.id)));
-      } catch {
-        // 暫時性失敗不中斷，下一個 tick 再試
-      }
-    }, POLL_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [accessToken, job, isActive, authedFetch]);
-
-  async function startScenario() {
-    if (!accessToken) return;
-    setStarting(true);
-    setError(null);
-    try {
-      const created = await authedFetch((token) => createJob(token, DEMO_URL));
-      sessionStorage.setItem(DEMO_JOB_KEY, String(created.id));
-      setJob(created);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong");
-    } finally {
-      setStarting(false);
-    }
-  }
 
   return (
     <section className="ha-page">
       <p className="eyebrow">
         <span className="eyebrow-dot" />
-        HIGH AVAILABILITY
+        APPENDIX
       </p>
-      <h1>Surviving Task Loss</h1>
-      <p className="placeholder-body">
-        Across two AZs, worker crashes lose no work and API task loss recovers
-        automatically.
-      </p>
+      <h1>Beyond the Route</h1>
 
-      <nav className="sec-spine" aria-label="high availability chapters">
-        {HA_CHAPTERS.map((chapter) => (
-          <a
-            key={chapter.id}
-            href={`#${chapter.id}`}
-            className="sec-spine-tile"
-          >
-            <span className="sec-spine-index">{chapter.index}</span>
-            <span className="sec-spine-tier">{chapter.tier}</span>
-            <span className="sec-spine-title">{chapter.title}</span>
-          </a>
-        ))}
-      </nav>
+      <SectionSpine sections={CHAPTERS} label="appendix chapters" />
 
-      {/* ── Scenario A ─────────────────────────────────────────── */}
-      <div id="worker-crash" className="ha-scenario">
-        <p className="eyebrow ha-scenario-tag">
-          <span className="eyebrow-dot" />
-          SCENARIO A
-        </p>
-        <h2 className="ha-scenario-title">Worker Crash Without Losing Work</h2>
-
-        {!accessToken && (
-          <div className="queue-card">
-            <p>
-              You need to be logged in to run this demo.{" "}
-              <Link to="/auth">Go to Authentication</Link>.
-            </p>
-          </div>
-        )}
-
-        {accessToken && (
-          <div className="queue-card ha-demo">
-            <div className="ha-demo-head">
-              <button
-                type="button"
-                className="btn-primary ha-start"
-                onClick={startScenario}
-                disabled={starting || isActive}
-              >
-                {starting
-                  ? "Starting…"
-                  : isActive
-                    ? "Running…"
-                    : "Start scenario A"}
-              </button>
-              {job && (
-                <span className={`ha-badge ha-badge-${job.status}`}>
-                  #{job.id} · {job.status}
-                </span>
-              )}
-            </div>
-            {error && <p className="auth-error">{error}</p>}
-
-            {job ? (
-              <div className="job-inspect ha-audit">
-                <p className="eyebrow audit-eyebrow">
-                  <span className="eyebrow-dot" />
-                  WORKER AUDIT TRAIL
-                </p>
-                <AuditTrail job={job} />
-              </div>
-            ) : (
-              <p className="placeholder-body ha-hint">
-                Start the demo, then kill the busy worker to see the job
-                reassigned.
-              </p>
-            )}
-          </div>
-        )}
-
-        <Foldout title="HOW TO RUN · WHY IT SURVIVES">
-          <div className="ha-columns">
-            <div className="ha-col">
-              <p className="eyebrow">
-                <span className="eyebrow-dot" />
-                HOW TO RUN
-              </p>
-              <ol className="ha-steps">
-                <li>
-                  <code>docker compose up --build --scale worker=2</code>.
-                </li>
-                <li>
-                  Start scenario A. While the job is RUNNING, find its worker
-                  with <code>docker ps</code>, then run{" "}
-                  <code>docker kill &lt;id&gt;</code>.
-                </li>
-                <li>
-                  After ~30s, verify a second attempt appears and the job
-                  succeeds.
-                </li>
-              </ol>
-            </div>
-
-            <div className="ha-col">
-              <p className="eyebrow">
-                <span className="eyebrow-dot" />
-                WHY IT SURVIVES
-              </p>
-              <ul className="ha-mechanism">
-                <li>
-                  <strong>Late ACK</strong> — incomplete work is redelivered.
-                </li>
-                <li>
-                  <strong>Visibility timeout</strong> — redelivery starts after
-                  30 seconds.
-                </li>
-                <li>
-                  <strong>Idempotency guard</strong> — finished jobs are not
-                  written twice.
-                </li>
-              </ul>
-            </div>
-          </div>
-        </Foldout>
-      </div>
-
-      {/* ── Scenario B ─────────────────────────────────────────── */}
-      <div className="ha-scenario">
-        <p className="eyebrow ha-scenario-tag">
-          <span className="eyebrow-dot" />
-          SCENARIO B
-        </p>
-        <h2 className="ha-scenario-title">Two Ways to Lose an API Task</h2>
+      {/* ── 01 API AVAILABILITY ─────────────────────────────────── */}
+      <section id="api-availability" className="sec-section">
+        <SectionHead section={CHAPTERS[0]} />
 
         <HealthProbe />
 
@@ -386,11 +283,11 @@ function HighAvailabilityPage() {
           </button>
         </div>
 
-        {/* ── B1 · graceful ──────────────────────────────────── */}
+        {/* ── graceful ─────────────────────────────────────── */}
         <div id="graceful-shutdown" className="ha-block">
           <p className="eyebrow ha-block-tag">
             <span className="eyebrow-dot" />
-            B1 · GRACEFUL SHUTDOWN
+            GRACEFUL SHUTDOWN
           </p>
           <h3 className="ha-block-title">Zero Downtime Deploy</h3>
 
@@ -446,11 +343,11 @@ function HighAvailabilityPage() {
           </Foldout>
         </div>
 
-        {/* ── B2 · ungraceful ────────────────────────────────── */}
+        {/* ── ungraceful ───────────────────────────────────── */}
         <div id="unexpected-crash" className="ha-block">
           <p className="eyebrow ha-block-tag">
             <span className="eyebrow-dot" />
-            B2 · UNGRACEFUL SHUTDOWN
+            UNGRACEFUL SHUTDOWN
           </p>
           <h3 className="ha-block-title">API Crash</h3>
 
@@ -564,7 +461,53 @@ function HighAvailabilityPage() {
             that cannot be drained.
           </p>
         </div>
-      </div>
+      </section>
+
+      {/* ── 02 PIPELINE IDENTITY & SECRET MANAGEMENT ────────────── */}
+      <section id="pipeline" className="sec-section">
+        <SectionHead section={CHAPTERS[1]} />
+
+        <LensFigure
+          lenses={PIPELINE_LENSES}
+          label="deploy pipeline"
+          navigation="overlay-arrows"
+        />
+
+        {/* 三個來源匯流成同一組環境變數；分類的依據放在最後一欄 */}
+        <div className="sec-secrets">
+          <p className="eyebrow sec-subsection-tag">
+            <span className="eyebrow-dot" />
+            THREE SOURCES, ONE PROCESS
+          </p>
+          <div className="sec-table-scroll">
+            <table className="sec-secret-table">
+              <thead>
+                <tr>
+                  <th>Source</th>
+                  <th>Who creates the value</th>
+                  <th>Task definition field</th>
+                </tr>
+              </thead>
+              <tbody>
+                {CONFIG_SOURCES.map((c) => (
+                  <tr key={c.source}>
+                    <td className="sec-secret-stage">{c.source}</td>
+                    <td className="sec-secret-produced">
+                      {c.origin}
+                      {c.note ? (
+                        <span className="sec-secret-note">{c.note}</span>
+                      ) : null}
+                    </td>
+                    <td className="sec-secret-produced">
+                      <code>{c.delivery}</code>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
       {zoomed && (
         <DiagramLightbox
@@ -577,4 +520,4 @@ function HighAvailabilityPage() {
   );
 }
 
-export default HighAvailabilityPage;
+export default AppendixPage;

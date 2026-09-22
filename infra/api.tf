@@ -1,10 +1,8 @@
 # =====================================================================
 # API：ECS/Fargate service
 # ---------------------------------------------------------------------
-# 取代原本「開一台 EC2、跑 user_data.sh 裡的 gunicorn」的 launch template
-# + ASG。這次遷移純粹是簡化 —— 部署方式從「開機腳本」換成宣告式的 task
-# definition，跟 Worker 在 05 做的事是同一個設計換一層抽象重新表達，兩者
-# 共用同一份 image，只有啟動指令不同。
+# 部署方式是宣告式的 task definition。API 與 Worker（worker.tf）共用同一份
+# image，只有進入點不同。
 #
 # 容量固定，不設 scaling policy：沒有量測指出需要它。
 # =====================================================================
@@ -22,9 +20,9 @@ resource "aws_ecs_cluster" "main" {
 }
 
 locals {
-  # API 沒有 02 那樣的量測依據，選 Fargate 上可用的最小檔位之上一階：
-  # 0.5 vCPU / 1GiB，比原本 t3.micro（2 vCPU 突發 / 1GiB，OS 常駐吃掉一截）
-  # 寬裕。容量固定、沒有 scaling policy，量不夠的話由後續觀測決定要不要調。
+  # API 沒有 Worker 那樣的量測依據，選 Fargate 上可用的最小檔位之上一階：
+  # 0.5 vCPU / 1GiB。容量固定、沒有 scaling policy，量不夠的話由後續觀測決定
+  # 要不要調。
   api_cpu    = "512"
   api_memory = "1024"
 
@@ -174,11 +172,11 @@ resource "aws_ecs_service" "api" {
   task_definition = aws_ecs_task_definition.api.arn
   launch_type     = "FARGATE"
 
-  # 固定容量，對應原本 API ASG 的 min=max=desired=2。不設 scaling policy——
-  # 沒有量測指出需要它。
+  # 兩個 task 放在兩個 AZ 的 private subnet。不設 scaling policy——沒有量測
+  # 指出需要它。
   desired_count = 2
 
-  # 09：滾動更新的零停機保證。min=100% 代表更新過程中，「先前版本」的
+  # 滾動更新的零停機保證。min=100% 代表更新過程中，「先前版本」的
   # 健康任務數不得低於 desired_count——新任務要先過 health check 才能
   # 讓舊任務下線。max=200% 允許新舊任務短暫並存，讓 min=100% 有空間達成。
   deployment_minimum_healthy_percent = 100

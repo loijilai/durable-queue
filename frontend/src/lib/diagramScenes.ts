@@ -7,8 +7,8 @@ import queueArch from '../assets/diagrams/1-queue-arch.excalidraw?raw'
 import workerSucceedTimeline from '../assets/diagrams/2-2-worker-succeed-timeline.excalidraw?raw'
 import workerFailure from '../assets/diagrams/2-worker-failure.excalidraw?raw'
 import visibilityTimeout from '../assets/diagrams/2-1-visibility-timeout.excalidraw?raw'
-import workerStuckDuplicate from '../assets/diagrams/3-worker-stuck-duplicate.excalidraw?raw'
-import raceCondition from '../assets/diagrams/3-1-race-condition.excalidraw?raw'
+import transientRetry from '../assets/diagrams/3-transient-retry.excalidraw?raw'
+import retryBackoff from '../assets/diagrams/3-1-retry-backoff.excalidraw?raw'
 import sequenceConcurrency from '../assets/diagrams/4-sequence-concurrency.excalidraw?raw'
 import authSequenceGoogleOidc from '../assets/diagrams/auth-sequence-google-oidc.excalidraw?raw'
 import authAttackState from '../assets/diagrams/8-auth-attack-1-state.excalidraw?raw'
@@ -24,11 +24,11 @@ export interface StepScenes {
   timeline?: string
 }
 
-// Steps 1–3 (the fixed-frame stepper group).
+// Steps 1–3 (the fixed-frame stepper group): succeed, crash, transient error.
 export const STEP_DIAGRAMS = {
   crash: { arch: queueArch, timeline: workerSucceedTimeline },
   'detect-death': { arch: workerFailure, timeline: visibilityTimeout },
-  'at-least-once': { arch: workerStuckDuplicate, timeline: raceCondition },
+  'transient-error': { arch: transientRetry, timeline: retryBackoff },
 } satisfies Record<string, StepScenes>
 
 // Step 4 (race-idempotency) — a standalone sequence diagram card.

@@ -1,18 +1,16 @@
-import { useState, type KeyboardEvent, type ReactNode } from "react";
+import { useState, type KeyboardEvent } from "react";
 
-/* 一疊截圖，一次只露出一張。證據有四張，攤開來排會把頁面拉得比它們撐起的
-   宣稱還長；疊起來則是每一張都拿到整個版面的寬度。
+/* 一疊截圖，一次只露出一張。證據攤開來排會把頁面拉得比它們撐起的宣稱還長；
+   疊起來則是每一張都拿到整個版面的寬度。
 
    切換的操作面是壓在圖片左右兩側的兩塊透明區域 —— 要點的是圖本身，不是圖
-   底下的一排小按鈕。四張都留在 DOM 裡只切透明度，換頁因此沒有等圖載入的
-   空窗，代價是首次進站四張一起下載（合計約 440 KB，都是自家 public 下的
-   檔案）。 */
+   底下的一排小按鈕。每一張都留在 DOM 裡只切透明度，換頁因此沒有等圖載入的
+   空窗，代價是首次進站全部一起下載（目前兩張合計約 60 KB，都是自家 public
+   下的檔案）。 */
 
 export type EvidenceSlide = {
   src: string;
   alt: string;
-  /* 圖說可以是一段話，也可以是主圖那種四條線的 legend。 */
-  caption: ReactNode;
 };
 
 function EvidenceCarousel({
@@ -90,11 +88,6 @@ function EvidenceCarousel({
           />
         ))}
       </div>
-
-      {/* 圖換了，圖說也換 —— 讀螢幕的人要聽得到這件事，所以這一塊是 live 的。 */}
-      <figcaption className="ev-caption" aria-live="polite">
-        {slides[index].caption}
-      </figcaption>
     </figure>
   );
 }

@@ -1,20 +1,18 @@
 # =====================================================================
 # Worker：AWS Lambda，由 Job 佇列的 event source mapping 觸發
 # ---------------------------------------------------------------------
-# 取代原本的 ECS/Fargate worker service 加一整套自己維護的 step scaling
-# control loop。一份 Job = 一則訊息 = 一次 invocation（ESM batch_size = 1），
+# 一份 Job = 一則訊息 = 一次 invocation（ESM batch_size = 1），
 # 容量由平台依 Backlog 自動擴張，上限就是下面 ESM 的 maximum_concurrency。
-# API 仍在 ECS/Fargate 上（見 api.tf）。
+# API 在 ECS/Fargate 上（見 api.tf）。
 # =====================================================================
 
 locals {
   # 900 秒是 Lambda 單次執行的上限，也是佇列的 visibility timeout
-  # （queue.tf）。02 投影的 Admission Limit 下最長 Execution Time 是 352.1s，
-  # 落在這個上限內。
+  # （queue.tf）。依實測樣本擬合的 Execution Time 線性模型，Admission Limit
+  # （4 小時影片）下最長是 352.1s，落在這個上限內。
   worker_timeout_seconds = 900
 
-  # 記憶體：沿用 Fargate 上量到夠用的 2GiB。Lambda 的 vCPU 配額隨記憶體
-  # 線性給，2048MB 約等於 1 vCPU，與原本 worker task 的 1 vCPU 同級——
+  # Lambda 的 vCPU 配額隨記憶體線性給，2048MB 約等於 1 vCPU——
   # re-encode 階段是單執行緒 ffmpeg CPU 工作，需要一整顆。
   worker_memory_mb = 2048
 
@@ -23,8 +21,7 @@ locals {
   worker_ephemeral_storage_mb = 1024
 
   # Scaling Ceiling：下游限制中最低的一項，也就是 RDS db.t4g.micro 的連線預算。
-  # 推導（原本記在 issues/scaling-control-loop 的 07，那份文件已經刪除，數字搬
-  # 到這裡）：
+  # 推導：
   #
   #   max_connections 在 RDS 的預設參數是
   #   LEAST({DBInstanceClassMemory/9531392}, 5000)。1GiB 級距的機型扣掉 OS 與
@@ -40,7 +37,7 @@ locals {
   #
   # 帳號的 Lambda 併發配額（1000）必須不低於這個值。配額曾經只有 10，ESM 設
   # 67 時超出的 invocation 全部被 throttle，ESM 退避到停止，訊息等 visibility
-  # timeout 到期才重送（見 issues/lambda-worker/04-burst-experiment-results.md）。
+  # timeout 到期才重送。
   #
   # 要讓 ceiling 再往上，下一步是資料庫（更大的 instance class 或連線代理），
   # 不是 compute。

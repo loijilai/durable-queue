@@ -8,7 +8,7 @@ const RETRY_MS = 30000;
  * 後端（AWS stack）平常是關機的，demo 才 terraform apply 開起來。
  * 前端掛在 Vercel 上永遠在線，所以要主動告訴訪客「不是網站壞了，是後端沒開」。
  *
- * 只在「掛掉」時顯示，且一旦探到活著就停止輪詢 —— High Availability 那頁的
+ * 只在「掛掉」時顯示，且一旦探到活著就停止輪詢 —— Appendix 那頁的
  * probe 是刻意要讓人看到紅格子的，這條 banner 不該跟著閃。
  */
 function BackendStatus() {
