@@ -1,9 +1,8 @@
 export type StoryNodeId =
   | "crash"
   | "detect-death"
-  | "at-least-once"
-  | "race-idempotency"
-  | "retry";
+  | "transient-error"
+  | "race-idempotency";
 
 export interface StoryNode {
   id: StoryNodeId;
@@ -13,9 +12,11 @@ export interface StoryNode {
   description: string;
 }
 
-// Each step exists because the previous step's solution opened a new failure mode.
-// This is the causal chain, not a checklist — the order matters. On-screen text is
-// intentionally minimal (context sentence + key term); the rest is narrated live.
+// Steps 1–3 are the three ways one execution can end — it succeeds, the Worker
+// crashes, or a transient error sends it back to SQS — and together they are the
+// durable design. Step 4 is the price of steps 2–3: both recover by redelivery, so
+// the same Job can arrive twice. On-screen text is intentionally minimal (context
+// sentence + key term); the rest is narrated live.
 export const STORY_NODES: StoryNode[] = [
   {
     id: "crash",
@@ -32,25 +33,18 @@ export const STORY_NODES: StoryNode[] = [
     description: "",
   },
   {
-    id: "at-least-once",
+    id: "transient-error",
     eyebrow: "STEP 3",
-    title: "At-least-once delivery means duplicates",
-    term: "At-least-once delivery",
-    description: "",
+    title: "An external API can fail for a moment",
+    term: "Retry with Backoff + Jitter",
+    description:
+      "Base 30s, doubling, capped at 300s, equal jitter. After the 4th attempt the Job is marked failed.",
   },
   {
     id: "race-idempotency",
     eyebrow: "STEP 4",
-    title: "Two workers, one row, at the same time",
-    term: "Race condition & Idempotency",
+    title: "SQS delivers at-least-once, so the same Job can arrive twice",
+    term: "At-least-once delivery & Idempotency",
     description: "",
-  },
-  {
-    id: "retry",
-    eyebrow: "STEP 5",
-    title: "External API failed",
-    term: "Retry with Backoff + Jitter",
-    description:
-      "A worker can be perfectly alive and still fail — a rate-limit or timeout from an external API. Exponential backoff with jitter keeps workers from retrying in lockstep",
   },
 ];

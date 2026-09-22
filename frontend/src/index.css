@@ -2755,25 +2755,6 @@ a {
   color: var(--slate);
 }
 
-/* Node 6: retry backoff bars */
-.diagram-retry {
-  align-items: flex-end;
-  gap: 20px;
-}
-
-.retry-bar-track {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.retry-bar {
-  width: 20px;
-  background: var(--light-orange);
-  border-radius: 6px 6px 0 0;
-}
-
 /* Node 7: synthesis */
 .diagram-synthesis {
   flex-direction: column;

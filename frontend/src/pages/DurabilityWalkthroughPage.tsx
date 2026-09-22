@@ -4,7 +4,7 @@ import { STORY_NODES } from "../lib/durabilityStory.ts";
 import { useScrollReveal } from "../lib/useScrollReveal.ts";
 
 // Steps 1–3 share one architecture diagram and are shown in a fixed-frame stepper;
-// steps 4–5 remain individual scroll-reveal cards.
+// step 4 remains an individual scroll-reveal card.
 const STEPPER_NODES = STORY_NODES.slice(0, 3);
 const CARD_NODES = STORY_NODES.slice(3);
 
