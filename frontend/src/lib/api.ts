@@ -46,7 +46,21 @@ export interface WorkerAttempt {
   at: string;
 }
 
-export interface TranscriptionJob {
+// list 的每一筆：不帶逐字稿全文，只帶一段預覽與全文長度。
+export interface JobSummary {
+  id: number;
+  video_url: string;
+  status: JobStatus;
+  error: string | null;
+  created_at: string;
+  finished_at: string | null;
+  worker_attempts: WorkerAttempt[];
+  transcript_preview: string | null;
+  transcript_length: number | null;
+}
+
+// detail 的回應：唯一帶逐字稿全文的地方。
+export interface JobDetail {
   id: number;
   video_url: string;
   status: JobStatus;
@@ -54,8 +68,14 @@ export interface TranscriptionJob {
   error: string | null;
   created_at: string;
   finished_at: string | null;
-  owner: number;
   worker_attempts: WorkerAttempt[];
+}
+
+// 建立 Job 後的最小回應：指出這個 Job 是誰，完整狀態要另外讀。
+export interface JobRef {
+  id: number;
+  status: JobStatus;
+  created_at: string;
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -117,10 +137,8 @@ export function refreshAccessToken(
   });
 }
 
-export function createJob(
-  token: string,
-  videoUrl: string,
-): Promise<TranscriptionJob> {
+// 回應是 201 加一個 Location header；body 只夠指出建立了哪一筆，狀態要重抓 list。
+export function createJob(token: string, videoUrl: string): Promise<JobRef> {
   return authedRequest(token, "/api/jobs/", {
     method: "POST",
     body: JSON.stringify({ video_url: videoUrl }),
@@ -128,11 +146,17 @@ export function createJob(
 }
 
 // JobCreateView 是 ListCreateAPIView，GET 已經內建 list（依 owner 過濾）能力。
-export function listJobs(token: string): Promise<TranscriptionJob[]> {
+export function listJobs(token: string): Promise<JobSummary[]> {
   return authedRequest(token, "/api/jobs/");
 }
 
+// 逐字稿全文只在 detail 拿得到，所以要看全文（展開、複製）時才打這支。
+export function getJob(token: string, id: number): Promise<JobDetail> {
+  return authedRequest(token, `/api/jobs/${id}/`);
+}
+
 // 後端只接受對 FAILED 狀態的 job 呼叫，否則回 409（見 jobs/services.py retry_job）。
-export function retryJob(token: string, id: number): Promise<TranscriptionJob> {
+// 回應是 202 且沒有 body：已受理而已，最終狀態要重抓 list。
+export function retryJob(token: string, id: number): Promise<void> {
   return authedRequest(token, `/api/jobs/${id}/retry/`, { method: "POST" });
 }

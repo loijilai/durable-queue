@@ -1,5 +1,11 @@
 from rest_framework import generics
-from jobs.serializers import TranscriptionJobSerializer, UserRegisterSerializer
+from jobs.serializers import (
+    JobCreateSerializer,
+    JobDetailSerializer,
+    JobRefSerializer,
+    JobSummarySerializer,
+    UserRegisterSerializer,
+)
 from jobs.models import TranscriptionJob
 from jobs.queue import enqueue_job
 from rest_framework.views import APIView
@@ -14,6 +20,7 @@ from drf_spectacular.utils import (
 )
 from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
+from rest_framework.reverse import reverse
 from django.conf import settings
 import secrets
 from django.shortcuts import redirect
@@ -34,36 +41,55 @@ GOOGLE_AUTH_STATE = "google_oauth_state"
 
 
 # Create your views here.
+def job_detail_url(request, job_id):
+    """回應 Location 用的 detail URL；寫入端點只回指標，狀態去那裡讀。"""
+    return reverse("job-detail", kwargs={"pk": job_id}, request=request)
+
+
 @extend_schema_view(
+    get=extend_schema(
+        responses={200: JobSummarySerializer(many=True)},
+    ),
     post=extend_schema(
+        request=JobCreateSerializer,
         responses={
-            201: TranscriptionJobSerializer,
+            201: JobRefSerializer,
             400: OpenApiResponse(description="輸入驗證失敗，例如 youtube url 格式錯誤"),
         },
     ),
 )
 class JobCreateView(generics.ListCreateAPIView):
-    serializer_class = TranscriptionJobSerializer
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return JobCreateSerializer
+        return JobSummarySerializer
 
     def get_queryset(self):
         return TranscriptionJob.objects.filter(owner=self.request.user)
 
-    def perform_create(self, serializer):
-        job = serializer.save(owner=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job = serializer.save(owner=request.user)
         # Worker 收到的 job id 必須已經存在於 DB，所以等 commit 之後才送出
         transaction.on_commit(lambda: enqueue_job(job.id))
+        return Response(
+            JobRefSerializer(job).data,
+            status=status.HTTP_201_CREATED,
+            headers={"Location": job_detail_url(request, job.id)},
+        )
 
 
 @extend_schema_view(
     get=extend_schema(
         responses={
-            200: TranscriptionJobSerializer,
+            200: JobDetailSerializer,
             404: OpenApiResponse(description="job 不存在或不屬於你"),
         },
     ),
 )
 class JobRetrieveView(generics.RetrieveAPIView):
-    serializer_class = TranscriptionJobSerializer
+    serializer_class = JobDetailSerializer
 
     def get_queryset(self):
         return TranscriptionJob.objects.filter(owner=self.request.user)
@@ -73,7 +99,9 @@ class JobRetryView(APIView):
     @extend_schema(
         request=None,
         responses={
-            202: TranscriptionJobSerializer,
+            202: OpenApiResponse(
+                description="已受理；最終狀態不在這裡，請讀 Location 指向的 detail"
+            ),
             404: OpenApiResponse(description="not found"),
             409: OpenApiResponse(description="job is not in failed status"),
         },
@@ -89,8 +117,10 @@ class JobRetryView(APIView):
         except TranscriptionJob.DoesNotExist:
             raise Http404
 
-        serializer = TranscriptionJobSerializer(job)
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(
+            status=status.HTTP_202_ACCEPTED,
+            headers={"Location": job_detail_url(request, job.id)},
+        )
 
 
 # Authentication
