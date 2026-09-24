@@ -1,4 +1,4 @@
-import { type JobStatus, type TranscriptionJob } from "../lib/api.ts";
+import { type JobStatus, type JobSummary } from "../lib/api.ts";
 
 // worker_attempts 只存 {host, at}，沒存結果——結果從「位置 + job 狀態」推斷：
 // 非最後一筆 = 被後續認領取代（那台掛了）；最後一筆看 job 現在的狀態。
@@ -19,7 +19,8 @@ function attemptState(
   }
 }
 
-function AuditTrail({ job }: { job: TranscriptionJob }) {
+// worker_attempts 已經在 list 的 summary 裡，這個元件不需要額外請求 detail。
+function AuditTrail({ job }: { job: JobSummary }) {
   const attempts = job.worker_attempts ?? [];
   if (attempts.length === 0) {
     return <p className="audit-empty">No worker has claimed this job yet.</p>;

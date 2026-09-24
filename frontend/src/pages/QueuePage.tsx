@@ -1,13 +1,14 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth.ts";
 import {
   ApiError,
   createJob,
+  getJob,
   listJobs,
   retryJob,
   type JobStatus,
-  type TranscriptionJob,
+  type JobSummary,
 } from "../lib/api.ts";
 import AuditTrail from "../components/AuditTrail.tsx";
 
@@ -33,7 +34,7 @@ function formatDuration(startIso: string, endIso: string): string {
 }
 
 // Poll 拿到的 list 順序不保證新到舊，前端自己排序才能讓最新送出的 job 一直釘在最上面。
-function sortByCreatedAtDesc(jobs: TranscriptionJob[]): TranscriptionJob[] {
+function sortByCreatedAtDesc(jobs: JobSummary[]): JobSummary[] {
   return [...jobs].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
@@ -41,6 +42,7 @@ function sortByCreatedAtDesc(jobs: TranscriptionJob[]): TranscriptionJob[] {
 
 // 卡片寬度固定、字型固定，用字元數估算是否會超過收合狀態的 max-height，
 // 比量測 DOM scrollHeight 簡單，且對這個 demo 頁面的排版已經足夠準確。
+// 字元數來自 summary 的 transcript_length，因為列表拿不到全文。
 const TRANSCRIPT_TRUNCATE_LENGTH = 220;
 
 const YOUTUBE_ID_PATTERN =
@@ -54,7 +56,7 @@ function getYouTubeThumbnailUrl(videoUrl: string): string | null {
 
 function stepState(
   stepStatus: JobStatus,
-  job: TranscriptionJob,
+  job: JobSummary,
 ): "done" | "active" | "failed" | "upcoming" {
   // succeeded / failed 是互斥的兩個 terminal 分支：走到其中一個，另一個永遠是 upcoming（灰色）。
   if (stepStatus === "succeeded")
@@ -73,7 +75,7 @@ function stepState(
   return "upcoming";
 }
 
-function JobStep({ status, label, job }: { status: JobStatus; label: string; job: TranscriptionJob }) {
+function JobStep({ status, label, job }: { status: JobStatus; label: string; job: JobSummary }) {
   return (
     <div className={`job-step job-step-${stepState(status, job)}`}>
       <span className="job-step-rail">
@@ -87,7 +89,7 @@ function JobStep({ status, label, job }: { status: JobStatus; label: string; job
 // 卡片寬度有限，橫向排不下四個節點，改用縱向 stepper（訂單追蹤那種常見 pattern）：
 // 由上到下 Pending → Running → Succeeded/Failed，一條連接線貫穿，寬度只吃卡片的一小塊，
 // 不管卡片多窄都不會橫向溢出。
-function JobTimeline({ job }: { job: TranscriptionJob }) {
+function JobTimeline({ job }: { job: JobSummary }) {
   return (
     <div className="job-timeline">
       <JobStep status="pending" label="Pending" job={job} />
@@ -101,7 +103,7 @@ function JobTimeline({ job }: { job: TranscriptionJob }) {
 function QueuePage() {
   const { accessToken, authedFetch } = useAuth();
   const [videoUrl, setVideoUrl] = useState("");
-  const [jobs, setJobs] = useState<TranscriptionJob[]>([]);
+  const [jobs, setJobs] = useState<JobSummary[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryingId, setRetryingId] = useState<number | null>(null);
@@ -109,6 +111,10 @@ function QueuePage() {
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [expandedTranscriptIds, setExpandedTranscriptIds] = useState<Set<number>>(new Set());
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  // 逐字稿全文只在 detail 拿得到，取回後快取在這裡，同一筆不重複請求。
+  const [transcripts, setTranscripts] = useState<Record<number, string>>({});
+  const [transcriptLoadingId, setTranscriptLoadingId] = useState<number | null>(null);
+  const [transcriptErrors, setTranscriptErrors] = useState<Record<number, string>>({});
 
   function toggleExpanded(id: number) {
     setExpandedIds((cur) => {
@@ -119,16 +125,49 @@ function QueuePage() {
     });
   }
 
-  function toggleTranscriptExpanded(id: number) {
-    setExpandedTranscriptIds((cur) => {
-      const next = new Set(cur);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  // 已經取回過的就直接用快取，失敗時回 null 並把訊息留在該列上。
+  async function loadTranscript(id: number): Promise<string | null> {
+    const cached = transcripts[id];
+    if (cached !== undefined) return cached;
+    setTranscriptLoadingId(id);
+    setTranscriptErrors((prev) => {
+      const { [id]: _discard, ...rest } = prev;
+      return rest;
     });
+    try {
+      const detail = await authedFetch((token) => getJob(token, id));
+      const transcript = detail.transcript ?? "";
+      setTranscripts((prev) => ({ ...prev, [id]: transcript }));
+      return transcript;
+    } catch (err) {
+      setTranscriptErrors((prev) => ({
+        ...prev,
+        [id]:
+          err instanceof ApiError ? err.message : "Could not load transcript",
+      }));
+      return null;
+    } finally {
+      setTranscriptLoadingId(null);
+    }
   }
 
-  async function handleCopyTranscript(id: number, transcript: string) {
+  async function toggleTranscriptExpanded(id: number) {
+    if (expandedTranscriptIds.has(id)) {
+      setExpandedTranscriptIds((cur) => {
+        const next = new Set(cur);
+        next.delete(id);
+        return next;
+      });
+      return;
+    }
+    // 展開才需要全文，取不回來就維持收合狀態，這一列的其他內容不受影響。
+    if ((await loadTranscript(id)) === null) return;
+    setExpandedTranscriptIds((cur) => new Set(cur).add(id));
+  }
+
+  async function handleCopyTranscript(id: number) {
+    const transcript = await loadTranscript(id);
+    if (transcript === null) return;
     await navigator.clipboard.writeText(transcript);
     setCopiedId(id);
     setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
@@ -136,15 +175,18 @@ function QueuePage() {
 
   const hasActiveJob = jobs.some((j) => !TERMINAL_STATUSES.includes(j.status));
 
+  const refreshJobs = useCallback(async () => {
+    const fetched = await authedFetch((token) => listJobs(token));
+    setJobs(sortByCreatedAtDesc(fetched));
+  }, [authedFetch]);
+
   // 進頁面先把使用者現有的 job 歷史抓回來——不只是這次 session 建立的那一批。
   useEffect(() => {
     if (!accessToken) return;
-    authedFetch((token) => listJobs(token))
-      .then((fetched) => setJobs(sortByCreatedAtDesc(fetched)))
-      .catch(() => {
-        // 初次載入失敗就維持空列表，使用者仍可以送出新 job
-      });
-  }, [accessToken, authedFetch]);
+    refreshJobs().catch(() => {
+      // 初次載入失敗就維持空列表，使用者仍可以送出新 job
+    });
+  }, [accessToken, refreshJobs]);
 
   // 輪詢：list 裡只要還有非 terminal 狀態的 job，每 2 秒打一次 GET /api/jobs/，
   // 一次 request 換回全部 job 的最新狀態，而不是每個 job 各開一條輪詢。
@@ -156,15 +198,14 @@ function QueuePage() {
 
     const id = setInterval(async () => {
       try {
-        const updated = await authedFetch((token) => listJobs(token));
-        setJobs(sortByCreatedAtDesc(updated));
+        await refreshJobs();
       } catch {
         // 輪詢中的暫時性失敗（含 refresh 也失敗）不中斷 loop，下一次 tick 再試
       }
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(id);
-  }, [accessToken, hasActiveJob, authedFetch]);
+  }, [accessToken, hasActiveJob, refreshJobs]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -172,9 +213,10 @@ function QueuePage() {
     setSubmitting(true);
     setError(null);
     try {
-      const created = await authedFetch((token) => createJob(token, videoUrl));
-      setJobs((prev) => [created, ...prev]);
+      // 201 的 body 只帶 id/status/created_at，湊不出列表要的那一列，所以重抓 list。
+      await authedFetch((token) => createJob(token, videoUrl));
       setVideoUrl("");
+      await refreshJobs();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
     } finally {
@@ -189,10 +231,20 @@ function QueuePage() {
       return rest;
     });
     try {
-      const updated = await authedFetch((token) => retryJob(token, id));
-      // retry 把該 job 重設回 PENDING 並清掉 error/finished_at（見後端 retry_job）；
-      // 換掉 list 裡對應那一筆，hasActiveJob 會自動變 true，輪詢 effect 自己接手繼續追蹤。
-      setJobs((prev) => prev.map((j) => (j.id === id ? updated : j)));
+      await authedFetch((token) => retryJob(token, id));
+      // 202 沒有 body，而且 worker 可能已經把狀態推進了，所以重抓 list 而不是自己拼一筆；
+      // 重抓後該 job 必為非終態，hasActiveJob 變 true，輪詢 effect 自己接手繼續追蹤。
+      // retry 會清掉逐字稿，快取的全文跟著作廢。
+      setTranscripts((prev) => {
+        const { [id]: _discard, ...rest } = prev;
+        return rest;
+      });
+      setExpandedTranscriptIds((cur) => {
+        const next = new Set(cur);
+        next.delete(id);
+        return next;
+      });
+      await refreshJobs();
     } catch (err) {
       setRetryErrors((prev) => ({
         ...prev,
@@ -255,6 +307,9 @@ function QueuePage() {
             {jobs.map((j) => {
               const thumbnailUrl = getYouTubeThumbnailUrl(j.video_url);
               const transcriptExpanded = expandedTranscriptIds.has(j.id);
+              const transcriptLoading = transcriptLoadingId === j.id;
+              // 收合時 500 字的預覽就足以填滿被裁切的框；展開後才用取回的全文。
+              const transcriptText = transcripts[j.id] ?? j.transcript_preview;
               return (
               <div key={j.id} className="job-card">
                 {thumbnailUrl && (
@@ -279,14 +334,15 @@ function QueuePage() {
                 {j.status === "failed" && j.error && (
                   <p className="auth-error">{j.error}</p>
                 )}
-                {j.status === "succeeded" && j.transcript && (
+                {j.status === "succeeded" && j.transcript_preview && (
                   <div className="job-transcript-block">
                     <button
                       type="button"
                       className="btn-copy-transcript"
                       title={copiedId === j.id ? "Copied" : "Copy transcript"}
                       aria-label={copiedId === j.id ? "Copied" : "Copy transcript"}
-                      onClick={() => handleCopyTranscript(j.id, j.transcript!)}
+                      onClick={() => handleCopyTranscript(j.id)}
+                      disabled={transcriptLoading}
                     >
                       {copiedId === j.id ? (
                         <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -324,18 +380,26 @@ function QueuePage() {
                           : "job-transcript"
                       }
                     >
-                      {j.transcript}
+                      {transcriptText}
                     </p>
-                    {j.transcript.length > TRANSCRIPT_TRUNCATE_LENGTH && (
+                    {(j.transcript_length ?? 0) > TRANSCRIPT_TRUNCATE_LENGTH && (
                       <div className="job-transcript-actions">
                         <button
                           type="button"
                           className="link-button"
-                          onClick={() => toggleTranscriptExpanded(j.id)}
+                          onClick={() => void toggleTranscriptExpanded(j.id)}
+                          disabled={transcriptLoading}
                         >
-                          {transcriptExpanded ? "Show less" : "Show more"}
+                          {transcriptLoading
+                            ? "Loading…"
+                            : transcriptExpanded
+                              ? "Show less"
+                              : "Show more"}
                         </button>
                       </div>
+                    )}
+                    {transcriptErrors[j.id] && (
+                      <p className="auth-error">{transcriptErrors[j.id]}</p>
                     )}
                   </div>
                 )}
