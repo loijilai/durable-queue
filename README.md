@@ -13,6 +13,7 @@ A distributed system built to answer one question : **how to make sure a job tha
   - [Table of Contents](#table-of-contents)
   - [Requirements](#requirements)
   - [Architecture](#architecture)
+  - [Schema](#schema)
   - [Deep dives](#deep-dives)
   - [Deployment pipeline](#deployment-pipeline)
   - [Verification](#verification)
@@ -49,6 +50,16 @@ A burst of 250 jobs (24 s each): Worker Count reaches the ceiling of 67 and the 
 ![Backlog peaks at 210 and drains to zero within three minutes](frontend/public/evidence/lambda-burst-queue.png)
 
 ![Worker Count reaches 67 in the first minute; per-minute average Queue Wait rises from 21 s to 69 s](frontend/public/evidence/lambda-burst-workers.png)
+
+## Schema
+
+![ER diagram](frontend/public/diagrams/er-diagram.svg)
+
+`SocialIdentity` maps an external identity provider account — `(provider, provider_sub)`, where `provider_sub` is the permanent user id that provider issues — to a local `CustomUser`. It is a separate table rather than columns on `CustomUser` for three reasons:
+
+- **One user can hold several identities.** Adding GitHub alongside Google is another row.
+- **The provider's email is not the local email.** A user can change their local address while Google still reports the old one; storing them separately keeps one from overwriting the other.
+- **The uniqueness constraint belongs on the pair.** `UniqueConstraint(["provider", "provider_sub"])` stops one provider account from binding to two local users. It has to be composite — ids from different providers can collide.
 
 ## Deep dives
 
