@@ -35,6 +35,14 @@ class TranscriptionJobAPITests(APITestCase):
         job = TranscriptionJob.objects.get()
         self.assertEqual(job.status, response.data["status"])
         self.assertEqual(response.data["id"], job.id)
+        # 建立只回一個指標：最小 body + 指向 detail 的 Location
+        self.assertEqual(set(response.data), {"id", "status", "created_at"})
+        self.assertTrue(
+            response["Location"].endswith(
+                reverse("job-detail", kwargs={"pk": job.id})
+            ),
+            response["Location"],
+        )
         mock_enqueue_job.assert_called_once_with(job.id)
 
     def test_invalid_url_create_job(self):
@@ -63,6 +71,94 @@ class TranscriptionJobAPITests(APITestCase):
             response = self.client.post(url)
             mock_enqueue_job.assert_not_called()
 
-        # Assert：202 + commit 後以 job.id 送進佇列
+        # Assert：202 + 無 body + 指向 detail 的 Location + commit 後送進佇列
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.content, b"")
+        self.assertTrue(
+            response["Location"].endswith(
+                reverse("job-detail", kwargs={"pk": job.id})
+            ),
+            response["Location"],
+        )
         mock_enqueue_job.assert_called_once_with(job.id)
+
+    @patch("jobs.views.enqueue_job")
+    def test_retry_non_failed_job_returns_409(self, mock_enqueue_job):
+        # Arrange
+        job = TranscriptionJob.objects.create(
+            owner=self.user, video_url=self.VALID_URL, status=TranscriptionJob.RUNNING
+        )
+        url = reverse("job-retry", kwargs={"job_id": job.id})
+
+        # Act
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        mock_enqueue_job.assert_not_called()
+        job.refresh_from_db()
+        self.assertEqual(job.status, TranscriptionJob.RUNNING)
+
+    def test_list_returns_summary_without_full_transcript(self):
+        # Arrange：一份長到會被裁切的逐字稿
+        transcript = "x" * 600
+        job = TranscriptionJob.objects.create(
+            owner=self.user,
+            video_url=self.VALID_URL,
+            status=TranscriptionJob.SUCCEEDED,
+            transcript=transcript,
+        )
+
+        # Act
+        response = self.client.get(reverse("job-list-create"))
+
+        # Assert：list 只給預覽與長度，全文與 owner 都不在
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            set(response.data[0]),
+            {
+                "id",
+                "video_url",
+                "status",
+                "error",
+                "created_at",
+                "finished_at",
+                "worker_attempts",
+                "transcript_preview",
+                "transcript_length",
+            },
+        )
+        self.assertEqual(response.data[0]["transcript_preview"], transcript[:500])
+        self.assertEqual(response.data[0]["transcript_length"], len(transcript))
+        self.assertEqual(response.data[0]["id"], job.id)
+
+    def test_detail_returns_full_transcript(self):
+        # Arrange
+        transcript = "x" * 600
+        job = TranscriptionJob.objects.create(
+            owner=self.user,
+            video_url=self.VALID_URL,
+            status=TranscriptionJob.SUCCEEDED,
+            transcript=transcript,
+        )
+
+        # Act
+        response = self.client.get(reverse("job-detail", kwargs={"pk": job.id}))
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            set(response.data),
+            {
+                "id",
+                "video_url",
+                "status",
+                "transcript",
+                "error",
+                "created_at",
+                "finished_at",
+                "worker_attempts",
+            },
+        )
+        self.assertEqual(response.data["transcript"], transcript)

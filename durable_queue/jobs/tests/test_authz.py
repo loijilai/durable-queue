@@ -37,9 +37,12 @@ class JobAuthzTests(APITestCase):
         resp = self.client.post(
             reverse("job-list-create"), {"video_url": self.VALID_URL}, format="json"
         )
-        # Assert：owner 由 request.user 蓋章，不是 client 傳的
+        # Assert：owner 由 request.user 蓋章，不是 client 傳的。
+        # 回應不再帶 owner，改從 DB 確認蓋章結果。
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(resp.data["owner"], self.alice.id)
+        self.assertNotIn("owner", resp.data)
+        job = TranscriptionJob.objects.get(id=resp.data["id"])
+        self.assertEqual(job.owner, self.alice)
 
     def test_list_returns_only_own_jobs(self):
         # Arrange：故意放一個 bob 的 job 當誘餌
@@ -59,9 +62,10 @@ class JobAuthzTests(APITestCase):
         self.client.force_authenticate(user=self.alice)
         # Act
         resp = self.client.get(reverse("job-detail", kwargs={"pk": mine.id}))
-        # Assert
+        # Assert：拿得到自己的 job，且回應不洩漏 owner 的內部 PK
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data["owner"], self.alice.id)
+        self.assertEqual(resp.data["id"], mine.id)
+        self.assertNotIn("owner", resp.data)
 
     @patch("jobs.views.enqueue_job")
     def test_retry_own_failed_job(self, mock_enqueue_job):
