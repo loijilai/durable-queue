@@ -38,6 +38,8 @@ User = get_user_model()
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_AUTH_STATE = "google_oauth_state"
+# 容忍本機與 Google 的時鐘誤差(例如 Docker Desktop VM 睡醒後慢幾秒),否則 iat 會被判 "Token used too early"
+GOOGLE_CLOCK_SKEW_SECONDS = 10
 
 
 # Create your views here.
@@ -201,7 +203,10 @@ class GoogleCallbackView(APIView):
         # === 3. 驗證和解碼 id_token===
         id_tok = token_resp.json()["id_token"]
         claims = google_id_token.verify_oauth2_token(
-            id_tok, google_requests.Request(), settings.GOOGLE_CLIENT_ID
+            id_tok,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=GOOGLE_CLOCK_SKEW_SECONDS,
         )
 
         sub = claims["sub"]

@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from unittest.mock import patch, MagicMock
 from jobs.models import SocialIdentity
-from jobs.views import GOOGLE_AUTH_STATE
+from jobs.views import GOOGLE_AUTH_STATE, GOOGLE_CLOCK_SKEW_SECONDS
 
 User = get_user_model()
 
@@ -74,6 +74,27 @@ class GoogleCallbackTests(APITestCase):
         self.assertIn("access", params)
         self.assertIn("refresh", params)
         self.assertEqual(User.objects.count(), users_before)
+
+    # --- 時鐘誤差:驗 id_token 時要容忍幾秒,不然 Docker VM 時鐘慢一點就登入失敗 ---
+
+    @patch("jobs.views.google_id_token.verify_oauth2_token")
+    @patch("jobs.views.http_requests.post")
+    def test_id_token_verification_tolerates_clock_skew(self, mock_post, mock_verify):
+        # Arrange
+        self._set_state("valid_state")
+        mock_post.return_value = _token_response({"id_token": "fake-id-token"})
+        mock_verify.return_value = {
+            "sub": "google-sub-skew",
+            "email": "skew@test.com",
+            "email_verified": True,
+        }
+        # Act
+        self._callback()
+        # Assert:有把 clock skew 容忍度傳給 library(預設 0 秒,差 1 秒就爆)
+        self.assertEqual(
+            mock_verify.call_args.kwargs["clock_skew_in_seconds"],
+            GOOGLE_CLOCK_SKEW_SECONDS,
+        )
 
     # --- Case 3:全新且 email 已驗證 → 建 user + identity,密碼設 unusable ---
 
